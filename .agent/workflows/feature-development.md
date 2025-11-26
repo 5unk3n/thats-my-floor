@@ -10,6 +10,7 @@ description: Feature Development Workflow
    - Follow strict vertical slice architecture.
    - Enforce linting and formatting rules.
 4. **Commit**: Commit changes using Gitmoji convention.
+   - **Atomic Commits**: Break down changes into small, logical units. Avoid large, monolithic commits.
    - `✨ Feat`, `🐛 Fix`, `📦️ Chore`, etc.
 5. **Verification**: Run tests and linting before finishing.
    - `npm run lint`
