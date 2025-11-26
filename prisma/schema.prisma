@@ -66,3 +66,61 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
+
+model Artist {
+  id              String    @id @default(uuid())
+  name            String
+  image           String?
+  genre           String?
+  description     String?
+  spotifyArtistId String?   @map("spotify_artist_id")
+  followerCount   Int       @default(0) @map("follower_count")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  concerts        Concert[]
+  // followers       UserArtist[]
+  // setlists        Setlist[]
+
+  @@map("artists")
+}
+
+model Concert {
+  id              String    @id @default(uuid())
+  kopisId         String?   @unique @map("kopis_id")
+  title           String
+  artistId        String?   @map("artist_id")
+  poster          String?
+  date            DateTime
+  venueName       String    @map("venue_name")
+  venueAddress    String?   @map("venue_address")
+  venueMapLink    String?   @map("venue_map_link")
+  region          String?
+  genre           String?
+  description     String?
+  ticketStatus    String?   @map("ticket_status")
+  ticketOpenDate  DateTime? @map("ticket_open_date")
+  ticketPriceMin  Int?      @map("ticket_price_min")
+  ticketPriceMax  Int?      @map("ticket_price_max")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  artist          Artist?   @relation(fields: [artistId], references: [id])
+  bookingLinks    BookingLink[]
+  // setlists        Setlist[]
+  // notifications   Notification[]
+
+  @@map("concerts")
+}
+
+model BookingLink {
+  id        Int      @id @default(autoincrement())
+  concertId String   @map("concert_id")
+  platform  String
+  url       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  concert   Concert  @relation(fields: [concertId], references: [id], onDelete: Cascade)
+
+  @@map("booking_links")
+}
