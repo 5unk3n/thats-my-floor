@@ -20,10 +20,10 @@ model User {
   sessions      Session[]
 
   // Custom Relations
-  // followedArtists         UserArtist[]
-  // notificationSettings    NotificationSettings?
-  // devices                 UserDevice[]
-  // notifications           Notification[]
+  followedArtists         UserArtist[]
+  notificationSettings    NotificationSettings?
+  devices                 UserDevice[]
+  notifications           Notification[]
 
   @@map("users")
 }
@@ -79,8 +79,8 @@ model Artist {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   concerts        Concert[]
-  // followers       UserArtist[]
-  // setlists        Setlist[]
+  followers       UserArtist[]
+  setlists        Setlist[]
 
   @@map("artists")
 }
@@ -107,8 +107,8 @@ model Concert {
 
   artist          Artist?   @relation(fields: [artistId], references: [id])
   bookingLinks    BookingLink[]
-  // setlists        Setlist[]
-  // notifications   Notification[]
+  setlists        Setlist[]
+  notifications   Notification[]
 
   @@map("concerts")
 }
@@ -123,4 +123,91 @@ model BookingLink {
   concert   Concert  @relation(fields: [concertId], references: [id], onDelete: Cascade)
 
   @@map("booking_links")
+}
+
+model UserArtist {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  artistId  String   @map("artist_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artistId])
+  @@map("user_artists")
+}
+
+model Setlist {
+  id        String   @id @default(uuid())
+  concertId String?  @map("concert_id")
+  artistId  String?  @map("artist_id")
+  date      DateTime?
+  venue     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  concert   Concert? @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist    Artist?  @relation(fields: [artistId], references: [id])
+  tracks    SetlistTrack[]
+
+  @@map("setlists")
+}
+
+model SetlistTrack {
+  id             Int      @id @default(autoincrement())
+  setlistId      String   @map("setlist_id")
+  orderNumber    Int      @map("order_number")
+  title          String
+  spotifyTrackId String?  @map("spotify_track_id")
+  duration       Int?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  setlist        Setlist  @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+
+  @@map("setlist_tracks")
+}
+
+model NotificationSettings {
+  id                       Int      @id @default(autoincrement())
+  userId                   String   @unique @map("user_id")
+  ticketOpenAlert          Boolean  @default(true) @map("ticket_open_alert")
+  concertRegistrationAlert Boolean  @default(true) @map("concert_registration_alert")
+  emailNotification        Boolean  @default(false) @map("email_notification")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+model UserDevice {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  fcmToken  String   @unique @map("fcm_token")
+  platform  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_devices")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  body      String
+  concertId String?  @map("concert_id")
+  readAt    DateTime? @map("read_at")
+  sentAt    DateTime @default(now()) @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concert   Concert? @relation(fields: [concertId], references: [id])
+
+  @@map("notifications")
 }
