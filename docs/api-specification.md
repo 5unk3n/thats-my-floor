@@ -22,7 +22,6 @@
 ### 1.1 인증 (Auth) - `features/auth/actions.ts`
 
 - **`signIn(provider: 'google' | 'kakao')`**
-
   - 설명: NextAuth.js 소셜 로그인 개시
   - 반환: `Promise<void>` (리다이렉트)
 
@@ -33,7 +32,6 @@
 ### 1.2 공연 (Concerts) - `features/concerts/actions.ts`
 
 - **`getConcerts(params: GetConcertsParams)`**
-
   - 설명: 공연 목록 조회 (필터링, 페이징 포함)
   - 파라미터:
     ```typescript
@@ -54,7 +52,6 @@
 ### 1.3 아티스트 (Artists) - `features/artists/actions.ts`
 
 - **`toggleFollowArtist(artistId: string)`**
-
   - 설명: 아티스트 팔로우/언팔로우 토글
   - 인증: 필수
   - 반환: `Promise<{ isFollowing: boolean }>`
@@ -66,12 +63,10 @@
 ### 1.4 사용자 (Users) - `features/users/actions.ts`
 
 - **`updateProfile(data: UpdateProfileData)`**
-
   - 설명: 사용자 프로필(이름, 이미지) 수정
   - 반환: `Promise<User>`
 
 - **`updateNotificationSettings(settings: NotificationSettings)`**
-
   - 설명: 알림 설정 업데이트
   - 반환: `Promise<NotificationSettings>`
 

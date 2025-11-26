@@ -170,9 +170,7 @@ export async function middleware(request: NextRequest) {
 
   // 보호된 경로 체크
   const protectedPaths = ['/mypage', '/api/artists/*/follow'];
-  const isProtected = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
   if (isProtected && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
