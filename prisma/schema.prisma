@@ -16,31 +16,31 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
 
   // Custom Relations
-  followedArtists         UserArtist[]
-  notificationSettings    NotificationSettings?
-  devices                 UserDevice[]
-  notifications           Notification[]
+  followedArtists      UserArtist[]
+  notificationSettings NotificationSettings?
+  devices              UserDevice[]
+  notifications        Notification[]
 
   @@map("users")
 }
 
 model Account {
-  id                 String  @id @default(uuid())
-  userId             String  @map("user_id")
-  type               String
-  provider           String
-  providerAccountId  String  @map("provider_account_id")
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -68,47 +68,47 @@ model VerificationToken {
 }
 
 model Artist {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
   image           String?
   genre           String?
   description     String?
-  spotifyArtistId String?   @map("spotify_artist_id")
-  followerCount   Int       @default(0) @map("follower_count")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  spotifyArtistId String?  @map("spotify_artist_id")
+  followerCount   Int      @default(0) @map("follower_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  concerts        Concert[]
-  followers       UserArtist[]
-  setlists        Setlist[]
+  concerts  Concert[]
+  followers UserArtist[]
+  setlists  Setlist[]
 
   @@map("artists")
 }
 
 model Concert {
-  id              String    @id @default(uuid())
-  kopisId         String?   @unique @map("kopis_id")
-  title           String
-  artistId        String?   @map("artist_id")
-  poster          String?
-  date            DateTime
-  venueName       String    @map("venue_name")
-  venueAddress    String?   @map("venue_address")
-  venueMapLink    String?   @map("venue_map_link")
-  region          String?
-  genre           String?
-  description     String?
-  ticketStatus    String?   @map("ticket_status")
-  ticketOpenDate  DateTime? @map("ticket_open_date")
-  ticketPriceMin  Int?      @map("ticket_price_min")
-  ticketPriceMax  Int?      @map("ticket_price_max")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  kopisId        String?   @unique @map("kopis_id")
+  title          String
+  artistId       String?   @map("artist_id")
+  poster         String?
+  date           DateTime
+  venueName      String    @map("venue_name")
+  venueAddress   String?   @map("venue_address")
+  venueMapLink   String?   @map("venue_map_link")
+  region         String?
+  genre          String?
+  description    String?
+  ticketStatus   String?   @map("ticket_status")
+  ticketOpenDate DateTime? @map("ticket_open_date")
+  ticketPriceMin Int?      @map("ticket_price_min")
+  ticketPriceMax Int?      @map("ticket_price_max")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist          Artist?   @relation(fields: [artistId], references: [id])
-  bookingLinks    BookingLink[]
-  setlists        Setlist[]
-  notifications   Notification[]
+  artist        Artist?        @relation(fields: [artistId], references: [id])
+  bookingLinks  BookingLink[]
+  setlists      Setlist[]
+  notifications Notification[]
 
   @@map("concerts")
 }
@@ -120,7 +120,7 @@ model BookingLink {
   url       String
   createdAt DateTime @default(now()) @map("created_at")
 
-  concert   Concert  @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
 
   @@map("booking_links")
 }
@@ -131,25 +131,25 @@ model UserArtist {
   artistId  String   @map("artist_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@unique([userId, artistId])
   @@map("user_artists")
 }
 
 model Setlist {
-  id        String   @id @default(uuid())
-  concertId String?  @map("concert_id")
-  artistId  String?  @map("artist_id")
+  id        String    @id @default(uuid())
+  concertId String?   @map("concert_id")
+  artistId  String?   @map("artist_id")
   date      DateTime?
   venue     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  concert   Concert? @relation(fields: [concertId], references: [id], onDelete: Cascade)
-  artist    Artist?  @relation(fields: [artistId], references: [id])
-  tracks    SetlistTrack[]
+  concert Concert?       @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist  Artist?        @relation(fields: [artistId], references: [id])
+  tracks  SetlistTrack[]
 
   @@map("setlists")
 }
@@ -163,7 +163,7 @@ model SetlistTrack {
   duration       Int?
   createdAt      DateTime @default(now()) @map("created_at")
 
-  setlist        Setlist  @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+  setlist Setlist @relation(fields: [setlistId], references: [id], onDelete: Cascade)
 
   @@map("setlist_tracks")
 }
@@ -177,7 +177,7 @@ model NotificationSettings {
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
 
-  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_settings")
 }
@@ -190,24 +190,24 @@ model UserDevice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_devices")
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    String   @map("user_id")
+  id        Int       @id @default(autoincrement())
+  userId    String    @map("user_id")
   type      String
   title     String
   body      String
-  concertId String?  @map("concert_id")
+  concertId String?   @map("concert_id")
   readAt    DateTime? @map("read_at")
-  sentAt    DateTime @default(now()) @map("sent_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  sentAt    DateTime  @default(now()) @map("sent_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  concert   Concert? @relation(fields: [concertId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concert Concert? @relation(fields: [concertId], references: [id])
 
   @@map("notifications")
 }
