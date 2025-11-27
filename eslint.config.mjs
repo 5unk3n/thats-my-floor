@@ -19,9 +19,23 @@ const eslintConfig = defineConfig([
     settings: {
       'boundaries/include': ['src/**/*'],
       'boundaries/elements': [
-        { type: 'app', pattern: 'src/app/**/*' },
-        { type: 'feature', pattern: 'src/features/**/*' },
-        { type: 'shared', pattern: 'src/shared/**/*' },
+        {
+          type: 'app',
+          pattern: 'src/app/**/*',
+        },
+        {
+          type: 'feature',
+          pattern: 'src/features/*/**/*',
+          capture: ['featureName'],
+        },
+        {
+          type: 'shared',
+          pattern: 'src/(components|lib|hooks|data|server|drizzle)/**/*',
+        },
+        {
+          type: 'never-import',
+          pattern: 'src/(middleware|tasks)/**/*',
+        },
       ],
     },
     rules: {
@@ -40,17 +54,19 @@ const eslintConfig = defineConfig([
       'boundaries/element-types': [
         'error',
         {
-          default: 'allow',
+          default: 'disallow',
           rules: [
             {
+              from: 'app',
+              allow: ['feature', 'shared'],
+            },
+            {
               from: 'feature',
-              disallow: ['feature'],
-              message: 'Feature modules cannot import other feature modules',
+              allow: ['shared', ['feature', { featureName: '${from.featureName}' }]],
             },
             {
               from: 'shared',
-              disallow: ['app', 'feature'],
-              message: 'Shared modules cannot import app or feature modules',
+              allow: ['shared'],
             },
           ],
         },
