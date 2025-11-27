@@ -337,8 +337,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -363,18 +364,20 @@ model User {
 }
 
 model Account {
-  id                 String  @id @default(uuid())
-  userId             String  @map("user_id")
-  type               String
-  provider           String
-  providerAccountId  String  @map("provider_account_id")
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String   @map("provider_account_id")
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -387,6 +390,8 @@ model Session {
   sessionToken String   @unique @map("session_token")
   userId       String   @map("user_id")
   expires      DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
@@ -396,54 +401,58 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
 
 model Artist {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
   image           String?
   genre           String?
   description     String?
-  spotifyArtistId String?   @map("spotify_artist_id")
-  followerCount   Int       @default(0) @map("follower_count")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  spotifyArtistId String?  @unique @map("spotify_artist_id")
+  followerCount   Int      @default(0) @map("follower_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  concerts        Concert[]
-  followers       UserArtist[]
-  setlists        Setlist[]
+  concerts  Concert[]
+  followers UserArtist[]
+  setlists  Setlist[]
 
   @@map("artists")
 }
 
 model Concert {
-  id              String    @id @default(uuid())
-  kopisId         String?   @unique @map("kopis_id")
-  title           String
-  artistId        String?   @map("artist_id")
-  poster          String?
-  date            DateTime
-  venueName       String    @map("venue_name")
-  venueAddress    String?   @map("venue_address")
-  venueMapLink    String?   @map("venue_map_link")
-  region          String?
-  genre           String?
-  description     String?
-  ticketStatus    String?   @map("ticket_status")
-  ticketOpenDate  DateTime? @map("ticket_open_date")
-  ticketPriceMin  Int?      @map("ticket_price_min")
-  ticketPriceMax  Int?      @map("ticket_price_max")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  kopisId        String?   @unique @map("kopis_id")
+  title          String
+  artistId       String?   @map("artist_id")
+  poster         String?
+  date           DateTime
+  venueName      String    @map("venue_name")
+  venueAddress   String?   @map("venue_address")
+  venueMapLink   String?   @map("venue_map_link")
+  region         String?
+  genre          String?
+  description    String?
+  ticketStatus   String?   @map("ticket_status")
+  ticketOpenDate DateTime? @map("ticket_open_date")
+  ticketPriceMin Int?      @map("ticket_price_min")
+  ticketPriceMax Int?      @map("ticket_price_max")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist          Artist?   @relation(fields: [artistId], references: [id])
-  bookingLinks    BookingLink[]
-  setlists        Setlist[]
-  notifications   Notification[]
+  artist        Artist?        @relation(fields: [artistId], references: [id])
+  bookingLinks  BookingLink[]
+  setlists      Setlist[]
+  notifications Notification[]
 
+  @@index([date])
+  @@index([artistId])
+  @@index([region])
   @@map("concerts")
 }
 
