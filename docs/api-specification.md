@@ -4,22 +4,22 @@
 
 - **문서명**: API 및 Server Actions 명세서
 - **프로젝트**: 공연 알림 서비스
-- **버전**: v1
+- **버전**: v1.1
 
 ---
 
 ## 개요
 
 본 프로젝트는 **Next.js Server Actions**를 주된 데이터 통신 방식으로 사용합니다.
-따라서 전통적인 REST API 엔드포인트 대신, **Server Actions 함수 시그니처**와 **External Webhooks**를 정의합니다.
+모든 Server Actions와 DB 접근 로직은 각 기능(Feature) 폴더 내의 `server` 디렉토리 내에 위치합니다.
 
 ---
 
 ## 1. Server Actions (Internal)
 
-클라이언트 컴포넌트에서 직접 호출하거나, 서버 컴포넌트에서 사용하는 함수들입니다.
+클라이언트 컴포넌트에서 직접 호출하거나, `src/app`의 서버 페이지에서 사용하는 함수들입니다.
 
-### 1.1 인증 (Auth) - `features/auth/actions.ts`
+### 1.1 인증 (Auth) - `features/auth/server/actions.ts`
 
 - **`signIn(provider: 'google' | 'kakao')`**
   - 설명: NextAuth.js 소셜 로그인 개시
@@ -29,7 +29,7 @@
   - 설명: 로그아웃 처리
   - 반환: `Promise<void>`
 
-### 1.2 공연 (Concerts) - `features/concerts/actions.ts`
+### 1.2 공연 (Concerts) - `features/concerts/server/actions.ts`
 
 - **`getConcerts(params: GetConcertsParams)`**
   - 설명: 공연 목록 조회 (필터링, 페이징 포함)
@@ -49,7 +49,7 @@
   - 설명: 공연 상세 정보 조회
   - 반환: `Promise<ConcertDetail>`
 
-### 1.3 아티스트 (Artists) - `features/artists/actions.ts`
+### 1.3 아티스트 (Artists) - `features/artists/server/actions.ts`
 
 - **`toggleFollowArtist(artistId: string)`**
   - 설명: 아티스트 팔로우/언팔로우 토글
@@ -60,7 +60,7 @@
   - 설명: 아티스트 상세 정보 및 예정 공연 조회
   - 반환: `Promise<ArtistDetail>`
 
-### 1.4 사용자 (Users) - `features/users/actions.ts`
+### 1.4 사용자 (Users) - `features/users/server/actions.ts`
 
 - **`updateProfile(data: UpdateProfileData)`**
   - 설명: 사용자 프로필(이름, 이미지) 수정

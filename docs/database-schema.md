@@ -5,7 +5,7 @@
 - **문서명**: 데이터베이스 스키마 설계
 - **프로젝트**: 공연 알림 서비스
 - **DBMS**: PostgreSQL 14+
-- **ORM**: Prisma
+- **ORM**: Prisma v7
 
 ---
 
@@ -338,8 +338,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {

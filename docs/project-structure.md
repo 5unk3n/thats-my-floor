@@ -5,74 +5,36 @@
 - **문서명**: Next.js App Router 프로젝트 구조
 - **프로젝트**: 공연 알림 서비스
 - **Framework**: Next.js 16 (App Router)
+- **Architecture**: Feature-Sliced Design (Strict Vertical Slices)
 
 ---
 
-## 디렉토리 구조
+## 디렉토리 구조 (요약)
 
 ```
 concert-notification-service/
-├── .next/
-├── public/
 ├── src/
-│   ├── app/                    # Next.js App Router (Routing only)
-│   │   ├── (auth)/
-│   │   │   ├── login/
-│   │   │   │   └── page.tsx
-│   │   │   └── layout.tsx
-│   │   ├── (main)/
-│   │   │   ├── page.tsx
-│   │   │   ├── concerts/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── [id]/
-│   │   │   │       └── page.tsx
-│   │   │   ├── artists/
-│   │   │   │   └── [id]/
-│   │   │   │       └── page.tsx
-│   │   │   ├── mypage/
-│   │   │   │   └── page.tsx
-│   │   │   └── layout.tsx
-│   │   ├── api/                # External Webhooks only (e.g. Payment, Auth callbacks)
-│   │   │   ├── auth/
-│   │   │   │   └── [...nextauth]/
-│   │   │   │       └── route.ts
-│   │   │   └── webhooks/
-│   │   │       └── spotify/
-│   │   │           └── route.ts
-│   │   ├── layout.tsx
-│   │   ├── globals.css
-│   │   └── providers.tsx
-│   ├── features/               # 기능 단위 모듈 (Domain Logic)
-│   │   ├── auth/
-│   │   │   ├── components/     # Auth 전용 컴포넌트 (LoginForm)
-│   │   │   ├── actions.ts      # Auth Server Actions (login, logout)
-│   │   │   └── hooks/
-│   │   ├── concerts/
-│   │   │   ├── components/     # Concert 전용 컴포넌트 (ConcertCard)
-│   │   │   ├── actions.ts      # Concert Server Actions (getConcerts)
-│   │   │   ├── service.ts      # DB 로직 (Prisma)
+│   ├── app/                    # [Composition Root] 페이지 조합 및 라우팅
+│   │   ├── (auth)/             # 인증 관련 라우트 그룹
+│   │   ├── (main)/             # 메인 앱 라우트 그룹
+│   │   └── api/                # External Webhooks (NextAuth, Spotify)
+│   ├── features/               # [Domain Logic] 기능별 격리된 모듈
+│   │   ├── [feature-name]/     # 예: auth, concerts, artists
+│   │   │   ├── components/     # UI Components (Client/Server)
+│   │   │   ├── hooks/          # Feature Hooks
+│   │   │   ├── server/         # [Isolated] Server Actions & DB Logic
+│   │   │   │   ├── actions.ts  # Public Server Actions
+│   │   │   │   └── db.ts       # Internal DB Access
 │   │   │   └── types.ts
-│   │   ├── artists/
-│   │   │   ├── components/
-│   │   │   ├── actions.ts
-│   │   │   └── service.ts
-│   │   └── notifications/
-│   │       ├── components/
-│   │       └── actions.ts
-│   ├── shared/                 # 여러 기능에서 공통으로 쓰이는 모듈
-│   │   ├── components/         # 재사용 가능한 UI (Button, Modal)
-│   │   │   ├── ui/             # Shadcn UI 등
-│   │   │   └── layout/         # Header, Footer, Sidebar
-│   │   ├── hooks/              # 공통 훅 (useDebounce)
-│   │   ├── lib/                # 공통 유틸 (date-fns, prisma client)
-│   │   └── types/              # 공통 타입 (API Response)
+│   ├── shared/                 # [Shared] 재사용 가능한 UI 및 유틸리티
+│   │   ├── components/         # UI Library (Button, Modal etc.)
+│   │   ├── hooks/              # Utility Hooks
+│   │   └── lib/                # Utils (prisma, date-fns)
 │   ├── middleware.ts
 │   └── env.mjs
 ├── prisma/
-│   └── schema.prisma
-├── tailwind.config.ts
-├── package.json
-└── README.md
+├── public/
+└── ...config files
 ```
 
 ---
@@ -129,10 +91,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### 3. `src/app/(main)/page.tsx` (홈 - Server Component)
+### 3. `src/app/(main)/page.tsx` (홈 - Composition Example)
+
+페이지 파일은 직접적인 로직을 수행하지 않고, Features의 컴포넌트와 Server Action을 **조합(Composition)**하는 역할만 수행합니다.
 
 ```typescript
-import { getConcerts } from '@/features/concerts/actions'; // Server Action 직접 호출
+import { getConcerts } from '@/features/concerts/server/actions'; // Server Action 호출
 import ConcertList from '@/features/concerts/components/ConcertList';
 import SearchBar from '@/shared/components/forms/SearchBar';
 
@@ -141,7 +105,7 @@ export default async function HomePage({
 }: {
   searchParams: { page?: string; status?: string; region?: string };
 }) {
-  // API 호출 대신 Server Action을 함수처럼 직접 호출
+  // Feature의 Server Action 호출
   const concerts = await getConcerts({
     page: Number(searchParams.page) || 1,
     status: searchParams.status,
@@ -151,7 +115,9 @@ export default async function HomePage({
   return (
     <main className='container mx-auto px-4 py-8'>
       <h1 className='text-3xl font-bold mb-6'>공연 목록</h1>
+      {/* Shared Component */}
       <SearchBar />
+      {/* Feature Component */}
       <ConcertList concerts={concerts} />
     </main>
   );
@@ -193,13 +159,14 @@ export const config = {
 };
 ```
 
-### 5. `src/features/concerts/actions.ts` (Server Actions)
+### 5. `src/features/concerts/server/actions.ts` (Server Actions)
+
+DB 로직과 Server Action이 분리된 구조입니다.
 
 ```typescript
-'use server'; // Server Action 선언
+'use server';
 
-import prisma from '@/shared/lib/prisma';
-import { kopisClient } from '@/external/kopis';
+import { getConcertsFromDB } from './db'; // Internal DB Logic
 
 export async function getConcerts(params: {
   page: number;
@@ -208,36 +175,8 @@ export async function getConcerts(params: {
   region?: string;
   genre?: string;
 }) {
-  const { page = 1, limit = 20, status, region, genre } = params;
-
-  const where = {
-    ...(status && { ticketStatus: status }),
-    ...(region && { region }),
-    ...(genre && { genre }),
-  };
-
-  const [concerts, total] = await Promise.all([
-    prisma.concert.findMany({
-      where,
-      include: {
-        artist: true,
-      },
-      orderBy: { date: 'asc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.concert.count({ where }),
-  ]);
-
-  // Server Action은 직렬화 가능한 데이터만 반환해야 함
-  return {
-    data: concerts,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total,
-    },
-  };
+  // Controller Logic: Validation, Auth Check etc.
+  return await getConcertsFromDB(params);
 }
 ```
 
@@ -271,117 +210,36 @@ export async function getConcerts(params: {
 - 상태 관리, 이벤트 핸들러 사용
 - 예: `SearchBar`, `FollowButton`, `Modal`
 
----
+## 개발 가이드라인 및 아키텍처 규칙
 
-## 환경변수 (.env.local)
+### 1. Server Isolation (서버 로직 격리)
 
-```bash
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/concert_notification"
+- **규칙**: 모든 DB 접근(Prisma)과 Server Actions는 반드시 `features/[feature]/server/` 디렉토리 안에 위치해야 합니다.
+- **목적**: 클라이언트 번들에 서버 코드가 포함되는 것을 방지하고, 코드의 실행 위치를 명확히 합니다.
 
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key"
+### 2. ESLint Boundaries (엄격한 의존성 관리)
 
-# OAuth Providers
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-KAKAO_CLIENT_ID="your-kakao-client-id"
-KAKAO_CLIENT_SECRET="your-kakao-client-secret"
+`.eslintrc.json`을 통해 다음 규칙을 강제합니다.
 
-# Spotify API
-SPOTIFY_CLIENT_ID="your-spotify-client-id"
-SPOTIFY_CLIENT_SECRET="your-spotify-client-secret"
-SPOTIFY_REDIRECT_URI="http://localhost:3000/api/spotify/callback"
+- **Shared**: `features`를 참조할 수 없음. 오직 다른 `shared` 모듈만 참조 가능.
+- **Features**: 다른 `feature`를 직접 import 할 수 없음. (예: `concerts`에서 `artists` import 금지).
+- **App**: `features`와 `shared`를 모두 import 하여 조합(Composition) 가능.
 
-# kOPIS API
-KOPIS_API_KEY="your-kopis-api-key"
+### 3. Feature Composition (기능 조합)
 
-# Firebase Cloud Messaging
-FCM_SERVER_KEY="your-fcm-server-key"
+기능 간의 의존성이 필요한 경우(예: 공연 상세에 아티스트 카드 표시), 직접 import 대신 **Page 레벨 조합**을 사용합니다.
 
-# Vercel (Production)
-NEXT_PUBLIC_BASE_URL="https://your-domain.com"
-```
+```typescript
+// src/app/(main)/concerts/[id]/page.tsx
+// Page 파일이 '접착제' 역할을 하여 두 기능을 조합
+import { ConcertDetail } from '@/features/concerts/components';
+import { ArtistCard } from '@/features/artists/components';
 
----
-
-## 개발 가이드라인
-
-### 1. Server Component 우선
-
-- 가능한 한 Server Component 사용
-- 클라이언트 상호작용이 필요한 부분만 Client Component로 분리
-
-### 2. 데이터 페칭
-
-- Server Component: **Server Actions** 직접 호출 (`await getConcerts(...)`)
-- Client Component: `useQuery`와 **Server Actions** 조합
-  ```typescript
-  // 예시
-  useQuery({
-    queryKey: ['concerts'],
-    queryFn: () => getConcertsAction({ page: 1 }),
-  });
-  ```
-
-### 3. 타입 안전성
-
-- 모든 함수, 컴포넌트에 TypeScript 타입 명시
-- Prisma 스키마에서 타입 자동 생성
-
-### 4. 코드 스타일
-
-- ESLint + Prettier 사용
-- Commit 전 `npm run lint` 실행
-
----
-
-## 모듈 의존성 및 배치 가이드라인 (Strict Vertical Slices)
-
-### 1. 엄격한 기능 간 경계 (Strict Boundaries)
-
-이 프로젝트는 **기능(Feature) 간의 직접 참조를 금지**합니다.
-
-- **규칙**: `features/A`는 `features/B`를 import 할 수 없습니다.
-- **이유**: 기능 간 결합도를 낮추고, 각 기능을 독립적으로 유지보수하기 위함입니다.
-- **해결 방법**:
-  1.  **Shared로 이동**: 두 기능이 공유해야 하는 로직(UI, 유틸)은 `src/shared`로 이동합니다.
-  2.  **상위 레벨 조합**: 두 기능의 조합이 필요한 경우, `src/app` (페이지) 또는 `src/hooks` (전역 훅)에서 조합합니다.
-
-### 2. Import 규칙 (단방향 의존성)
-
-의존성은 항상 **아래 방향**으로만 흘러야 합니다.
-
-- `src/app` -> `src/features` (O)
-- `src/features` -> `src/shared` (O)
-- `src/app` -> `src/shared` (O)
-- `src/features/A` -> `src/features/B` (**X 금지**)
-- `src/shared` -> `src/features` (**X 금지**)
-
-### 3. ESLint 설정 (`eslint-plugin-boundaries`)
-
-이 규칙을 강제하기 위해 `eslint-plugin-boundaries`를 도입합니다.
-
-```json
-// .eslintrc.json 예시
-{
-  "plugins": ["boundaries"],
-  "settings": {
-    "boundaries/elements": [
-      { "type": "app", "pattern": "src/app/*" },
-      { "type": "feature", "pattern": "src/features/*" },
-      { "type": "shared", "pattern": "src/shared/*" }
-    ]
-  },
-  "rules": {
-    "boundaries/element-types": [
-      {
-        "from": "feature",
-        "disallow": ["feature"], // 다른 feature import 금지
-        "message": "Feature 간의 직접 참조는 금지됩니다. Shared로 옮기거나 상위 레벨에서 조합하세요."
-      }
-    ]
-  }
+export default function Page() {
+  return (
+    <ConcertDetail>
+      <ArtistCard />
+    </ConcertDetail>
+  );
 }
 ```
