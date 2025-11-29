@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # 커밋 컨벤션 (Commit Convention)
 
 ## 기본 원칙
