@@ -1,4 +1,7 @@
+import Link from 'next/link';
+
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
 
@@ -59,6 +62,16 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
             <p className="font-medium">{concert.entrpsnm || '-'}</p>
           </div>
         </div>
+
+        {concert.relate && (
+          <div className="mt-6 pt-6 border-t">
+            <Button asChild className="w-full" size="lg">
+              <Link href={concert.relate} target="_blank" rel="noopener noreferrer">
+                {concert.relatenm || '예매하기'}
+              </Link>
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

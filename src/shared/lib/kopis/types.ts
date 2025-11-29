@@ -37,6 +37,8 @@ export interface KopisConcertDetailResponse {
         styurl: string[]; // 소개 이미지 목록
       };
       dtguidance: string; // 공연 시간
+      relatenm: string; // 예매처명
+      relate: string; // 예매처 링크
     };
   };
 }
