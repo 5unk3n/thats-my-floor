@@ -77,7 +77,11 @@ export const concertService = {
         producer: item.entrpsnm,
         price: item.pcseguidance,
         story: item.sty,
-        storyUrls: item.styurls?.styurl || [],
+        storyUrls: Array.isArray(item.styurls?.styurl)
+          ? item.styurls.styurl
+          : item.styurls?.styurl
+            ? [item.styurls.styurl]
+            : [],
         schedule: item.dtguidance,
       };
     } catch (error) {

@@ -34,9 +34,20 @@ export interface KopisConcertDetailResponse {
       state: string; // 공연 상태
       openrun: string; // 오픈런 여부
       styurls: {
-        styurl: string[]; // 소개 이미지 목록
+        styurl: string | string[]; // 소개 이미지 목록 (단일 또는 배열)
       };
       dtguidance: string; // 공연 시간
+      relates?: {
+        relate?:
+          | {
+              relatenm: string; // 예매처명
+              relateurl: string; // 예매처 링크
+            }
+          | Array<{
+              relatenm: string; // 예매처명
+              relateurl: string; // 예매처 링크
+            }>;
+      };
     };
   };
 }
