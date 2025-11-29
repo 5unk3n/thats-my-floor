@@ -20,21 +20,26 @@ const eslintConfig = defineConfig([
       'boundaries/include': ['src/**/*'],
       'boundaries/elements': [
         {
+          mode: 'full',
           type: 'app',
+          capture: ['fileName'],
           pattern: 'src/app/**/*',
         },
         {
+          mode: 'full',
           type: 'feature',
           pattern: 'src/features/*/**/*',
           capture: ['featureName'],
         },
         {
+          mode: 'full',
           type: 'shared',
-          pattern: 'src/(components|lib|hooks|data|server|drizzle)/**/*',
+          pattern: 'src/shared/**/*',
         },
         {
-          type: 'never-import',
-          pattern: 'src/(middleware|tasks)/**/*',
+          mode: 'full',
+          type: 'config',
+          pattern: 'src/*.{ts,tsx}', // Root files like middleware.ts, auth.ts (if any)
         },
       ],
     },
@@ -59,6 +64,10 @@ const eslintConfig = defineConfig([
             {
               from: 'app',
               allow: ['feature', 'shared'],
+            },
+            {
+              from: 'app',
+              allow: ['feature', 'shared', 'app'],
             },
             {
               from: 'feature',
