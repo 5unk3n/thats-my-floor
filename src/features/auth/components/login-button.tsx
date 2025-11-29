@@ -2,6 +2,8 @@
 
 import { signIn, signOut, useSession } from 'next-auth/react';
 
+import { Button } from '@/shared/components/ui/button';
+
 export function LoginButton() {
   const { data: session } = useSession();
 
@@ -9,30 +11,24 @@ export function LoginButton() {
     return (
       <div className="flex items-center gap-4">
         <p>Signed in as {session.user?.email}</p>
-        <button
-          onClick={() => signOut()}
-          className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-        >
+        <Button variant="destructive" onClick={() => signOut()}>
           Sign out
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex gap-4">
-      <button
-        onClick={() => signIn('google')}
-        className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-      >
+      <Button onClick={() => signIn('google')} className="bg-blue-500 hover:bg-blue-600">
         Sign in with Google
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => signIn('kakao')}
-        className="rounded bg-yellow-400 px-4 py-2 text-black hover:bg-yellow-500"
+        className="bg-yellow-400 text-black hover:bg-yellow-500"
       >
         Sign in with Kakao
-      </button>
+      </Button>
     </div>
   );
 }
