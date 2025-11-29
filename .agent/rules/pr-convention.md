@@ -8,6 +8,7 @@ trigger: always_on
 
 - **대상 브랜치**: `develop`
 - **명령어**: `gh pr create --base develop`
+- **언어**: PR 제목 및 본문은 한글로 작성
 
 ## PR 제목 형식
 
@@ -24,7 +25,7 @@ Closes #이슈번호
 
 ## Architecture
 
-Vertical Slice Architecture 적용 내용
+레이어 구조, 의존성 방향, 컴포넌트 분리 전략 등
 
 ## Verification
 
