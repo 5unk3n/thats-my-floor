@@ -2,6 +2,14 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
+
 import { GENRES, REGIONS } from '../model/types';
 
 export function ConcertFilter() {
@@ -13,7 +21,7 @@ export function ConcertFilter() {
 
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) {
+    if (value && value !== 'ALL') {
       params.set(key, value);
     } else {
       params.delete(key);
@@ -27,34 +35,42 @@ export function ConcertFilter() {
     <div className="mb-8 flex flex-wrap gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-gray-800">
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">지역</label>
-        <select
-          value={currentRegion}
-          onChange={(e) => handleFilterChange('region', e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        <Select
+          value={currentRegion || 'ALL'}
+          onValueChange={(value) => handleFilterChange('region', value)}
         >
-          <option value="">전체</option>
-          {REGIONS.map((region) => (
-            <option key={region.code} value={region.code}>
-              {region.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="전체" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">전체</SelectItem>
+            {REGIONS.map((region) => (
+              <SelectItem key={region.code} value={region.code}>
+                {region.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">장르</label>
-        <select
-          value={currentGenre}
-          onChange={(e) => handleFilterChange('genre', e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        <Select
+          value={currentGenre || 'ALL'}
+          onValueChange={(value) => handleFilterChange('genre', value)}
         >
-          <option value="">전체</option>
-          {GENRES.map((genre) => (
-            <option key={genre.code} value={genre.code}>
-              {genre.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="전체" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">전체</SelectItem>
+            {GENRES.map((genre) => (
+              <SelectItem key={genre.code} value={genre.code}>
+                {genre.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
