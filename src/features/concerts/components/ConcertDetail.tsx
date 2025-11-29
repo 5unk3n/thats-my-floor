@@ -1,6 +1,7 @@
 import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
-import { ConcertInfo } from './ConcertInfo';
+
 import { ConcertImages } from './ConcertImages';
+import { ConcertInfo } from './ConcertInfo';
 
 type ConcertDetailData = KopisConcertDetailResponse['dbs']['db'];
 

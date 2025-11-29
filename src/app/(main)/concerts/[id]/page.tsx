@@ -1,6 +1,7 @@
-import { kopisClient } from '@/shared/lib/kopis/client';
-import { ConcertDetail } from '@/features/concerts/components/ConcertDetail';
 import { notFound } from 'next/navigation';
+
+import { ConcertDetail } from '@/features/concerts/components/ConcertDetail';
+import { kopisClient } from '@/shared/lib/kopis/client';
 
 interface PageProps {
   params: Promise<{ id: string }>;

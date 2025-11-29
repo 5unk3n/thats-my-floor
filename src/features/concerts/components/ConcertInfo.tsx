@@ -1,6 +1,6 @@
-import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
 
 type ConcertDetailData = KopisConcertDetailResponse['dbs']['db'];
 
