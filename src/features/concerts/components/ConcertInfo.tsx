@@ -12,9 +12,9 @@ interface ConcertInfoProps {
 }
 
 export function ConcertInfo({ concert }: ConcertInfoProps) {
-  // Get first booking link if available (handle both single object and array)
+  // Get all booking links (handle both single object and array)
   const relateData = concert.relates?.relate;
-  const bookingInfo = Array.isArray(relateData) ? relateData[0] : relateData;
+  const bookingLinks = relateData ? (Array.isArray(relateData) ? relateData : [relateData]) : [];
 
   return (
     <Card className="w-full">
@@ -67,13 +67,18 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
           </div>
         </div>
 
-        {bookingInfo?.relateurl && (
+        {bookingLinks.length > 0 && (
           <div className="mt-6 pt-6 border-t">
-            <Button asChild className="w-full" size="lg">
-              <Link href={bookingInfo.relateurl} target="_blank" rel="noopener noreferrer">
-                {bookingInfo.relatenm || '예매하기'}
-              </Link>
-            </Button>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">예매하기</h4>
+            <div className="flex flex-col gap-2">
+              {bookingLinks.map((booking, index) => (
+                <Button key={index} asChild variant="default" size="lg">
+                  <Link href={booking.relateurl} target="_blank" rel="noopener noreferrer">
+                    {booking.relatenm}
+                  </Link>
+                </Button>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
