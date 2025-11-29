@@ -8,7 +8,7 @@ interface ConcertListProps {
 export function ConcertList({ concerts }: ConcertListProps) {
   if (concerts.length === 0) {
     return (
-      <div className="flex h-64 w-full items-center justify-center rounded-xl bg-gray-50 text-gray-500 dark:bg-gray-800/50">
+      <div className="flex h-64 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground">
         검색 결과가 없습니다.
       </div>
     );
