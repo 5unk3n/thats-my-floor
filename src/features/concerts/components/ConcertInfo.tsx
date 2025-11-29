@@ -12,6 +12,10 @@ interface ConcertInfoProps {
 }
 
 export function ConcertInfo({ concert }: ConcertInfoProps) {
+  // Get first booking link if available (handle both single object and array)
+  const relateData = concert.relates?.relate;
+  const bookingInfo = Array.isArray(relateData) ? relateData[0] : relateData;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -63,11 +67,11 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
           </div>
         </div>
 
-        {concert.relate && (
+        {bookingInfo?.relateurl && (
           <div className="mt-6 pt-6 border-t">
             <Button asChild className="w-full" size="lg">
-              <Link href={concert.relate} target="_blank" rel="noopener noreferrer">
-                {concert.relatenm || '예매하기'}
+              <Link href={bookingInfo.relateurl} target="_blank" rel="noopener noreferrer">
+                {bookingInfo.relatenm || '예매하기'}
               </Link>
             </Button>
           </div>
