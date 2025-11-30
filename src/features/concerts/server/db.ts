@@ -1,4 +1,5 @@
 import { kopisClient } from '@/shared/lib/kopis/client';
+import { prisma } from '@/shared/lib/prisma';
 
 export interface Concert {
   id: string;
@@ -88,5 +89,53 @@ export const concertService = {
       console.error('Failed to fetch concert detail:', error);
       return null;
     }
+  },
+
+  upsertConcert: async (data: {
+    kopisId: string;
+    title: string;
+    poster?: string;
+    startDate: string;
+    endDate: string;
+    venueName: string;
+    genre?: string;
+    status?: string;
+    artistId?: string;
+  }) => {
+    return prisma.concert.upsert({
+      where: { kopisId: data.kopisId },
+      update: {
+        title: data.title,
+        poster: data.poster,
+        date: new Date(data.startDate), // Using startDate as the main date
+        venueName: data.venueName,
+        genre: data.genre,
+        ticketStatus: data.status,
+        artistId: data.artistId,
+      },
+      create: {
+        kopisId: data.kopisId,
+        title: data.title,
+        poster: data.poster,
+        date: new Date(data.startDate),
+        venueName: data.venueName,
+        genre: data.genre,
+        ticketStatus: data.status,
+        artistId: data.artistId,
+      },
+    });
+  },
+
+  findArtistByName: async (name: string) => {
+    // Simple exact match for now.
+    // In real world, might need fuzzy search or normalization.
+    return prisma.artist.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive',
+        },
+      },
+    });
   },
 };
