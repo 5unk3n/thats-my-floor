@@ -9,6 +9,7 @@ import {
   markAllNotificationsAsReadInDB,
   markNotificationAsReadInDB,
 } from './db';
+import { notificationService } from './services';
 
 export async function getNotifications() {
   const session = await auth();
@@ -37,4 +38,27 @@ export async function markAllNotificationsAsRead() {
 
   await markAllNotificationsAsReadInDB(session.user.id);
   revalidatePath('/notifications');
+}
+
+export async function getNotificationSettingsAction() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  return await notificationService.getNotificationSettings(session.user.id);
+}
+
+export async function updateNotificationSettingsAction(settings: {
+  ticketOpenAlert?: boolean;
+  concertRegistrationAlert?: boolean;
+  emailNotification?: boolean;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  await notificationService.updateNotificationSettings(session.user.id, settings);
+  revalidatePath('/mypage');
 }
