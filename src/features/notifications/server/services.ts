@@ -75,4 +75,37 @@ export const notificationService = {
       }
     }
   },
+
+  getNotificationSettings: async (userId: string) => {
+    const settings = await prisma.notificationSettings.findUnique({
+      where: { userId },
+    });
+
+    if (!settings) {
+      // Create default settings if not exists
+      return await prisma.notificationSettings.create({
+        data: { userId },
+      });
+    }
+
+    return settings;
+  },
+
+  updateNotificationSettings: async (
+    userId: string,
+    settings: {
+      ticketOpenAlert?: boolean;
+      concertRegistrationAlert?: boolean;
+      emailNotification?: boolean;
+    }
+  ) => {
+    return await prisma.notificationSettings.upsert({
+      where: { userId },
+      update: settings,
+      create: {
+        userId,
+        ...settings,
+      },
+    });
+  },
 };
