@@ -1,10 +1,123 @@
-import { PrismaAdapter } from '@auth/prisma-adapter';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { NextAuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import KakaoProvider from 'next-auth/providers/kakao';
 import SpotifyProvider from 'next-auth/providers/spotify';
 
 import { prisma } from '@/shared/lib/prisma';
+
+async function refreshGoogleToken(token: JWT) {
+  const url = 'https://oauth2.googleapis.com/token';
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      grant_type: 'refresh_token',
+      refresh_token: token.refreshToken!,
+    }),
+  });
+
+  const refreshedTokens = await response.json();
+
+  if (!response.ok) {
+    throw refreshedTokens;
+  }
+
+  return {
+    ...token,
+    accessToken: refreshedTokens.access_token,
+    accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+  };
+}
+
+async function refreshKakaoToken(token: JWT) {
+  const url = 'https://kauth.kakao.com/oauth/token';
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: process.env.KAKAO_CLIENT_ID!,
+      client_secret: process.env.KAKAO_CLIENT_SECRET!,
+      refresh_token: token.refreshToken!,
+    }),
+  });
+
+  const refreshedTokens = await response.json();
+
+  if (!response.ok) {
+    throw refreshedTokens;
+  }
+
+  return {
+    ...token,
+    accessToken: refreshedTokens.access_token,
+    accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+  };
+}
+
+async function refreshSpotifyToken(token: JWT) {
+  const url = 'https://accounts.spotify.com/api/token';
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization:
+        'Basic ' +
+        Buffer.from(
+          process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
+        ).toString('base64'),
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: token.refreshToken!,
+    }),
+  });
+
+  const refreshedTokens = await response.json();
+
+  if (!response.ok) {
+    throw refreshedTokens;
+  }
+
+  return {
+    ...token,
+    accessToken: refreshedTokens.access_token,
+    accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+  };
+}
+
+async function refreshAccessToken(token: JWT) {
+  try {
+    switch (token.provider) {
+      case 'google':
+        return await refreshGoogleToken(token);
+      case 'kakao':
+        return await refreshKakaoToken(token);
+      case 'spotify':
+        return await refreshSpotifyToken(token);
+      default:
+        return token;
+    }
+  } catch (error) {
+    console.error(`Error refreshing access token for ${token.provider}`, error);
+
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -12,6 +125,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
     }),
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
@@ -42,6 +162,7 @@ export const authOptions: NextAuthOptions = {
           accessToken: account.access_token,
           accessTokenExpires: Date.now() + (account.expires_in as number) * 1000,
           refreshToken: account.refresh_token,
+          provider: account.provider,
           user,
         };
       }
@@ -68,46 +189,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
-
-import { JWT } from 'next-auth/jwt';
-
-async function refreshAccessToken(token: JWT) {
-  try {
-    const url = 'https://accounts.spotify.com/api/token';
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization:
-          'Basic ' +
-          Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
-          ).toString('base64'),
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: token.refreshToken!,
-      }),
-    });
-
-    const refreshedTokens = await response.json();
-
-    if (!response.ok) {
-      throw refreshedTokens;
-    }
-
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
-    };
-  } catch (error) {
-    console.error('Error refreshing access token', error);
-
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
-    };
-  }
-}

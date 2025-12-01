@@ -1,8 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { getServerSession } from 'next-auth';
 
-import { auth } from '@/shared/lib/auth';
+import { authOptions } from '@/shared/lib/auth';
 
 import {
   getNotificationsFromDB,
@@ -12,7 +13,7 @@ import {
 import { notificationService } from './services';
 
 export async function getNotifications() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
@@ -21,7 +22,7 @@ export async function getNotifications() {
 }
 
 export async function markNotificationAsRead(notificationId: number) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
@@ -31,7 +32,7 @@ export async function markNotificationAsRead(notificationId: number) {
 }
 
 export async function markAllNotificationsAsRead() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
@@ -41,7 +42,7 @@ export async function markAllNotificationsAsRead() {
 }
 
 export async function getNotificationSettingsAction() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
@@ -54,7 +55,7 @@ export async function updateNotificationSettingsAction(settings: {
   concertRegistrationAlert?: boolean;
   emailNotification?: boolean;
 }) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
