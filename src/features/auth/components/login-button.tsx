@@ -29,6 +29,9 @@ export function LoginButton() {
       >
         Sign in with Kakao
       </Button>
+      <Button onClick={() => signIn('spotify')} className="bg-green-500 hover:bg-green-600">
+        Sign in with Spotify
+      </Button>
     </div>
   );
 }

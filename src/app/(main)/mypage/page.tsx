@@ -1,10 +1,11 @@
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
 
 import NotificationSettings from '@/features/notifications/components/NotificationSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { auth } from '@/shared/lib/auth';
+import { authOptions } from '@/shared/lib/auth';
 
 export const metadata = {
   title: '마이페이지 | 공연 알림 서비스',
@@ -12,7 +13,7 @@ export const metadata = {
 };
 
 export default async function MyPage() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return <div>로그인이 필요합니다.</div>;

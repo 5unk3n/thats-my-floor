@@ -1,13 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { getServerSession } from 'next-auth';
 
-import { auth } from '@/shared/lib/auth';
+import { authOptions } from '@/shared/lib/auth';
 
 import { getFollowedArtistsFromDB, getFollowStatusFromDB, toggleFollowInDB } from './db';
 
 export async function toggleFollow(artistId: string) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
@@ -19,7 +20,7 @@ export async function toggleFollow(artistId: string) {
 }
 
 export async function getFollowStatus(artistId: string) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return false;
   }
@@ -28,7 +29,7 @@ export async function getFollowStatus(artistId: string) {
 }
 
 export async function getFollowedArtists() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
