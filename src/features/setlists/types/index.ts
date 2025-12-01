@@ -20,3 +20,18 @@ export interface CreateSetlistTrackInput {
   spotifyTrackId?: string;
   duration?: number;
 }
+
+export interface PlayerState {
+  deviceId: string;
+  paused: boolean;
+  currentTrack: Spotify.Track | null;
+  position: number;
+  duration: number;
+  volume: number;
+  active: boolean;
+}
+
+export interface PlaybackError {
+  message: string;
+  type: 'authentication_error' | 'initialization_error' | 'playback_error' | 'account_error';
+}
