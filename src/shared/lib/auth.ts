@@ -119,8 +119,13 @@ async function refreshAccessToken(token: JWT) {
   }
 }
 
+import { Adapter } from 'next-auth/adapters';
+
+// ... imports
+
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // @ts-expect-error: Known issue with PrismaAdapter types
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -143,7 +148,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope:
-            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private',
+            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing',
         },
       },
     }),

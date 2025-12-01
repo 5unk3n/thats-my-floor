@@ -1,15 +1,35 @@
-import { Clock, Music } from 'lucide-react';
+'use client';
+
+import { Clock, Music, Play } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
+import { playTrack } from '../lib/spotify-player';
+import { usePlayerStore } from '../store/use-player-store';
 import { Setlist } from '../types';
+import { SpotifyPlayer } from './SpotifyPlayer';
 
 interface SetlistViewerProps {
   setlist: Setlist | null;
 }
 
 export function SetlistViewer({ setlist }: SetlistViewerProps) {
+  const { data: session } = useSession();
+  const { deviceId, currentTrack, active } = usePlayerStore();
+
+  const handlePlay = async (spotifyTrackId: string) => {
+    if (!session?.user?.accessToken || !deviceId) return;
+
+    try {
+      await playTrack(session.user.accessToken, deviceId, `spotify:track:${spotifyTrackId}`);
+    } catch (error) {
+      console.error('Failed to play track', error);
+    }
+  };
+
   if (!setlist || setlist.tracks.length === 0) {
     return (
       <Card>
@@ -21,37 +41,63 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Music className="h-5 w-5" />
-          셋리스트
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2">
-          {setlist.tracks.map((track) => (
-            <li
-              key={track.id}
-              className="flex items-center justify-between rounded-md border p-3 hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                  {track.orderNumber}
-                </span>
-                <span className="font-medium">{track.title}</span>
-              </div>
-              {track.duration && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDuration(track.duration)}
-                </Badge>
-              )}
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="w-full mb-24">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            셋리스트
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {setlist.tracks.map((track) => {
+              const isPlaying = currentTrack?.id === track.spotifyTrackId;
+
+              return (
+                <li
+                  key={track.id}
+                  className="flex items-center justify-between rounded-md border p-3 hover:bg-accent/50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-8 w-8 items-center justify-center">
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary ${track.spotifyTrackId ? 'group-hover:opacity-0' : ''}`}
+                      >
+                        {track.orderNumber}
+                      </span>
+                      {track.spotifyTrackId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute inset-0 hidden h-8 w-8 group-hover:flex"
+                          onClick={() => handlePlay(track.spotifyTrackId!)}
+                          disabled={!active}
+                        >
+                          <Play
+                            className={`h-4 w-4 ${isPlaying ? 'fill-primary text-primary' : ''}`}
+                          />
+                        </Button>
+                      )}
+                    </div>
+                    <span className={`font-medium ${isPlaying ? 'text-primary' : ''}`}>
+                      {track.title}
+                    </span>
+                  </div>
+                  {track.duration && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatDuration(track.duration)}
+                    </Badge>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+      <SpotifyPlayer />
+    </>
   );
 }
 
