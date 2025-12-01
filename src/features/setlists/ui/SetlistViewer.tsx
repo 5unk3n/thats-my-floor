@@ -1,7 +1,9 @@
-import { Setlist } from '../types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
 import { Clock, Music } from 'lucide-react';
+
+import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+
+import { Setlist } from '../types';
 
 interface SetlistViewerProps {
   setlist: Setlist | null;
