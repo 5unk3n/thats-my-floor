@@ -5,7 +5,9 @@ set -e
 
 # Load environment variables if .env exists
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  source .env
+  set +a
 fi
 
 # Check if required variables are set
