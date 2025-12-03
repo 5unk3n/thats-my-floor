@@ -7,20 +7,20 @@ if [ -f .env ]; then
 fi
 
 # Check required variables
-if [ -z "$EC2_HOST" ] || [ -z "$EC2_USERNAME" ] || [ -z "$EC2_SSH_KEY_PATH" ]; then
-  echo "Error: Please set EC2_HOST, EC2_USERNAME, and EC2_SSH_KEY_PATH in .env or environment."
+if [ -z "$VM_HOST" ] || [ -z "$VM_USERNAME" ] || [ -z "$VM_SSH_KEY_PATH" ]; then
+  echo "Error: Please set VM_HOST, VM_USERNAME, and VM_SSH_KEY_PATH in .env or environment."
   exit 1
 fi
 
-echo "🚀 Deploying Nginx configuration to $EC2_HOST..."
+echo "🚀 Deploying Nginx configuration to $VM_HOST..."
 
 # 1. Copy nginx.conf to server
 echo "📦 Copying nginx.conf..."
-scp -i "$EC2_SSH_KEY_PATH" nginx/nginx.conf "$EC2_USERNAME@$EC2_HOST:/home/$EC2_USERNAME/app/nginx.conf"
+scp -i "$VM_SSH_KEY_PATH" nginx/nginx.conf "$VM_USERNAME@$VM_HOST:/home/$VM_USERNAME/app/nginx.conf"
 
 # 2. Move config and reload Nginx
 echo "🔄 Reloading Nginx..."
-ssh -i "$EC2_SSH_KEY_PATH" "$EC2_USERNAME@$EC2_HOST" << 'EOF'
+ssh -i "$VM_SSH_KEY_PATH" "$VM_USERNAME@$VM_HOST" << 'EOF'
   set -e
   # Move config to sites-available
   sudo mv ~/app/nginx.conf /etc/nginx/sites-available/my-app
