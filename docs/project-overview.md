@@ -91,7 +91,7 @@
 
 ### Infrastructure
 
-- **Hosting**: AWS (EC2 + Docker)
+- **Hosting**: Azure (VM + Docker)
 - **CI/CD**: GitHub Actions
 - **Notifications**: Firebase Cloud Messaging (FCM)
 - **Monitoring**: AWS CloudWatch / Sentry
