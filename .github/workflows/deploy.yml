@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to VM
 
 on:
   push:
@@ -49,28 +49,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: 'docker-compose.yml'
+          target: '/home/${{ secrets.VM_USERNAME }}/app'
+          strip_components: 0
+
+      - name: Deploy to VM
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
           script: |
+            cd /home/${{ secrets.VM_USERNAME }}/app
+
             # Login to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Pull the latest image
-            docker pull ghcr.io/${{ github.repository }}:latest
+            # Pull latest images
+            docker-compose pull
 
-            # Stop and remove existing container
-            docker stop my-app || true
-            docker rm my-app || true
+            # Restart containers
+            docker-compose up -d
 
-            # Run new container
-            # Note: Ensure .env file exists on the server or pass env vars here
-            docker run -d \
-              --name my-app \
-              --restart always \
-              -p 3000:3000 \
-              --env-file .env \
-              ghcr.io/${{ github.repository }}:latest
+            # Prune unused images
+            docker image prune -f
