@@ -98,6 +98,9 @@ jobs:
           # Stop and remove existing container to avoid conflict
           docker compose down
 
+          # Migrate DB
+          docker compose run --rm my-app npx prisma migrate deploy
+
           # Restart containers
           docker compose up -d
 
