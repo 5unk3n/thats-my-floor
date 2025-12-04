@@ -93,10 +93,10 @@ jobs:
       - name: Pull and Deploy
         run: |
           # Pull latest images
-          docker-compose pull
+          docker compose pull
 
           # Restart containers
-          docker-compose up -d
+          docker compose up -d
 
           # Prune unused images
           docker image prune -f
