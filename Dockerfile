@@ -74,7 +74,7 @@ RUN apk add --no-cache openssl
 
 # Install Prisma CLI and dependencies for migration locally
 # We install locally because prisma.config.ts imports dotenv, which must be resolvable in local node_modules
-RUN npm install prisma tsx dotenv
+RUN npm install prisma tsx dotenv && npm cache clean --force
 
 # Copy prisma config
 COPY --from=builder /app/prisma.config.ts ./
