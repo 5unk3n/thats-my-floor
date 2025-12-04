@@ -1,4 +1,4 @@
-import { admin } from '@/shared/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/shared/lib/firebase-admin';
 import { prisma } from '@/shared/lib/prisma';
 
 export const checkTicketOpenAndSendNotifications = async () => {
@@ -94,7 +94,7 @@ export const checkTicketOpenAndSendNotifications = async () => {
           tokens: tokens,
         };
 
-        const response = await admin.messaging().sendEachForMulticast(message);
+        const response = await getFirebaseAdmin().messaging().sendEachForMulticast(message);
         console.log(
           `[TicketOpenScheduler] FCM sent to user ${user.id}: ${response.successCount} success, ${response.failureCount} failure`
         );
