@@ -72,6 +72,13 @@ COPY --from=builder /app/prisma ./prisma
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
 
+# Install Prisma CLI and dependencies for migration locally
+# We install locally because prisma.config.ts imports dotenv, which must be resolvable in local node_modules
+RUN npm install prisma tsx dotenv
+
+# Copy prisma config
+COPY --from=builder /app/prisma.config.ts ./
+
 # Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
