@@ -1,4 +1,7 @@
-import { Setlist as PrismaSetlist, SetlistTrack as PrismaSetlistTrack } from '@prisma/client';
+import {
+  Setlist as PrismaSetlist,
+  SetlistTrack as PrismaSetlistTrack,
+} from '../../../../generated/prisma/client';
 
 export type Setlist = PrismaSetlist & {
   tracks: SetlistTrack[];

@@ -1,5 +1,6 @@
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { NextAuthOptions } from 'next-auth';
+import { Adapter } from 'next-auth/adapters';
 import { JWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import KakaoProvider from 'next-auth/providers/kakao';
@@ -119,12 +120,9 @@ async function refreshAccessToken(token: JWT) {
   }
 }
 
-import { Adapter } from 'next-auth/adapters';
-
-// ... imports
-
 export const authOptions: NextAuthOptions = {
-  // @ts-expect-error: Known issue with PrismaAdapter types
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Prisma Adapter type compatibility issue with NextAuth
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     GoogleProvider({
