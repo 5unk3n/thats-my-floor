@@ -95,9 +95,6 @@ jobs:
           # Pull latest images
           docker compose pull
 
-          # Stop and remove existing container to avoid conflict
-          docker compose down
-
           # Migrate DB
           docker compose run --rm my-app npx prisma migrate deploy
 

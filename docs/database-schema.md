@@ -68,6 +68,7 @@ CREATE TABLE accounts (
   scope TEXT,
   id_token TEXT,
   session_state TEXT,
+  refresh_token_expires_in INTEGER,
 
   UNIQUE(provider, provider_account_id)
 );
@@ -374,6 +375,7 @@ model Account {
   scope             String?
   id_token          String?  @db.Text
   session_state     String?
+  refresh_token_expires_in Int?
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
