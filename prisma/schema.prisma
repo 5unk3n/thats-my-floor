@@ -41,6 +41,7 @@ model Account {
   scope             String?
   id_token          String?  @db.Text
   session_state     String?
+  refresh_token_expires_in Int?
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
