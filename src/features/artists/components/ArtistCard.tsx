@@ -1,9 +1,9 @@
+import { Artist } from '@prisma/client';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 
-import { Artist } from '../../../../generated/prisma';
 import FollowButton from './FollowButton';
 
 interface ArtistCardProps {
