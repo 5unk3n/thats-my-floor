@@ -19,7 +19,7 @@ concert-notification-service/
 │   │   ├── (main)/             # 메인 앱 라우트 그룹
 │   │   └── api/                # External Webhooks (NextAuth, Spotify)
 │   ├── features/               # [Domain Logic] 기능별 격리된 모듈
-│   │   ├── [feature-name]/     # 예: auth, concerts, artists
+│   │   ├── [feature-name]/     # 예: auth, concerts, artists, notifications, setlists
 │   │   │   ├── components/     # UI Components (Client/Server)
 │   │   │   ├── hooks/          # Feature Hooks
 │   │   │   ├── server/         # [Isolated] Server Actions & DB Logic
@@ -29,9 +29,10 @@ concert-notification-service/
 │   ├── shared/                 # [Shared] 재사용 가능한 UI 및 유틸리티
 │   │   ├── components/         # UI Library (Button, Modal etc.)
 │   │   ├── hooks/              # Utility Hooks
-│   │   └── lib/                # Utils (prisma, date-fns)
-│   ├── middleware.ts
-│   └── env.mjs
+│   │   ├── lib/                # Utils (prisma, date-fns)
+│   │   └── providers/          # Global Providers (QueryClient, Session)
+│   ├── types/                  # Global Types (declarations)
+│   └── proxy.ts                # [Interceptor] Lightweight Request Proxy
 ├── prisma/
 ├── public/
 └── ...config files
@@ -47,7 +48,7 @@ concert-notification-service/
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Providers from './providers';
+import Providers from '@/shared/providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -71,7 +72,7 @@ export default function RootLayout({
 }
 ```
 
-### 2. `src/app/providers.tsx` (클라이언트 Providers)
+### 2. `src/shared/providers/index.tsx` (클라이언트 Providers)
 
 ```typescript
 'use client';
@@ -124,39 +125,39 @@ export default async function HomePage({
 }
 ```
 
-### 4. `src/middleware.ts` (인증 미들웨어)
+### 4. `src/proxy.ts` (요청 인터셉터)
+
+Next.js 16의 새로운 Interceptor 파일로, 기존 Middleware를 대체합니다.
+페이지가 렌더링되기 전에 요청을 가로채어 리다이렉트나 헤더 수정을 수행합니다.
+
+**주요 역할**:
+
+- **인증 리다이렉트**: 보호된 경로(`/mypage` 등) 접근 시 쿠키 확인 후 `/login`으로 이동
+- **보안 헤더**: 응답에 `X-Frame-Options`, `X-Content-Type-Options` 등 보안 헤더 추가
 
 ```typescript
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyJWT } from '@/lib/auth';
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
+export default function proxy(request: NextRequest) {
+  // 1. 보안 헤더 추가
+  const headers = new Headers(request.headers);
+  headers.set('X-Content-Type-Options', 'nosniff');
 
-  // 보호된 경로 체크
-  const protectedPaths = ['/mypage', '/api/artists/*/follow'];
-  const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
+  // 2. 인증 리다이렉트 (Lightweight)
+  const isAuthenticated = request.cookies.has('auth-token');
+  const isProtected = request.nextUrl.pathname.startsWith('/mypage');
 
-  if (isProtected && !token) {
+  if (isProtected && !isAuthenticated) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (token) {
-    try {
-      await verifyJWT(token);
-    } catch (error) {
-      // 토큰 만료 또는 유효하지 않음
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  }
-
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers,
+    },
+  });
 }
-
-export const config = {
-  matcher: ['/mypage/:path*', '/api/:path*'],
-};
 ```
 
 ### 5. `src/features/concerts/server/actions.ts` (Server Actions)
