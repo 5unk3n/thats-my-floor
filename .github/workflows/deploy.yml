@@ -103,3 +103,8 @@ jobs:
 
           # Prune unused images
           docker image prune -f
+
+      - name: Setup Cron Jobs
+        run: |
+          chmod +x ./scripts/setup-cron.sh
+          ./scripts/setup-cron.sh
