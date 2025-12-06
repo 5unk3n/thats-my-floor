@@ -4,35 +4,7 @@ trigger: always_on
 
 # 기술 스택 (Tech Stack)
 
-## Frontend
-
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: Shadcn/ui
-- **State Management**: Zustand (UI 상태), React Query (서버 데이터 캐싱)
-
-## Backend
-
-- **API Routes**: Next.js API Routes
-- **Authentication**: NextAuth.js (Google, Kakao OAuth, Spotify Refresh Token)
-- **External APIs**:
-  - KOPIS API (공연 정보)
-  - Spotify Web API (음악 재생, 플레이리스트)
-
-## Database & Storage
-
-- **Database**: PostgreSQL (Supabase)
-- **ORM**: Prisma
-
-## Infrastructure
-
-- **Hosting**: AWS (EC2 + Docker)
-- **CI/CD**: GitHub Actions
-- **Notifications**: Firebase Cloud Messaging (FCM)
-- **Monitoring**: AWS CloudWatch / Sentry
-
----
+기술 스택은 `docs/project-structure.md`의 '## 기술 스택'를 참조하세요.
 
 ## 사용 규칙
 
