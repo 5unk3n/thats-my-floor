@@ -1,27 +1,23 @@
 #!/bin/bash
 set -e
 
-# Load .env if exists
-if [ -f .env ]; then
-  source .env
-fi
+# Target Host defined in ~/.ssh/config
+TARGET_HOST="my-app-target"
 
-# Check required variables
-if [ -z "$VM_HOST" ] || [ -z "$VM_USERNAME" ] || [ -z "$VM_SSH_KEY_PATH" ]; then
-  echo "Error: Please set VM_HOST, VM_USERNAME, and VM_SSH_KEY_PATH in .env or environment."
-  exit 1
-fi
-
-echo "🚀 Deploying Nginx configuration to $VM_HOST..."
+echo "🚀 Deploying Nginx configuration to $TARGET_HOST..."
 
 # 1. Copy nginx.conf to server
 echo "📦 Copying nginx.conf..."
-scp -i "$VM_SSH_KEY_PATH" nginx/nginx.conf "$VM_USERNAME@$VM_HOST:/home/$VM_USERNAME/app/nginx.conf"
+scp nginx/nginx.conf "$TARGET_HOST:~/app/nginx.conf"
 
 # 2. Move config and reload Nginx
 echo "🔄 Reloading Nginx..."
-ssh -i "$VM_SSH_KEY_PATH" "$VM_USERNAME@$VM_HOST" << 'EOF'
+ssh "$TARGET_HOST" << 'EOF'
   set -e
+  
+  # Ensure target directory exists
+  mkdir -p ~/app
+
   # Move config to sites-available
   sudo mv ~/app/nginx.conf /etc/nginx/sites-available/my-app
   
