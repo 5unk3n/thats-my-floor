@@ -1,3 +1,7 @@
+'use server';
+
+import { Prisma } from '@prisma/client';
+
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
@@ -110,7 +114,7 @@ export const concertService = {
     dtguidance?: string;
     sty?: string;
     styurls?: string[];
-    relates?: any[];
+    relates?: Prisma.InputJsonValue[];
     visit?: boolean;
     festival?: boolean;
     artistId?: string;

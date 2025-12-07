@@ -1,5 +1,7 @@
 'use server';
 
+import { Prisma } from '@prisma/client';
+
 import { prisma } from '@/shared/lib/prisma';
 
 import { Concert } from '../model/types';
@@ -20,10 +22,8 @@ export async function getConcerts(params: {
   const nextMonth = new Date();
   nextMonth.setMonth(today.getMonth() + 1);
 
-  const formatDate = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
-
   // DB Query Filters
-  const where: any = {};
+  const where: Prisma.ConcertWhereInput = {};
 
   // 1. Type Filter
   if (type === 'VISIT') {
@@ -35,38 +35,9 @@ export async function getConcerts(params: {
     where.festival = false;
   }
 
-  // 2. Region Filter (searching in venueName or region string if we had one?)
-  // KOPIS `signgucode` is code, but DB `region` field is string?
-  // Our schema `region` is `String?`. But `upsertConcert` doesn't populate `region`!
-  // It only populates `venueName` and `venueAddress` if available (but upsert only maps `venueName`).
-  // KOPIS detail has `fcltynm` (venue name). `region` is usually implied by address.
-  // The UI selects region code.
-  // The `collector` doesn't fetch region code or map it.
-  // `getConcertDetail` output in `db.ts` doesn't have region.
-  // This is a GAP.
-  // If user wants region filtering, and DB doesn't have region data properly stored...
-  // However, `Concert` model has `region String?`.
-  // `collector.ts` calls `upsertConcert`.
-  // `db.ts` `upsertConcert` definition:
-  // `region` is NOT in the arguments for `upsertConcert`.
-  // So `region` is null in DB.
-  // If I switch to DB, Region filter breaks.
-  // I must check if I can populate region.
-  // KOPIS detail API response doesn't give region code easily, but address.
-  // This is complexity.
-  // Should I warn user or implement region mapping?
-  // Given "Architecture Switch: Direct API to DB Sync" requested by user, I should try to support existing features.
-  // But region mapping is non-trivial without external data or parsing address.
-  // Or I assume filtering by `venueAddress` with keyword?
-  // Let's postpone region filter perfection and focus on Type/Visit first, or mention it.
-  // Actually, I'll allow `keyword` search on `title` or `venueName`.
-
   // 2. Keyword Search
   if (keyword) {
-    where.OR = [
-      { prfnm: { contains: keyword, mode: 'insensitive' } },
-      { fcltynm: { contains: keyword, mode: 'insensitive' } },
-    ];
+    where.prfnm = { contains: keyword, mode: 'insensitive' };
   }
 
   // 3. Date Filter

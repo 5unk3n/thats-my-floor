@@ -64,16 +64,6 @@ export const collectConcerts = async () => {
 
       if (!detail) return;
 
-      // Determine Type
-      let type = 'DOMESTIC';
-      if (category === 'FESTIVAL') {
-        type = 'FESTIVAL';
-      } else {
-        if (detail.visit === 'Y') {
-          type = 'VISIT';
-        }
-      }
-
       // Artist Matching Logic
       let artistId = undefined;
       if (detail.prfcast) {
