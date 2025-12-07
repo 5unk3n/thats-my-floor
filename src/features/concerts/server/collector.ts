@@ -41,7 +41,11 @@ export const collectConcerts = async () => {
     `[Collector] Found ${concertList.length} concerts and ${festivalList.length} festivals.`
   );
 
-  const newConcerts = [];
+  const newConcerts: Array<{
+    id: string;
+    mt20id: string;
+    artistId: string | null;
+  }> = [];
 
   // Helper function to process items
   const processItem = async (item: { mt20id: string }, category: 'CONCERT' | 'FESTIVAL') => {
