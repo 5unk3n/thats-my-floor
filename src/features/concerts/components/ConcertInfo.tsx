@@ -23,8 +23,8 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
           <CardTitle className="text-2xl font-bold break-keep">{concert.prfnm}</CardTitle>
           <div className="flex gap-2 shrink-0">
             <Badge variant="outline">{concert.genrenm}</Badge>
-            <Badge variant={concert.state === '공연중' ? 'default' : 'secondary'}>
-              {concert.state}
+            <Badge variant={concert.prfstate === '공연중' ? 'default' : 'secondary'}>
+              {concert.prfstate}
             </Badge>
           </div>
         </div>

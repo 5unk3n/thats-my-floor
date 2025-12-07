@@ -2,6 +2,11 @@ import { getFirebaseAdmin } from '@/shared/lib/firebase-admin';
 import { prisma } from '@/shared/lib/prisma';
 
 export const checkTicketOpenAndSendNotifications = async () => {
+  console.log(
+    '[TicketOpenScheduler] Feature disabled due to schema changes (ticketOpenDate removed).'
+  );
+  // Logic disabled until ticketOpenDate is restored or replaced.
+  /*
   const now = new Date();
 
   // Find concerts with ticket open date between now and 1 hour later
@@ -52,7 +57,7 @@ export const checkTicketOpenAndSendNotifications = async () => {
     });
 
     console.log(
-      `[TicketOpenScheduler] Concert ${concert.title}: Found ${followers.length} followers to notify.`
+      `[TicketOpenScheduler] Concert ${concert.prfnm}: Found ${followers.length} followers to notify.`
     );
 
     for (const follower of followers) {
@@ -78,7 +83,7 @@ export const checkTicketOpenAndSendNotifications = async () => {
       }
 
       const title = '티켓 오픈 임박!';
-      const body = `'${concert.artist?.name}'의 공연 '${concert.title}' 티켓 오픈이 1시간 남았습니다.`;
+      const body = `'${concert.artist?.name}'의 공연 '${concert.prfnm}' 티켓 오픈이 1시간 남았습니다.`;
 
       // Send FCM
       try {
@@ -117,4 +122,5 @@ export const checkTicketOpenAndSendNotifications = async () => {
       }
     }
   }
+  */
 };

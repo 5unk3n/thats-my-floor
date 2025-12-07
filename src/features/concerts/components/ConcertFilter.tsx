@@ -10,14 +10,14 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 
-import { GENRES, REGIONS } from '../model/types';
+import { CONCERT_TYPES, REGIONS } from '../model/types';
 
 export function ConcertFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const currentRegion = searchParams.get('region') || '';
-  const currentGenre = searchParams.get('genre') || '';
+  const currentType = searchParams.get('type') || '';
 
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,19 +54,19 @@ export function ConcertFilter() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">장르</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">공연 형태</label>
         <Select
-          value={currentGenre || 'ALL'}
-          onValueChange={(value) => handleFilterChange('genre', value)}
+          value={currentType || 'ALL'}
+          onValueChange={(value) => handleFilterChange('type', value)}
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">전체</SelectItem>
-            {GENRES.map((genre) => (
-              <SelectItem key={genre.code} value={genre.code}>
-                {genre.name}
+            {CONCERT_TYPES.map((type) => (
+              <SelectItem key={type.code} value={type.code}>
+                {type.name}
               </SelectItem>
             ))}
           </SelectContent>
