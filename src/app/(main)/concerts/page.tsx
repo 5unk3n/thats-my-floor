@@ -10,18 +10,21 @@ interface ConcertsPageProps {
   searchParams: Promise<{
     page?: string;
     region?: string;
-    genre?: string;
+    type?: string;
   }>;
 }
 
 export default async function ConcertsPage({ searchParams }: ConcertsPageProps) {
-  const { page: pageParam, region, genre } = await searchParams;
+  const { page: pageParam, region, type } = await searchParams;
   const page = Number(pageParam) || 1;
+
+  const validTypes = ['DOMESTIC', 'VISIT', 'FESTIVAL'] as const;
+  const concertType = validTypes.find((t) => t === type) || undefined;
 
   const concerts = await getConcerts({
     page,
     region,
-    genre,
+    type: concertType,
   });
 
   // Check if there are more results for pagination
