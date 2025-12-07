@@ -47,7 +47,7 @@ export const collectConcerts = async () => {
   const processItem = async (item: { mt20id: string }, category: 'CONCERT' | 'FESTIVAL') => {
     try {
       const exists = await prisma.concert.findUnique({
-        where: { kopisId: item.mt20id },
+        where: { mt20id: item.mt20id },
       });
 
       if (exists) {
