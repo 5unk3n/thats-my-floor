@@ -24,7 +24,7 @@ export const getNotificationsFromDB = async (userId: string) => {
       concert: {
         select: {
           id: true,
-          title: true,
+          prfnm: true,
           poster: true,
         },
       },

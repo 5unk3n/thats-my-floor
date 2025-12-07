@@ -30,11 +30,11 @@ export const notificationService = {
     });
 
     console.log(
-      `[NotificationService] Concert ${concert.title}: Found ${followers.length} followers to notify.`
+      `[NotificationService] Concert ${concert.prfnm}: Found ${followers.length} followers to notify.`
     );
 
     const title = '새로운 공연 소식';
-    const body = `'${concert.artist?.name}'의 새 공연 '${concert.title}' 정보가 등록되었습니다.`;
+    const body = `'${concert.artist?.name}'의 새 공연 '${concert.prfnm}' 정보가 등록되었습니다.`;
 
     for (const follower of followers) {
       const user = follower.user;

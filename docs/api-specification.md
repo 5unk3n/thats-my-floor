@@ -36,14 +36,16 @@
   - 파라미터:
     ```typescript
     type GetConcertsParams = {
-      page?: number;
-      limit?: number;
-      status?: 'open' | 'booking' | 'closed';
+      page: number;
+      size?: number;
       region?: string;
-      genre?: string;
+      type?: 'DOMESTIC' | 'VISIT' | 'FESTIVAL';
+      startDate?: string;
+      endDate?: string;
+      keyword?: string;
     };
     ```
-  - 반환: `Promise<{ data: Concert[], pagination: Pagination }>`
+  - 반환: `Promise<Concert[]>`
 
 - **`getConcertDetail(id: string)`**
   - 설명: 공연 상세 정보 조회
