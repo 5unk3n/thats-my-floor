@@ -93,14 +93,16 @@ model Artist {
 model Concert {
   id             String    @id @default(uuid())
   mt20id         String    @unique // 공연 ID
+  mt10id         String?   // 공연시설 ID
   prfnm          String    // 공연명
   prfpdfrom      DateTime  // 공연 시작일
   prfpdto        DateTime  // 공연 종료일
   fcltynm        String    // 공연 시설명
   poster         String?   // 포스터 이미지 경로
   genrenm        String?   // 공연 장르명
-  state          String?   // 공연 상태
+  prfstate       String?   // 공연 상태
   openrun        Boolean   @default(false) // 오픈런 여부
+  area           String?   // 지역 (서울, 경기, 인천 등)
   
   // Extended KOPIS fields
   prfcast        String?   // 공연출연진

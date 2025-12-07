@@ -53,7 +53,7 @@ export const concertService = {
       endDate: item.prfpdto,
       place: item.fcltynm,
       genre: item.genrenm,
-      status: item.state,
+      status: item.prfstate,
     }));
   },
 
@@ -72,7 +72,7 @@ export const concertService = {
         endDate: item.prfpdto,
         place: item.fcltynm,
         genre: item.genrenm,
-        status: item.state,
+        status: item.prfstate,
         cast: item.prfcast,
         crew: item.prfcrew,
         runtime: item.prfruntime,
@@ -95,14 +95,16 @@ export const concertService = {
 
   upsertConcert: async (data: {
     mt20id: string;
+    mt10id?: string;
     prfnm: string;
     prfpdfrom: string;
     prfpdto: string;
     fcltynm: string;
     poster?: string;
     genrenm?: string;
-    state?: string;
+    prfstate?: string;
     openrun?: boolean;
+    area?: string;
     prfcast?: string;
     prfcrew?: string;
     prfruntime?: string;
@@ -120,14 +122,16 @@ export const concertService = {
     return prisma.concert.upsert({
       where: { mt20id: data.mt20id },
       update: {
+        mt10id: data.mt10id,
         prfnm: data.prfnm,
         poster: data.poster,
         prfpdfrom: new Date(data.prfpdfrom),
         prfpdto: new Date(data.prfpdto),
         fcltynm: data.fcltynm,
         genrenm: data.genrenm,
-        state: data.state,
+        prfstate: data.prfstate,
         openrun: data.openrun || false,
+        area: data.area,
         prfcast: data.prfcast,
         prfcrew: data.prfcrew,
         prfruntime: data.prfruntime,
@@ -144,14 +148,16 @@ export const concertService = {
       },
       create: {
         mt20id: data.mt20id,
+        mt10id: data.mt10id,
         prfnm: data.prfnm,
         poster: data.poster,
         prfpdfrom: new Date(data.prfpdfrom),
         prfpdto: new Date(data.prfpdto),
         fcltynm: data.fcltynm,
         genrenm: data.genrenm,
-        state: data.state,
+        prfstate: data.prfstate,
         openrun: data.openrun || false,
+        area: data.area,
         prfcast: data.prfcast,
         prfcrew: data.prfcrew,
         prfruntime: data.prfruntime,

@@ -54,6 +54,11 @@ export async function getConcerts(params: {
     lte: ed,
   };
 
+  // 4. Region Filter
+  if (region) {
+    where.area = { contains: region, mode: 'insensitive' };
+  }
+
   try {
     const concerts = await prisma.concert.findMany({
       where,
@@ -70,7 +75,7 @@ export async function getConcerts(params: {
       venue: item.fcltynm,
       posterUrl: item.poster || '',
       genre: item.genrenm || '',
-      state: item.state || '',
+      state: item.prfstate || '',
       openRun: item.openrun,
     }));
   } catch (error) {

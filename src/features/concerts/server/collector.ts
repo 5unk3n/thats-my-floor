@@ -95,13 +95,15 @@ export const collectConcerts = async () => {
 
       const savedConcert = await concertService.upsertConcert({
         mt20id: detail.mt20id,
+        mt10id: detail.mt10id,
         prfnm: detail.prfnm,
         poster: detail.poster,
         prfpdfrom: detail.prfpdfrom,
         prfpdto: detail.prfpdto,
         fcltynm: detail.fcltynm,
         genrenm: detail.genrenm,
-        state: detail.state,
+        prfstate: detail.prfstate,
+        area: detail.area,
         artistId,
         visit: detail.visit === 'Y',
         festival: detail.festival === 'Y',
