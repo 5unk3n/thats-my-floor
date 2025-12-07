@@ -35,6 +35,7 @@ export interface KopisConcertDetailResponse {
       state: string; // 공연 상태
       openrun: string; // 오픈런 여부
       festival?: string; // 페스티벌 여부 (Y/N)
+      visit?: string; // 내한공연 여부 (Y/N)
       styurls: {
         styurl: string | string[]; // 소개 이미지 목록 (단일 또는 배열)
       };

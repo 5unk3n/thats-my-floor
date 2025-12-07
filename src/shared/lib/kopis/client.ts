@@ -53,4 +53,15 @@ export const kopisClient = {
   getConcertDetail: async (mt20id: string) => {
     return fetchKopis<KopisConcertDetailResponse>(`pblprfr/${mt20id}`);
   },
+
+  getFestivalList: async (params: {
+    stdate: string;
+    eddate: string;
+    cpage: string;
+    rows: string;
+    signgucode?: string;
+    shcate?: string;
+  }) => {
+    return fetchKopis<KopisConcertListResponse>('prffest', params);
+  },
 };
