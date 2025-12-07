@@ -10,6 +10,7 @@ export interface KopisConcertListResponse {
       genrenm: string; // 공연 장르명
       openrun: string; // 오픈런 여부
       state: string; // 공연 상태
+      festival?: string; // 페스티벌 여부 (Y/N)
     }[];
   };
 }
@@ -33,6 +34,7 @@ export interface KopisConcertDetailResponse {
       genrenm: string; // 공연 장르명
       state: string; // 공연 상태
       openrun: string; // 오픈런 여부
+      festival?: string; // 페스티벌 여부 (Y/N)
       styurls: {
         styurl: string | string[]; // 소개 이미지 목록 (단일 또는 배열)
       };

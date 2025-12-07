@@ -25,13 +25,19 @@ export async function getConcerts(params: {
   const eddate = endDate || formatDate(nextMonth);
 
   try {
+    // If genre is 'FESTIVAL', we still query 'CCCD' (Popular Music) and set festival='Y'
+    // For any other genre (or no genre), we default to 'CCCD' (Popular Music) to restrict scope
+    const requestGenre = 'CCCD';
+    const requestFestival = genre === 'FESTIVAL' ? 'Y' : undefined;
+
     const response = await kopisClient.getConcertList({
       cpage: page.toString(),
       rows: size.toString(),
       stdate,
       eddate,
       signgucode: region,
-      shcate: genre,
+      shcate: requestGenre,
+      festival: requestFestival,
     });
 
     if (!response?.dbs?.db) {

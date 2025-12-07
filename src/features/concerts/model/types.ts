@@ -37,13 +37,6 @@ export const REGIONS = [
 ];
 
 export const GENRES = [
-  { code: 'AAAA', name: '연극' },
-  { code: 'GGGA', name: '뮤지컬' },
-  { code: 'CCCA', name: '클래식' },
-  { code: 'CCCC', name: '국악' },
   { code: 'CCCD', name: '대중음악' },
-  { code: 'BBBC', name: '무용' },
-  { code: 'BBBR', name: '대중무용' },
-  { code: 'EEEB', name: '서커스/마술' },
-  { code: 'EEEA', name: '복합' },
+  { code: 'FESTIVAL', name: '페스티벌' },
 ];

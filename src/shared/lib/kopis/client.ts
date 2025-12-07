@@ -45,6 +45,7 @@ export const kopisClient = {
     shcate?: string; // 장르 코드
     signgucode?: string; // 지역 코드
     shprfnm?: string; // 공연명
+    festival?: string; // 페스티벌 여부 (Y/N)
   }) => {
     return fetchKopis<KopisConcertListResponse>('pblprfr', params);
   },
