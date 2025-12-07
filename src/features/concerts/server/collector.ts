@@ -1,3 +1,4 @@
+import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
 import { concertService } from './db';
@@ -8,66 +9,142 @@ export const collectConcerts = async () => {
   nextMonth.setMonth(today.getMonth() + 1);
 
   const formatDate = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
+  const stdate = formatDate(today);
+  const eddate = formatDate(nextMonth);
 
   console.log('[Collector] Fetching concerts from KOPIS...');
-  const concerts = await concertService.getConcerts({
-    page: 1,
-    size: 50,
-    startDate: formatDate(today),
-    endDate: formatDate(nextMonth),
-  });
 
-  console.log(`[Collector] Found ${concerts.length} concerts.`);
+  // 1. Fetch Concerts (Popular Music, Non-Festival)
+  const concertResponse = await kopisClient.getConcertList({
+    cpage: '1',
+    rows: '50',
+    stdate,
+    eddate,
+    shcate: 'CCCD',
+    festival: 'N',
+  });
+  const rawConcerts = concertResponse.dbs?.db || [];
+  const concertList = Array.isArray(rawConcerts) ? rawConcerts : [rawConcerts];
+
+  // 2. Fetch Festivals (Popular Music)
+  const festivalResponse = await kopisClient.getFestivalList({
+    cpage: '1',
+    rows: '50',
+    stdate,
+    eddate,
+    shcate: 'CCCD',
+  });
+  const rawFestivals = festivalResponse.dbs?.db || [];
+  const festivalList = Array.isArray(rawFestivals) ? rawFestivals : [rawFestivals];
+
+  console.log(
+    `[Collector] Found ${concertList.length} concerts and ${festivalList.length} festivals.`
+  );
 
   const newConcerts = [];
 
-  for (const concert of concerts) {
-    const exists = await prisma.concert.findUnique({
-      where: { kopisId: concert.id },
-    });
+  // Helper function to process items
+  const processItem = async (item: { mt20id: string }, category: 'CONCERT' | 'FESTIVAL') => {
+    try {
+      const exists = await prisma.concert.findUnique({
+        where: { kopisId: item.mt20id },
+      });
 
-    if (exists) {
-      continue;
-    }
+      if (exists) {
+        return;
+      }
 
-    console.log(`[Collector] New concert found: ${concert.title}`);
+      console.log(`[Collector] New ${category} found: ${item.mt20id}`);
 
-    const detail = await concertService.getConcertDetail(concert.id);
-    if (!detail) continue;
+      // We need raw detail to check 'visit' field
+      // concertService.getConcertDetail doesn't expose 'visit' yet, so we use client directly or we update service.
+      // For now, let's use client directly to be safe and get 'visit'.
+      const detailResponse = await kopisClient.getConcertDetail(item.mt20id);
+      const detail = detailResponse.dbs?.db;
 
-    let artistId = undefined;
+      if (!detail) return;
 
-    if (detail.cast) {
-      const castNames = detail.cast.split(',').map((s) => s.trim());
-      for (const name of castNames) {
-        if (!name) continue;
-        const artist = await concertService.findArtistByName(name);
-        if (artist) {
-          artistId = artist.id;
-          console.log(`[Collector] Matched artist: ${artist.name}`);
-          break;
+      // Determine Type
+      let type = 'DOMESTIC';
+      if (category === 'FESTIVAL') {
+        type = 'FESTIVAL';
+      } else {
+        if (detail.visit === 'Y') {
+          type = 'VISIT';
         }
       }
+
+      // Artist Matching Logic
+      let artistId = undefined;
+      if (detail.prfcast) {
+        const castNames = detail.prfcast.split(',').map((s) => s.trim());
+        for (const name of castNames) {
+          if (!name) continue;
+          const artist = await concertService.findArtistByName(name);
+          if (artist) {
+            artistId = artist.id;
+            console.log(`[Collector] Matched artist: ${artist.name}`);
+            break;
+          }
+        }
+      }
+
+      // Parse storyUrls
+      const storyUrls = Array.isArray(detail.styurls?.styurl)
+        ? detail.styurls.styurl
+        : detail.styurls?.styurl
+          ? [detail.styurls.styurl as string]
+          : [];
+
+      // Parse relates
+      const relates = Array.isArray(detail.relates?.relate)
+        ? detail.relates.relate
+        : detail.relates?.relate
+          ? [detail.relates.relate]
+          : [];
+
+      const savedConcert = await concertService.upsertConcert({
+        mt20id: detail.mt20id,
+        prfnm: detail.prfnm,
+        poster: detail.poster,
+        prfpdfrom: detail.prfpdfrom,
+        prfpdto: detail.prfpdto,
+        fcltynm: detail.fcltynm,
+        genrenm: detail.genrenm,
+        state: detail.state,
+        artistId,
+        visit: detail.visit === 'Y',
+        festival: detail.festival === 'Y',
+        openrun: detail.openrun === 'Y',
+        prfcast: detail.prfcast,
+        prfcrew: detail.prfcrew,
+        prfruntime: detail.prfruntime,
+        prfage: detail.prfage,
+        entrpsnm: detail.entrpsnm,
+        pcseguidance: detail.pcseguidance,
+        dtguidance: detail.dtguidance,
+        sty: detail.sty,
+        styurls: storyUrls,
+        relates,
+      });
+
+      newConcerts.push(savedConcert);
+    } catch (e) {
+      console.error(`[Collector] Error processing ${item.mt20id}:`, e);
     }
+  };
 
-    const savedConcert = await concertService.upsertConcert({
-      kopisId: detail.id,
-      title: detail.title,
-      poster: detail.poster,
-      startDate: detail.startDate,
-      endDate: detail.endDate,
-      venueName: detail.place,
-      genre: detail.genre,
-      status: detail.status,
-      artistId,
-    });
-
-    newConcerts.push(savedConcert);
+  // Process lists
+  // Note: KOPIS might return empty object or undefined in some cases, loop safely
+  for (const c of concertList) {
+    if (c?.mt20id) await processItem(c, 'CONCERT');
   }
 
-  console.log(
-    `[Collector] Processed ${concerts.length} concerts. Created ${newConcerts.length} new concerts.`
-  );
+  for (const f of festivalList) {
+    if (f?.mt20id) await processItem(f, 'FESTIVAL');
+  }
+
+  console.log(`[Collector] Processed. Created ${newConcerts.length} new items.`);
 
   return newConcerts;
 };

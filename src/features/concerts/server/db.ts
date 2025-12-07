@@ -92,35 +92,76 @@ export const concertService = {
   },
 
   upsertConcert: async (data: {
-    kopisId: string;
-    title: string;
+    mt20id: string;
+    prfnm: string;
+    prfpdfrom: string;
+    prfpdto: string;
+    fcltynm: string;
     poster?: string;
-    startDate: string;
-    endDate: string;
-    venueName: string;
-    genre?: string;
-    status?: string;
+    genrenm?: string;
+    state?: string;
+    openrun?: boolean;
+    prfcast?: string;
+    prfcrew?: string;
+    prfruntime?: string;
+    prfage?: string;
+    entrpsnm?: string;
+    pcseguidance?: string;
+    dtguidance?: string;
+    sty?: string;
+    styurls?: string[];
+    relates?: any[];
+    visit?: boolean;
+    festival?: boolean;
     artistId?: string;
   }) => {
     return prisma.concert.upsert({
-      where: { kopisId: data.kopisId },
+      where: { mt20id: data.mt20id },
       update: {
-        title: data.title,
+        prfnm: data.prfnm,
         poster: data.poster,
-        date: new Date(data.startDate), // Using startDate as the main date
-        venueName: data.venueName,
-        genre: data.genre,
-        ticketStatus: data.status,
+        prfpdfrom: new Date(data.prfpdfrom),
+        prfpdto: new Date(data.prfpdto),
+        fcltynm: data.fcltynm,
+        genrenm: data.genrenm,
+        state: data.state,
+        openrun: data.openrun || false,
+        prfcast: data.prfcast,
+        prfcrew: data.prfcrew,
+        prfruntime: data.prfruntime,
+        prfage: data.prfage,
+        entrpsnm: data.entrpsnm,
+        pcseguidance: data.pcseguidance,
+        dtguidance: data.dtguidance,
+        sty: data.sty,
+        styurls: data.styurls || [],
+        relates: data.relates || [],
+        visit: data.visit || false,
+        festival: data.festival || false,
         artistId: data.artistId,
       },
       create: {
-        kopisId: data.kopisId,
-        title: data.title,
+        mt20id: data.mt20id,
+        prfnm: data.prfnm,
         poster: data.poster,
-        date: new Date(data.startDate),
-        venueName: data.venueName,
-        genre: data.genre,
-        ticketStatus: data.status,
+        prfpdfrom: new Date(data.prfpdfrom),
+        prfpdto: new Date(data.prfpdto),
+        fcltynm: data.fcltynm,
+        genrenm: data.genrenm,
+        state: data.state,
+        openrun: data.openrun || false,
+        prfcast: data.prfcast,
+        prfcrew: data.prfcrew,
+        prfruntime: data.prfruntime,
+        prfage: data.prfage,
+        entrpsnm: data.entrpsnm,
+        pcseguidance: data.pcseguidance,
+        dtguidance: data.dtguidance,
+        sty: data.sty,
+        styurls: data.styurls || [],
+        relates: data.relates || [],
+        visit: data.visit || false,
+        festival: data.festival || false,
         artistId: data.artistId,
       },
     });

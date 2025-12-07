@@ -92,46 +92,46 @@ model Artist {
 
 model Concert {
   id             String    @id @default(uuid())
-  kopisId        String?   @unique @map("kopis_id")
-  title          String
+  mt20id         String    @unique // 공연 ID
+  prfnm          String    // 공연명
+  prfpdfrom      DateTime  // 공연 시작일
+  prfpdto        DateTime  // 공연 종료일
+  fcltynm        String    // 공연 시설명
+  poster         String?   // 포스터 이미지 경로
+  genrenm        String?   // 공연 장르명
+  state          String?   // 공연 상태
+  openrun        Boolean   @default(false) // 오픈런 여부
+  
+  // Extended KOPIS fields
+  prfcast        String?   // 공연출연진
+  prfcrew        String?   // 공연제작진
+  prfruntime     String?   // 공연 런타임
+  prfage         String?   // 관람 연령
+  entrpsnm       String?   // 제작사
+  pcseguidance   String?   // 티켓 가격
+  dtguidance     String?   // 공연 시간
+  sty            String?   // 줄거리
+  styurls        String[]  // 소개 이미지 목록
+  relates        Json?     // 예매처 목록 (JSON array: { relatenm, relateurl })
+  
+  visit          Boolean   @default(false) // 내한공연 여부
+  festival       Boolean   @default(false) // 페스티벌 여부
+
+  // Internal Logic Fields
   artistId       String?   @map("artist_id")
-  poster         String?
-  date           DateTime
-  venueName      String    @map("venue_name")
-  venueAddress   String?   @map("venue_address")
-  venueMapLink   String?   @map("venue_map_link")
-  region         String?
-  genre          String?
-  description    String?
-  ticketStatus   String?   @map("ticket_status")
-  ticketOpenDate DateTime? @map("ticket_open_date")
-  ticketPriceMin Int?      @map("ticket_price_min")
-  ticketPriceMax Int?      @map("ticket_price_max")
+  
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist        Artist?        @relation(fields: [artistId], references: [id])
-  bookingLinks  BookingLink[]
+  artist         Artist?   @relation(fields: [artistId], references: [id])
   setlists      Setlist[]
   notifications Notification[]
 
-  @@index([date])
   @@index([artistId])
-  @@index([region])
   @@map("concerts")
 }
 
-model BookingLink {
-  id        Int      @id @default(autoincrement())
-  concertId String   @map("concert_id")
-  platform  String
-  url       String
-  createdAt DateTime @default(now()) @map("created_at")
 
-  concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
-
-  @@map("booking_links")
-}
 
 model UserArtist {
   id        Int      @id @default(autoincrement())
