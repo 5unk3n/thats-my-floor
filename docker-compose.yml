@@ -1,9 +1,18 @@
 services:
-  my-app:
+  app-blue:
     image: ghcr.io/5unk3n/app:latest
-    container_name: my-app
+    container_name: app-blue
     restart: always
     ports:
       - '3000:3000'
+    env_file:
+      - .env
+
+  app-green:
+    image: ghcr.io/5unk3n/app:latest
+    container_name: app-green
+    restart: always
+    ports:
+      - '3001:3000'
     env_file:
       - .env
