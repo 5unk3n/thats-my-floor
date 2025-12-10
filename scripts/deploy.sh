@@ -76,7 +76,7 @@ done
 echo "✅ Health Check Passed!"
 
 # 6. Switch Traffic (Nginx Reload)
-echo "VR Traffic Switch..."
+echo "🔀 Traffic Switch..."
 sudo ln -sf $NGINX_CONF_DIR/$NEW_COLOR.inc $NGINX_CONF_DIR/service-url.inc
 
 if sudo nginx -t; then
