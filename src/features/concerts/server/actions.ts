@@ -5,6 +5,43 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
 
 import { Concert } from '../model/types';
+import { AnalysisService } from './services/analysis.service';
+import { revalidatePath } from 'next/cache';
+
+// --- Admin Pipeline Actions ---
+
+export async function requestAnalysisAction(concertId: string) {
+  try {
+    await AnalysisService.requestAnalysis(concertId);
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Request Analysis Failed:', error);
+    return { success: false, error: 'Failed' };
+  }
+}
+
+export async function runPipelineAction() {
+  try {
+    const results = await AnalysisService.runAnalysisPipeline();
+    revalidatePath('/admin/reviews');
+    return { success: true, count: results.length };
+  } catch (error) {
+    console.error('Pipeline Run Failed:', error);
+    return { success: false, error: 'Pipeline Failed' };
+  }
+}
+
+export async function publishConcertAction(concertId: string, candidate: any) {
+  try {
+    await AnalysisService.publishConcert(concertId, candidate);
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Publish Failed:', error);
+    return { success: false, error: 'Publish Failed' };
+  }
+}
 
 export async function getConcerts(params: {
   page: number;
