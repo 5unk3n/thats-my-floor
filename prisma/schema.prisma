@@ -122,6 +122,9 @@ model Concert {
   // Internal Logic Fields
   artistId       String?   @map("artist_id")
   
+  publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
+  analysisResult Json?         @map("analysis_result")
+  
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
@@ -131,6 +134,15 @@ model Concert {
 
   @@index([artistId])
   @@map("concerts")
+}
+
+enum PublishStatus {
+  DRAFT
+  ANALYZING_REQUEST
+  ANALYZING
+  REVIEWING
+  PUBLISHED
+  REJECTED
 }
 
 
