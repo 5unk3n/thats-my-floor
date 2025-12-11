@@ -1,24 +1,22 @@
 'use client';
 
+import { Concert } from '@prisma/client';
 import { CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { publishConcertAction, requestAnalysisAction } from '@/features/concerts/server/actions';
+import {
+  publishConcertAction,
+  rejectConcertAction,
+  requestAnalysisAction,
+} from '@/features/concerts/server/actions';
+import { Candidate } from '@/features/concerts/server/services/analysis.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 
-interface Candidate {
-  name: string;
-  spotifyId?: string;
-  imageUrl?: string;
-  popularity?: number;
-  followers?: number;
-}
-
 interface ConcertReviewCardProps {
-  concert: any; // Using any for partial Prisma type compatibility simplicity in MVP
+  concert: Concert;
   mode: 'draft' | 'review';
 }
 
@@ -40,6 +38,12 @@ export function ConcertReviewCard({ concert, mode }: ConcertReviewCardProps) {
     setLoading(true);
     const candidate = candidates[selectedCandidateIdx];
     await publishConcertAction(concert.id, candidate);
+    setLoading(false);
+  };
+
+  const handleReject = async () => {
+    setLoading(true);
+    await rejectConcertAction(concert.id);
     setLoading(false);
   };
 
@@ -136,7 +140,10 @@ export function ConcertReviewCard({ concert, mode }: ConcertReviewCardProps) {
               </p>
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={handleReject} disabled={loading}>
+                {loading ? '처리 중...' : '반려'}
+              </Button>
               <Button
                 onClick={handlePublish}
                 disabled={loading || selectedCandidateIdx === null || candidates.length === 0}
