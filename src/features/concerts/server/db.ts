@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, PublishStatus } from '@prisma/client';
 
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
@@ -171,6 +171,7 @@ export const concertService = {
         visit: data.visit || false,
         festival: data.festival || false,
         artistId: data.artistId,
+        publishStatus: PublishStatus.DRAFT,
       },
     });
   },
