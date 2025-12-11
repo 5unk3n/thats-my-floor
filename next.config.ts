@@ -3,12 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'www.kopis.or.kr',
-      },
-    ],
+    remotePatterns: [new URL('http://www.kopis.or.kr/**'), new URL('https://i.scdn.co/**')],
   },
 };
 
