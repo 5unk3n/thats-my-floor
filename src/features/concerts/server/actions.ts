@@ -1,6 +1,6 @@
 'use server';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, PublishStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 // eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
@@ -146,7 +146,10 @@ export async function getConcerts(params: {
   nextMonth.setMonth(today.getMonth() + 1);
 
   // DB Query Filters
-  const where: Prisma.ConcertWhereInput = {};
+  const where: Prisma.ConcertWhereInput = {
+    // Only show published concerts to users
+    publishStatus: PublishStatus.PUBLISHED,
+  };
 
   // 1. Type Filter
   if (type === 'VISIT') {
