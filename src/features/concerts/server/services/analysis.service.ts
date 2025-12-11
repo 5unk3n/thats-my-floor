@@ -56,12 +56,7 @@ export class AnalysisService {
         });
 
         // 2. AI Search (Perplexity)
-        const dateStr = concert.prfpdfrom.toISOString().split('T')[0];
-        const artistNames = await PerplexityService.searchConcertLineup(
-          concert.prfnm,
-          concert.fcltynm,
-          dateStr
-        );
+        const artistNames = await PerplexityService.searchConcertLineup(concert.prfnm);
 
         const candidates: Candidate[] = [];
 

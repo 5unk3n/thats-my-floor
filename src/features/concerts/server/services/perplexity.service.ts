@@ -7,18 +7,14 @@ export class PerplexityService {
    * Search for artist lineup for a given concert.
    * Returns a list of artist names found.
    */
-  static async searchConcertLineup(
-    concertTitle: string,
-    place: string,
-    date: string
-  ): Promise<string[]> {
+  static async searchConcertLineup(concertTitle: string): Promise<string[]> {
     if (!this.apiKey) {
       console.warn('PERPLEXITY_API_KEY is not set. Skipping AI search.');
       return [];
     }
 
     const query = `
-      Find the artist lineup for the concert "${concertTitle}" held at "${place}" on ${date}.
+      Find the artist lineup for the concert "${concertTitle}".
       Return the artist names as a JSON array of strings.
       Example: ["Artist A", "Artist B"]
       Only return the JSON array, no other text.
@@ -33,15 +29,18 @@ export class PerplexityService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'sonar-online',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful assistant that returns JSON arrays of artist names.',
-            },
-            { role: 'user', content: query },
-          ],
-          temperature: 0.1,
+          model: 'sonar',
+          max_tokens: 50,
+          search_mode: 'web',
+          temperature: 0.0,
+          top_p: 0.9,
+          top_k: 1,
+          // "response_language": "ko",
+          return_images: false,
+          return_videos: false,
+          frequency_penalty: 0,
+          stream: false,
+          messages: [{ role: 'user', content: query }],
         }),
       });
 
@@ -50,6 +49,7 @@ export class PerplexityService {
       }
 
       const data = await response.json();
+      console.log(data.choices[0]?.message?.content);
       const content = data.choices[0]?.message?.content || '[]';
 
       return this.parseJsonArray(content);
