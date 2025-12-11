@@ -7,10 +7,10 @@ fi
 
 # Define Cron Jobs
 # 1. Collect Concerts
-CRON_JOB_COLLECT="0 9,18 * * * curl -X GET http://localhost:3000/api/cron/collect-concerts -H \"Authorization: Bearer ${CRON_SECRET}\" >> /home/azureuser/cron_collect.log 2>&1"
+CRON_JOB_COLLECT="0 9,18 * * * curl https://localhost/api/cron/collect-concerts -H \"Authorization: Bearer ${CRON_SECRET}\" --insecure >> /home/azureuser/cron_collect.log 2>&1"
 
 # 2. Ticket Open Notification (Every 10 minutes)
-CRON_JOB_TICKET="*/10 * * * * curl -X GET http://localhost:3000/api/cron/ticket-open -H \"Authorization: Bearer ${CRON_SECRET}\" >> /home/azureuser/cron_ticket.log 2>&1"
+CRON_JOB_TICKET="*/10 * * * * curl https://localhost/api/cron/ticket-open -H \"Authorization: Bearer ${CRON_SECRET}\" --insecure >> /home/azureuser/cron_ticket.log 2>&1"
 
 # Function to add cron job if not exists
 add_cron_job() {
