@@ -14,13 +14,7 @@ export const metadata: Metadata = {
 // Force dynamic rendering to ensure fresh data
 export const dynamic = 'force-dynamic';
 
-export default async function AdminReviewsPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string };
-}) {
-  const currentTab = searchParams.tab || 'draft';
-
+export default async function AdminReviewsPage() {
   // Fetch Drafts (Collection)
   const drafts = await prisma.concert.findMany({
     where: { publishStatus: PublishStatus.DRAFT },
@@ -42,6 +36,14 @@ export default async function AdminReviewsPage({
     orderBy: { updatedAt: 'desc' },
   });
 
+  // Fetch Published (Completed)
+  const published = await prisma.concert.findMany({
+    where: { publishStatus: PublishStatus.PUBLISHED },
+    orderBy: { updatedAt: 'desc' },
+    take: 50,
+    include: { artist: true },
+  });
+
   return (
     <div className="container py-8 space-y-6">
       <div className="flex justify-between items-center">
@@ -59,10 +61,11 @@ export default async function AdminReviewsPage({
       </div>
 
       <Tabs defaultValue="draft" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="draft">수집 ({drafts.length})</TabsTrigger>
           <TabsTrigger value="analyzing">분석 중 ({analyzing.length})</TabsTrigger>
           <TabsTrigger value="reviews">검토 대기 ({reviews.length})</TabsTrigger>
+          <TabsTrigger value="published">발행 완료 ({published.length})</TabsTrigger>
         </TabsList>
 
         {/* 1. 수집 탭 */}
@@ -100,6 +103,24 @@ export default async function AdminReviewsPage({
             ))}
             {reviews.length === 0 && (
               <p className="text-muted-foreground p-4">검토 대기 중인 항목이 없습니다.</p>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* 4. 발행 완료 탭 */}
+        <TabsContent value="published" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {published.map((concert) => (
+              <div key={concert.id} className="p-4 border rounded shadow-sm bg-green-50">
+                <h3 className="font-bold text-sm">{concert.prfnm}</h3>
+                <p className="text-xs text-gray-600">🎤 {concert.artist?.name || '알 수 없음'}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  📅 {new Date(concert.prfpdfrom).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+            {published.length === 0 && (
+              <p className="text-muted-foreground p-4">발행된 공연이 없습니다.</p>
             )}
           </div>
         </TabsContent>
