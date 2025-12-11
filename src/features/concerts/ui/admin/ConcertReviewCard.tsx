@@ -94,14 +94,14 @@ export function ConcertReviewCard({ concert, mode }: ConcertReviewCardProps) {
           )}
         </div>
         <h3 className="font-bold text-lg mb-2">{concert.prfnm}</h3>
-        <p className="text-sm text-gray-600 space-y-1">
-          <div>
+        <div className="text-sm text-gray-600 space-y-1">
+          <p>
             📅 {new Date(concert.prfpdfrom).toLocaleDateString()} ~{' '}
             {new Date(concert.prfpdto).toLocaleDateString()}
-          </div>
-          <div>📍 {concert.fcltynm}</div>
-          <div>🎭 {concert.genrenm}</div>
-        </p>
+          </p>
+          <p>📍 {concert.fcltynm}</p>
+          <p>🎭 {concert.genrenm}</p>
+        </div>
         <div className="mt-4 text-xs text-gray-400 break-all">ID: {concert.mt20id}</div>
       </div>
 
