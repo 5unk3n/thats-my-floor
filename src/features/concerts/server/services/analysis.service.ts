@@ -1,10 +1,10 @@
-import { PublishStatus } from '@prisma/client';
+import { Prisma, PublishStatus } from '@prisma/client';
 
 import { PerplexityService } from '@/features/concerts/server/services/perplexity.service';
 import { prisma } from '@/shared/lib/prisma';
 import { SpotifyService } from '@/shared/lib/spotify';
 
-interface Candidate {
+export interface Candidate {
   name: string;
   spotifyId?: string;
   imageUrl?: string;
@@ -95,11 +95,11 @@ export class AnalysisService {
         };
 
         // 4. Save Result & Update Status
-        const updated = await prisma.concert.update({
+        await prisma.concert.update({
           where: { id: concert.id },
           data: {
             publishStatus: PublishStatus.REVIEWING,
-            analysisResult: analysisResult as any, // Json type casting
+            analysisResult: analysisResult as unknown as Prisma.InputJsonValue,
           },
         });
 

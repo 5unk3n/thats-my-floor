@@ -1,12 +1,12 @@
 'use server';
 
 import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 import { prisma } from '@/shared/lib/prisma';
 
 import { Concert } from '../model/types';
-import { AnalysisService } from './services/analysis.service';
-import { revalidatePath } from 'next/cache';
+import { AnalysisService, Candidate } from './services/analysis.service';
 
 // --- Admin Pipeline Actions ---
 
@@ -32,7 +32,7 @@ export async function runPipelineAction() {
   }
 }
 
-export async function publishConcertAction(concertId: string, candidate: any) {
+export async function publishConcertAction(concertId: string, candidate: Candidate) {
   try {
     await AnalysisService.publishConcert(concertId, candidate);
     revalidatePath('/admin/reviews');
@@ -40,6 +40,17 @@ export async function publishConcertAction(concertId: string, candidate: any) {
   } catch (error) {
     console.error('Publish Failed:', error);
     return { success: false, error: 'Publish Failed' };
+  }
+}
+
+export async function rejectConcertAction(concertId: string) {
+  try {
+    await AnalysisService.rejectConcert(concertId);
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Reject Failed:', error);
+    return { success: false, error: 'Reject Failed' };
   }
 }
 
