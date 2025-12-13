@@ -61,15 +61,37 @@ export class PerplexityService {
 
   private static parseJsonArray(text: string): string[] {
     try {
-      // Find JSON array pattern in the text (in case there is extra text)
+      // 1. Try standard JSON parsing first (best case)
+      // Look for a complete JSON array pattern
       const match = text.match(/\[[\s\S]*\]/);
       if (match) {
         return JSON.parse(match[0]);
       }
-      return [];
     } catch (e) {
-      console.error('Failed to parse JSON from Perplexity response:', text);
-      return [];
+      console.warn('Standard JSON parse failed, attempting recovery for truncated data:', e);
     }
+
+    // 2. Recovery logic for truncated JSON (e.g. finish_reason="length")
+    // If the text looks like the start of an array, extract all complete quoted strings
+    if (text.trim().startsWith('[')) {
+      const results: string[] = [];
+      // Regex to match valid JSON strings: "..." taking escapes into account
+      const stringRegex = /"(?:[^"\\]|\\.)*"/g;
+
+      let match;
+      while ((match = stringRegex.exec(text)) !== null) {
+        try {
+          // match[0] is the full string with quotes, e.g., "Artist Name"
+          // We use JSON.parse to correctly handle escapes
+          const str = JSON.parse(match[0]);
+          results.push(str);
+        } catch (e) {
+          // Ignore malformed strings
+        }
+      }
+      return results;
+    }
+
+    return [];
   }
 }
