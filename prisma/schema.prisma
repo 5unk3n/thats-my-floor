@@ -6,12 +6,18 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
+  role          UserRole  @default(USER)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -83,11 +89,23 @@ model Artist {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  concerts  Concert[]
+  concerts  ConcertArtist[]
   followers UserArtist[]
   setlists  Setlist[]
 
   @@map("artists")
+}
+
+model ConcertArtist {
+  concertId String @map("concert_id")
+  artistId  String @map("artist_id")
+  role      String @default("MAIN") // MAIN, GUEST, etc.
+
+  concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist  Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([concertId, artistId])
+  @@map("concert_artists")
 }
 
 model Concert {
@@ -120,17 +138,27 @@ model Concert {
   festival       Boolean   @default(false) // 페스티벌 여부
 
   // Internal Logic Fields
-  artistId       String?   @map("artist_id")
+  // artistId field REMOVED
+  
+  publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
+  analysisResult Json?         @map("analysis_result")
   
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist         Artist?   @relation(fields: [artistId], references: [id])
+  artists        ConcertArtist[]
   setlists      Setlist[]
   notifications Notification[]
 
-  @@index([artistId])
   @@map("concerts")
+}
+
+enum PublishStatus {
+  DRAFT
+  ANALYZING
+  REVIEWING
+  PUBLISHED
+  REJECTED
 }
 
 

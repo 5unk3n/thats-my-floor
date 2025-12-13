@@ -161,11 +161,18 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, account, user }) {
       // Initial sign in
       if (account && user) {
+        // Fetch user role from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        });
+
         return {
           accessToken: account.access_token,
           accessTokenExpires: Date.now() + (account.expires_in as number) * 1000,
           refreshToken: account.refresh_token,
           provider: account.provider,
+          role: dbUser?.role,
           user,
         };
       }
@@ -182,6 +189,7 @@ export const authOptions: NextAuthOptions = {
       session.user.accessToken = token.accessToken as string;
       session.user.refreshToken = token.refreshToken as string;
       session.user.accessTokenExpires = token.accessTokenExpires as number;
+      session.user.role = token.role;
       session.error = token.error as string;
 
       if (token.user) {

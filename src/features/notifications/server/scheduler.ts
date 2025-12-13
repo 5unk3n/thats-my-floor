@@ -1,5 +1,3 @@
-import { getFirebaseAdmin } from '@/shared/lib/firebase-admin';
-import { prisma } from '@/shared/lib/prisma';
 
 export const checkTicketOpenAndSendNotifications = async () => {
   console.log(

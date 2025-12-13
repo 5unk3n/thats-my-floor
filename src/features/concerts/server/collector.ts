@@ -44,7 +44,6 @@ export const collectConcerts = async () => {
   const newConcerts: Array<{
     id: string;
     mt20id: string;
-    artistId: string | null;
   }> = [];
 
   // Helper function to process items

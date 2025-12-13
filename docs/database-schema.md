@@ -20,10 +20,14 @@
                                │                 ┌──────▼───────┐
                                │                 │   Artists    │
                                │                 └──────┬───────┘
-                               │                        │
-                               │                 ┌──────▼───────┐
-                               ▼                 │  Concerts    │
-                        ┌──────────────┐         └──────┬───────┘
+                               │                        ▲
+                               │                 ┌──────┴───────┐
+                               │                 │ConcertArtists│
+                               │                 └──────┬───────┘
+                               │                        ▼
+                               ▼                 ┌──────────────┐
+                        ┌──────────────┐         │  Concerts    │
+                        │UserDevices   │         └──────┬───────┘
                         │UserDevices   │                │
                         └──────────────┘         ┌──────▼───────┐
                                                  │  Setlists    │
@@ -170,13 +174,12 @@ CREATE TABLE concerts (
   visit BOOLEAN DEFAULT FALSE,    -- 내한공연 여부
   festival BOOLEAN DEFAULT FALSE, -- 페스티벌 여부
 
-  artist_id VARCHAR(36) REFERENCES artists(id) ON DELETE SET NULL,
+  publish_status VARCHAR(20) DEFAULT 'DRAFT', -- 발행 상태 (Enum)
+  analysis_result JSONB,          -- AI 분석 결과 (JSON)
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_concerts_artist ON concerts(artist_id);
 ```
 
 **컬럼 설명:**
@@ -193,6 +196,25 @@ CREATE INDEX idx_concerts_artist ON concerts(artist_id);
 - `styurls`: 소개 이미지 URL 목록
 - `visit`: 내한 공연 여부
 - `festival`: 페스티벌 여부
+
+- `publishStatus`: 발행 상태 (`DRAFT`, `ANALYZING`, `REVIEWING`, `PUBLISHED`, `REJECTED`)
+- `analysisResult`: AI 분석 후보군 데이터
+
+---
+
+### 3-1. concert_artists (공연-아티스트 관계)
+
+공연과 아티스트의 N:M 관계를 정의합니다.
+
+```sql
+CREATE TABLE concert_artists (
+  concert_id VARCHAR(36) REFERENCES concerts(id) ON DELETE CASCADE,
+  artist_id VARCHAR(36) REFERENCES artists(id) ON DELETE CASCADE,
+  role VARCHAR(50) DEFAULT 'MAIN', -- 'MAIN', 'GUEST'
+
+  PRIMARY KEY (concert_id, artist_id)
+);
+```
 
 ---
 
@@ -410,11 +432,23 @@ model Artist {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  concerts  Concert[]
+  concerts  ConcertArtist[]
   followers UserArtist[]
   setlists  Setlist[]
 
   @@map("artists")
+}
+
+model ConcertArtist {
+  concertId String @map("concert_id")
+  artistId  String @map("artist_id")
+  role      String @default("MAIN") // MAIN, GUEST, etc.
+
+  concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist  Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([concertId, artistId])
+  @@map("concert_artists")
 }
 
 model Concert {
@@ -447,17 +481,25 @@ model Concert {
   festival       Boolean   @default(false) // 페스티벌 여부
 
   // Internal Logic Fields
-  artistId       String?   @map("artist_id")
+  publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
+  analysisResult Json?         @map("analysis_result")
 
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist         Artist?   @relation(fields: [artistId], references: [id])
+  artists        ConcertArtist[]
   setlists      Setlist[]
   notifications Notification[]
 
-  @@index([artistId])
   @@map("concerts")
+}
+
+enum PublishStatus {
+  DRAFT
+  ANALYZING
+  REVIEWING
+  PUBLISHED
+  REJECTED
 }
 
 model UserArtist {

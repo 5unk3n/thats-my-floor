@@ -1,10 +1,142 @@
 'use server';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, PublishStatus } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
+// eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
+import { notificationService } from '@/features/notifications/server/services';
 import { prisma } from '@/shared/lib/prisma';
 
 import { Concert } from '../model/types';
+import { AnalysisService, Candidate } from './services/analysis.service';
+
+// --- Admin Pipeline Actions ---
+
+export async function requestAnalysisAction(concertId: string) {
+  try {
+    // 1. Set status to ANALYZING immediately
+    await AnalysisService.requestAnalysis(concertId);
+
+    // 2. Trigger Pipeline asynchronously (Fire-and-forget)
+    // In a real serverless env, this might require Inngest/Queue.
+    // Here we just don't await the promise.
+    AnalysisService.runAnalysisPipeline(concertId).catch((err) =>
+      console.error('Async Pipeline Error:', err)
+    );
+
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Request Analysis Failed:', error);
+    return { success: false, error: 'Failed' };
+  }
+}
+
+export async function runPipelineAction() {
+  try {
+    const results = await AnalysisService.runAnalysisPipeline();
+    revalidatePath('/admin/reviews');
+    return { success: true, count: results.length };
+  } catch (error) {
+    console.error('Pipeline Run Failed:', error);
+    return { success: false, error: 'Pipeline Failed' };
+  }
+}
+
+export async function publishConcertAction(concertId: string, candidates: Candidate[]) {
+  try {
+    const concert = await AnalysisService.publishConcert(concertId, candidates);
+
+    // Send notification to followers after successful publish
+    await notificationService.notifyConcertRegistration(concert.id);
+
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Publish Failed:', error);
+    return { success: false, error: 'Publish Failed' };
+  }
+}
+
+export async function rejectConcertAction(concertId: string) {
+  try {
+    await AnalysisService.rejectConcert(concertId);
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Reject Failed:', error);
+    return { success: false, error: 'Reject Failed' };
+  }
+}
+
+// --- Manual Spotify Search ---
+
+export async function searchSpotifyArtistsAction(query: string): Promise<Candidate[]> {
+  if (!query || query.trim().length < 2) return [];
+
+  const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
+  const SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search';
+
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) return [];
+
+  try {
+    // Get access token
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const tokenRes = await fetch(SPOTIFY_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    });
+
+    if (!tokenRes.ok) return [];
+
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    // Search artists
+    const params = new URLSearchParams({
+      q: query,
+      type: 'artist',
+      limit: '5',
+    });
+
+    const searchRes = await fetch(`${SPOTIFY_SEARCH_URL}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!searchRes.ok) return [];
+
+    const data = await searchRes.json();
+    const artists = data.artists?.items || [];
+
+    return artists.map(
+      (artist: {
+        id: string;
+        name: string;
+        images: { url: string }[];
+        popularity: number;
+        followers: { total: number };
+        genres: string[];
+      }) => ({
+        name: artist.name,
+        spotifyId: artist.id,
+        imageUrl: artist.images[0]?.url,
+        popularity: artist.popularity,
+        followers: artist.followers.total,
+        genres: artist.genres,
+      })
+    );
+  } catch (error) {
+    console.error('Spotify Search Failed:', error);
+    return [];
+  }
+}
 
 export async function getConcerts(params: {
   page: number;
@@ -23,7 +155,10 @@ export async function getConcerts(params: {
   nextMonth.setMonth(today.getMonth() + 1);
 
   // DB Query Filters
-  const where: Prisma.ConcertWhereInput = {};
+  const where: Prisma.ConcertWhereInput = {
+    // Only show published concerts to users
+    publishStatus: PublishStatus.PUBLISHED,
+  };
 
   // 1. Type Filter
   if (type === 'VISIT') {

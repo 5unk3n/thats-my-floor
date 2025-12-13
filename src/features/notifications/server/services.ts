@@ -5,15 +5,25 @@ export const notificationService = {
   notifyConcertRegistration: async (concertId: string) => {
     const concert = await prisma.concert.findUnique({
       where: { id: concertId },
-      include: { artist: true },
+      include: {
+        artists: {
+          include: {
+            artist: true,
+          },
+        },
+      },
     });
 
-    if (!concert || !concert.artistId) return;
+    if (!concert || concert.artists.length === 0) return;
 
-    // Find users who follow this artist and have concert registration alert enabled
+    // Collect all artist IDs from the concert
+    const artistIds = concert.artists.map((ca) => ca.artistId);
+    const artistNames = concert.artists.map((ca) => ca.artist.name).join(', ');
+
+    // Find users who follow ANY of these artists and have concert registration alert enabled
     const followers = await prisma.userArtist.findMany({
       where: {
-        artistId: concert.artistId,
+        artistId: { in: artistIds },
         user: {
           notificationSettings: {
             concertRegistrationAlert: true,
@@ -29,16 +39,24 @@ export const notificationService = {
       },
     });
 
+    // Deduplicate users (a user might follow multiple artists in the lineup)
+    const uniqueFollowersMap = new Map();
+    followers.forEach((f) => {
+      uniqueFollowersMap.set(f.userId, f.user);
+    });
+    const uniqueFollowers = Array.from(uniqueFollowersMap.values());
+
     console.log(
-      `[NotificationService] Concert ${concert.prfnm}: Found ${followers.length} followers to notify.`
+      `[NotificationService] Concert ${concert.prfnm}: Found ${uniqueFollowers.length} followers to notify.`
     );
 
     const title = '새로운 공연 소식';
-    const body = `'${concert.artist?.name}'의 새 공연 '${concert.prfnm}' 정보가 등록되었습니다.`;
+    const body = `'${artistNames}'의 새 공연 '${concert.prfnm}' 정보가 등록되었습니다.`;
 
-    for (const follower of followers) {
-      const user = follower.user;
-      const tokens = user.devices.map((d) => d.fcmToken);
+    for (const user of uniqueFollowers) {
+      // Correctly typed from Prisma result, but if implicit any occurs, use specific type or unknown
+      // uniqueFollowers is User[] here based on Prisma query structure
+      const tokens = user.devices.map((d: { fcmToken: string }) => d.fcmToken);
 
       if (tokens.length === 0) continue;
 
