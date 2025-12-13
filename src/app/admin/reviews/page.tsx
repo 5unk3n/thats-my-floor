@@ -2,7 +2,7 @@ import { PublishStatus } from '@prisma/client';
 import { Metadata } from 'next';
 
 import { runPipelineAction } from '@/features/concerts/server/actions';
-import { ConcertReviewCard } from '@/features/concerts/ui/admin/ConcertReviewCard';
+import { ConcertReviewCard } from '@/features/concerts/components/admin/ConcertReviewCard';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { prisma } from '@/shared/lib/prisma';
