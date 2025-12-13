@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const results = await AnalysisService.runAnalysisPipeline(5);
+    const results = await AnalysisService.runAnalysisPipeline(undefined, 5);
 
     const successCount = results.filter((r) => r.success).length;
     const failCount = results.filter((r) => !r.success).length;

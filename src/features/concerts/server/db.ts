@@ -119,7 +119,7 @@ export const concertService = {
     festival?: boolean;
     artistId?: string;
   }) => {
-    return prisma.concert.upsert({
+    const concert = await prisma.concert.upsert({
       where: { mt20id: data.mt20id },
       update: {
         mt10id: data.mt10id,
@@ -144,7 +144,6 @@ export const concertService = {
         relates: data.relates || [],
         visit: data.visit || false,
         festival: data.festival || false,
-        artistId: data.artistId,
       },
       create: {
         mt20id: data.mt20id,
@@ -170,10 +169,33 @@ export const concertService = {
         relates: data.relates || [],
         visit: data.visit || false,
         festival: data.festival || false,
-        artistId: data.artistId,
         publishStatus: PublishStatus.DRAFT,
       },
     });
+
+    if (data.artistId) {
+      // Check for existing relation to avoid duplicates
+      const existing = await prisma.concertArtist.findUnique({
+        where: {
+          concertId_artistId: {
+            concertId: concert.id,
+            artistId: data.artistId,
+          },
+        },
+      });
+
+      if (!existing) {
+        await prisma.concertArtist.create({
+          data: {
+            concertId: concert.id,
+            artistId: data.artistId,
+            role: 'MAIN', // Default role for collector-matched artists
+          },
+        });
+      }
+    }
+
+    return concert;
   },
 
   findArtistByName: async (name: string) => {

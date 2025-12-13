@@ -15,9 +15,8 @@ export async function GET(req: Request) {
     const newConcerts = await collectConcerts();
 
     for (const concert of newConcerts) {
-      if (concert.artistId) {
-        await notificationService.notifyConcertRegistration(concert.id);
-      }
+      // Attempt to notify. Service checks internally if there are linked artists.
+      await notificationService.notifyConcertRegistration(concert.id);
     }
 
     return NextResponse.json({ success: true, count: newConcerts.length });

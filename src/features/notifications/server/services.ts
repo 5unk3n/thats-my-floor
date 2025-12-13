@@ -54,10 +54,9 @@ export const notificationService = {
     const body = `'${artistNames}'의 새 공연 '${concert.prfnm}' 정보가 등록되었습니다.`;
 
     for (const user of uniqueFollowers) {
-      // FIX: user type assertion or ensure type safety
-      // explicit casting to any to bypass potential type inference issues if User type is strict
-      const safeUser = user as any;
-      const tokens = safeUser.devices.map((d: any) => d.fcmToken);
+      // Correctly typed from Prisma result, but if implicit any occurs, use specific type or unknown
+      // uniqueFollowers is User[] here based on Prisma query structure
+      const tokens = user.devices.map((d: { fcmToken: string }) => d.fcmToken);
 
       if (tokens.length === 0) continue;
 
@@ -80,7 +79,7 @@ export const notificationService = {
         if (response.successCount > 0) {
           await prisma.notification.create({
             data: {
-              userId: safeUser.id,
+              userId: user.id,
               type: 'CONCERT_REGISTRATION',
               title,
               body,
@@ -90,7 +89,7 @@ export const notificationService = {
           });
         }
       } catch (error) {
-        console.error(`[NotificationService] Failed to send FCM to user ${safeUser.id}:`, error);
+        console.error(`[NotificationService] Failed to send FCM to user ${user.id}:`, error);
       }
     }
   },
