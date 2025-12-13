@@ -22,17 +22,17 @@ export default async function AdminReviewsPage() {
     take: 50,
   });
 
-  // Fetch Reviews (Scanning Complete)
-  const reviews = await prisma.concert.findMany({
-    where: { publishStatus: PublishStatus.REVIEWING },
-    orderBy: { updatedAt: 'desc' },
-  });
-
   // Fetch Analyzing (In Progress)
   const analyzing = await prisma.concert.findMany({
     where: {
-      publishStatus: { in: [PublishStatus.ANALYZING_REQUEST, PublishStatus.ANALYZING] },
+      publishStatus: PublishStatus.ANALYZING,
     },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  // Fetch Reviews (Scanning Complete)
+  const reviews = await prisma.concert.findMany({
+    where: { publishStatus: PublishStatus.REVIEWING },
     orderBy: { updatedAt: 'desc' },
   });
 
@@ -41,7 +41,14 @@ export default async function AdminReviewsPage() {
     where: { publishStatus: PublishStatus.PUBLISHED },
     orderBy: { updatedAt: 'desc' },
     take: 50,
-    include: { artist: true },
+    include: { artists: { include: { artist: true } } }, // Updated include
+  });
+
+  // Fetch Rejected
+  const rejected = await prisma.concert.findMany({
+    where: { publishStatus: PublishStatus.REJECTED },
+    orderBy: { updatedAt: 'desc' },
+    take: 50,
   });
 
   return (
@@ -61,11 +68,12 @@ export default async function AdminReviewsPage() {
       </div>
 
       <Tabs defaultValue="draft" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="draft">수집 ({drafts.length})</TabsTrigger>
           <TabsTrigger value="analyzing">분석 중 ({analyzing.length})</TabsTrigger>
           <TabsTrigger value="reviews">검토 대기 ({reviews.length})</TabsTrigger>
           <TabsTrigger value="published">발행 완료 ({published.length})</TabsTrigger>
+          <TabsTrigger value="rejected">반려 ({rejected.length})</TabsTrigger>
         </TabsList>
 
         {/* 1. 수집 탭 */}
@@ -113,7 +121,9 @@ export default async function AdminReviewsPage() {
             {published.map((concert) => (
               <div key={concert.id} className="p-4 border rounded shadow-sm bg-green-50">
                 <h3 className="font-bold text-sm">{concert.prfnm}</h3>
-                <p className="text-xs text-gray-600">🎤 {concert.artist?.name || '알 수 없음'}</p>
+                <p className="text-xs text-gray-600">
+                  🎤 {concert.artists.map((a) => a.artist.name).join(', ') || '알 수 없음'}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
                   📅 {new Date(concert.prfpdfrom).toLocaleDateString()}
                 </p>
@@ -121,6 +131,21 @@ export default async function AdminReviewsPage() {
             ))}
             {published.length === 0 && (
               <p className="text-muted-foreground p-4">발행된 공연이 없습니다.</p>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* 5. 반려 탭 */}
+        <TabsContent value="rejected" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 gap-4">
+            {rejected.map((concert) => (
+              <div key={concert.id} className="p-4 border rounded shadow-sm bg-gray-100 opacity-60">
+                <h3 className="font-bold text-sm">{concert.prfnm}</h3>
+                <p className="text-xs text-gray-500">❌ 반려됨</p>
+              </div>
+            ))}
+            {rejected.length === 0 && (
+              <p className="text-muted-foreground p-4">반려된 항목이 없습니다.</p>
             )}
           </div>
         </TabsContent>
