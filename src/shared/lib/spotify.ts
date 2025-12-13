@@ -66,33 +66,36 @@ export class SpotifyService {
    * Search Artist by Query
    */
   static async searchArtist(query: string): Promise<SpotifyArtist | null> {
+    const list = await this.searchArtists(query, 1);
+    return list[0] || null;
+  }
+
+  /**
+   * Search Artists by Query (Multi)
+   */
+  static async searchArtists(query: string, limit = 5): Promise<SpotifyArtist[]> {
     const token = await this.getAccessToken();
-    if (!token) return null;
+    if (!token) return [];
 
     try {
       // Search for the artist
       const params = new URLSearchParams({
         q: query,
         type: 'artist',
-        limit: '1', // We define "Search" here as finding the best match for a specific name
+        limit: limit.toString(),
       });
 
       const response = await fetch(`${SPOTIFY_SEARCH_URL}?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) return null;
+      if (!response.ok) return [];
 
       const data = await response.json();
-      const artists = data.artists?.items as SpotifyArtist[];
-
-      if (artists && artists.length > 0) {
-        return artists[0];
-      }
-      return null;
+      return (data.artists?.items as SpotifyArtist[]) || [];
     } catch (error) {
       console.error(`Spotify Search Error for "${query}":`, error);
-      return null;
+      return [];
     }
   }
 }
