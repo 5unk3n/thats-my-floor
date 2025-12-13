@@ -16,11 +16,10 @@ KOPIS 데이터의 한계(출연진 정보 부족/불명확)를 극복하기 위
 
 ```mermaid
 graph TD
-    A[Concert Collected (DRAFT)] -->|Admin Selection| B[ANALYZING_REQUEST]
-    B -->|Batch Job| C[ANALYZING]
-    C -->|AI & Spotify API| D[REVIEWING]
-    D -->|Admin Approval| E[PUBLISHED]
-    D -->|Admin Reject| F[REJECTED]
+    A[Concert Collected (DRAFT)] -->|Admin Selection| B[ANALYZING]
+    B -->|AI & Spotify API| C[REVIEWING]
+    C -->|Admin Approval| D[PUBLISHED]
+    C -->|Admin Reject| E[REJECTED]
 ```
 
 ### Phase 1: Selection (선별)
@@ -29,11 +28,11 @@ graph TD
 - **Action**: 관리자가 수집된 공연 목록(`DRAFT`)을 검토합니다.
   - 유명 가수의 내한공연, 대형 페스티벌 등 "분석 가치가 있는" 공연을 선택합니다.
   - "분석 요청" 버튼을 클릭합니다.
-- **Output**: `status` -> `ANALYZING_REQUEST`
+- **Output**: `status` -> `ANALYZING` (Async Fire-and-Forget)
 
 ### Phase 2: Analysis (AI Pipeline)
 
-- **Trigger**: 백그라운드 Job이 `ANALYZING_REQUEST` 상태인 공연을 주기적으로 폴링합니다.
+- **Trigger**: `AnalysisService.runAnalysisPipeline` (Async call).
 - **Step 1: AI Search (Perplexity/Sonar)**
   - Query: `"{공연명}" 출연진 및 아티스트 라인업 알려줘`
   - Result: 아티스트 이름 배열 (예: `['아이유', 'NewJeans']`)
@@ -54,7 +53,7 @@ graph TD
   - [승인 및 발행] 버튼 클릭.
 - **System Logic**:
   1.  선택된 아티스트가 DB에 없으면 `Artist` 레코드 생성 (Lazy Creation).
-  2.  `ConcertArtist` 관계 연결.
+  2.  `ConcertArtist` (N:M) 관계 연결.
   3.  `status` -> `PUBLISHED` 업데이트.
   4.  관심 유저(Followers)에게 알림 발송.
 
@@ -65,11 +64,10 @@ graph TD
 ```prisma
 enum PublishStatus {
   DRAFT             // 1. 수집됨, 선별 전
-  ANALYZING_REQUEST // 2. 관리자가 분석 요청 (배치 대상)
-  ANALYZING         // 3. AI 분석 중 (Lock)
-  REVIEWING         // 4. 분석 완료, 검수 대기
-  PUBLISHED         // 5. 검수 완료 & 알림 발송됨
-  REJECTED          // 6. 분석 반려 또는 보관
+  ANALYZING         // 2. 관리자가 분석 요청 & AI 분석 중
+  REVIEWING         // 3. 분석 완료, 검수 대기
+  PUBLISHED         // 4. 검수 완료 & 알림 발송됨
+  REJECTED          // 5. 분석 반려 또는 보관
 }
 
 model Concert {

@@ -23,6 +23,7 @@ concert-notification-service/
 │   │   │   ├── components/     # UI Components (Client/Server)
 │   │   │   ├── hooks/          # Feature Hooks
 │   │   │   ├── server/         # [Isolated] Server Actions & DB Logic
+│   │   │   │   ├── services/   # Business Logic Services (Analysis, Notification etc.)
 │   │   │   │   ├── actions.ts  # Public Server Actions
 │   │   │   │   └── db.ts       # Internal DB Access
 │   │   │   └── types.ts

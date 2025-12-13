@@ -1,59 +1,37 @@
-const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
+import { perplexityClient } from '@/shared/lib/perplexity/client';
 
 export class PerplexityService {
-  private static apiKey = process.env.PERPLEXITY_API_KEY;
-
   /**
    * Search for artist lineup for a given concert.
    * Returns a list of artist names found.
    */
   static async searchConcertLineup(concertTitle: string): Promise<string[]> {
-    if (!this.apiKey) {
-      console.warn('PERPLEXITY_API_KEY is not set. Skipping AI search.');
-      return [];
-    }
-
     try {
-      const response = await fetch(PERPLEXITY_API_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
+      const messages: { role: 'system' | 'user'; content: string }[] = [
+        {
+          role: 'system',
+          content: `You are a JSON API that returns concert lineup data.
+          # Output Format
+          - Return ONLY a valid JSON array of strings
+          - Each string is an artist name
+          - No explanations, no additional text
+          - Example: ["Artist A", "Artist B"]
+          - If no artists found: []`,
         },
-        body: JSON.stringify({
-          model: 'sonar',
-          max_tokens: 800,
-          search_mode: 'web',
-          temperature: 0.1,
-          top_p: 0.9,
-          return_images: false,
-          return_videos: false,
-          frequency_penalty: 0,
-          stream: false,
-          messages: [
-            {
-              role: 'system',
-              content: `You are a JSON API that returns concert lineup data.
-              # Output Format
-              - Return ONLY a valid JSON array of strings
-              - Each string is an artist name
-              - No explanations, no additional text
-              - Example: ["Artist A", "Artist B"]
-              - If no artists found: []`,
-            },
-            {
-              role: 'user',
-              content: `Find the complete artist lineup for the concert: "${concertTitle}"`,
-            },
-          ],
-        }),
+        {
+          role: 'user',
+          content: `Find the complete artist lineup for the concert: "${concertTitle}"`,
+        },
+      ];
+
+      const data = await perplexityClient.chat(messages, {
+        model: 'sonar',
+        max_tokens: 800,
+        search_mode: 'web',
+        temperature: 0.1,
+        top_p: 0.9,
+        frequency_penalty: 0,
       });
-
-      if (!response.ok) {
-        throw new Error(`Perplexity API Error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       const content = data.choices[0]?.message?.content || '[]';
 
       return this.parseJsonArray(content);
