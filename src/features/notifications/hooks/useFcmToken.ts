@@ -3,7 +3,7 @@
 import { getToken, onMessage } from 'firebase/messaging';
 import { useEffect, useState } from 'react';
 
-import { messaging } from '@/shared/lib/firebase-client';
+import { messaging } from '@/shared/lib/firebase/client';
 
 export default function useFcmToken() {
   const [token, setToken] = useState<string | null>(null);

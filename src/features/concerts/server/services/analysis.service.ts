@@ -2,7 +2,7 @@ import { Prisma, PublishStatus } from '@prisma/client';
 
 import { PerplexityService } from '@/features/concerts/server/services/perplexity.service';
 import { prisma } from '@/shared/lib/prisma';
-import { SpotifyService } from '@/shared/lib/spotify';
+import { SpotifyService } from '@/shared/lib/spotify/client';
 
 export interface Candidate {
   name: string;

@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { notificationService } from '@/features/notifications/server/services';
 import { prisma } from '@/shared/lib/prisma';
 
-import { Concert } from '../model/types';
+import { Concert } from '../types';
 import { AnalysisService, Candidate } from './services/analysis.service';
 
 // --- Admin Pipeline Actions ---

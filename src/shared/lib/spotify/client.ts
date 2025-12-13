@@ -1,20 +1,7 @@
+import { SpotifyArtist, SpotifyTokenResponse } from './types';
+
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search';
-
-interface SpotifyTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
-
-interface SpotifyArtist {
-  id: string;
-  name: string;
-  images: { url: string; height: number; width: number }[];
-  popularity: number;
-  followers: { total: number };
-  genres: string[];
-}
 
 export class SpotifyService {
   private static clientId = process.env.SPOTIFY_CLIENT_ID;

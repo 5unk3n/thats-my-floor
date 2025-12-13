@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 
-import { CONCERT_TYPES, REGIONS } from '../model/types';
+import { CONCERT_TYPES, REGIONS } from '../types';
 
 export function ConcertFilter() {
   const router = useRouter();

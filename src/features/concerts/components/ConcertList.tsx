@@ -1,4 +1,4 @@
-import { Concert } from '../model/types';
+import { Concert } from '../types';
 import { ConcertCard } from './ConcertCard';
 
 interface ConcertListProps {
