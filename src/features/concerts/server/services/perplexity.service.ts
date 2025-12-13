@@ -13,14 +13,6 @@ export class PerplexityService {
       return [];
     }
 
-    const query = `
-      Find the artist lineup for the concert "${concertTitle}".
-      Return the artist names as a JSON array of strings.
-      Example: ["Artist A", "Artist B"]
-      Only return the JSON array, no other text.
-      If no artists are found, return [].
-    `;
-
     try {
       const response = await fetch(PERPLEXITY_API_URL, {
         method: 'POST',
@@ -30,17 +22,30 @@ export class PerplexityService {
         },
         body: JSON.stringify({
           model: 'sonar',
-          max_tokens: 50,
+          max_tokens: 800,
           search_mode: 'web',
-          temperature: 0.0,
+          temperature: 0.1,
           top_p: 0.9,
-          top_k: 1,
-          // "response_language": "ko",
           return_images: false,
           return_videos: false,
           frequency_penalty: 0,
           stream: false,
-          messages: [{ role: 'user', content: query }],
+          messages: [
+            {
+              role: 'system',
+              content: `You are a JSON API that returns concert lineup data.
+              # Output Format
+              - Return ONLY a valid JSON array of strings
+              - Each string is an artist name
+              - No explanations, no additional text
+              - Example: ["Artist A", "Artist B"]
+              - If no artists found: []`,
+            },
+            {
+              role: 'user',
+              content: `Find the complete artist lineup for the concert: "${concertTitle}"`,
+            },
+          ],
         }),
       });
 
@@ -49,7 +54,6 @@ export class PerplexityService {
       }
 
       const data = await response.json();
-      console.log(data.choices[0]?.message?.content);
       const content = data.choices[0]?.message?.content || '[]';
 
       return this.parseJsonArray(content);
