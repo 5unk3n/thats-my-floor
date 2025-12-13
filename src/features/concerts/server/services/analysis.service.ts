@@ -27,21 +27,22 @@ export class AnalysisService {
     return prisma.concert.update({
       where: { id: concertId },
       data: {
-        publishStatus: PublishStatus.ANALYZING_REQUEST,
+        publishStatus: PublishStatus.ANALYZING,
       },
     });
   }
 
   /**
-   * Step 2: Batch Analysis Job
-   * Finds concerts in ANALYZING_REQUEST, runs AI search & Verification.
-   * Note: This should ideally be run by a Cron/Background worker.
-   * For MVP, we can trigger it manually or via an API endpoint.
+   * Step 2: Batch/Async Analysis Job
+   * Triggers grouping analysis: Perplexity -> Spotify (N) -> Grouped Result.
    */
-  static async runAnalysisPipeline(limit = 5) {
-    // 1. Fetch targets
+  static async runAnalysisPipeline(concertId?: string, limit = 5) {
+    const where: Prisma.ConcertWhereInput = concertId
+      ? { id: concertId }
+      : { publishStatus: PublishStatus.ANALYZING };
+
     const targets = await prisma.concert.findMany({
-      where: { publishStatus: PublishStatus.ANALYZING_REQUEST },
+      where,
       take: limit,
     });
 
@@ -49,47 +50,53 @@ export class AnalysisService {
 
     for (const concert of targets) {
       try {
-        // Lock the row (Optional: optimizing for concurrency)
-        await prisma.concert.update({
-          where: { id: concert.id },
-          data: { publishStatus: PublishStatus.ANALYZING },
-        });
+        // Double-check status update if needed (e.g. if picked up by cron)
+        if (concert.publishStatus !== PublishStatus.ANALYZING) {
+          await prisma.concert.update({
+            where: { id: concert.id },
+            data: { publishStatus: PublishStatus.ANALYZING },
+          });
+        }
 
-        // 2. AI Search (Perplexity)
+        // 1. AI Search (Perplexity) - Get Array of Artist Names
         const artistNames = await PerplexityService.searchConcertLineup(concert.prfnm);
+        // Clean and unique names
+        const uniqueNames = Array.from(new Set(artistNames.map((n) => n.trim()).filter(Boolean)));
 
-        const candidates: Candidate[] = [];
+        const groupedResults = [];
 
-        // 3. Verification (Spotify) - Loop through found names
-        for (const name of artistNames) {
-          const spotifyArtist = await SpotifyService.searchArtist(name);
-          if (spotifyArtist) {
-            candidates.push({
-              name: spotifyArtist.name,
-              spotifyId: spotifyArtist.id,
-              imageUrl: spotifyArtist.images[0]?.url,
-              popularity: spotifyArtist.popularity,
-              followers: spotifyArtist.followers.total,
-              genres: spotifyArtist.genres,
+        // 2. Verification (Spotify) - Loop through EACH detected name
+        for (const name of uniqueNames) {
+          try {
+            // Search Spotify for this specific name
+            // We use a broader search here to get candidates
+            // Assumption: SpotifyService.searchArtists (plural) needed or reuse singular
+            // Let's assume we fetch top 3 for each name
+            const candidates = await SpotifyService.searchArtists(name, 3);
+
+            groupedResults.push({
+              query: name,
+              candidates: candidates.map((c) => ({
+                name: c.name,
+                spotifyId: c.id,
+                imageUrl: c.images[0]?.url,
+                popularity: c.popularity,
+                followers: c.followers.total,
+                genres: c.genres,
+              })),
             });
-          } else {
-            // Fallback if not found on Spotify (Optional: add as 'unknown' or skip)
-            // candidates.push({ name, popularity: 0 });
+          } catch (e) {
+            // Fallback for this name
+            groupedResults.push({ query: name, candidates: [] });
           }
         }
 
-        // Sort by popularity (Mock logic)
-        candidates.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-        const topCandidates = candidates.slice(0, 3);
-
-        const searchKeyword = concert.prfnm + ' ' + concert.fcltynm + ' lineup';
-
-        const analysisResult: AnalysisResult = {
-          candidates: topCandidates,
-          searchKeyword: searchKeyword,
+        const analysisResult = {
+          results: groupedResults,
+          analyzedAt: new Date().toISOString(),
         };
 
-        // 4. Save Result & Update Status
+        // 3. Save Result & Update Status
         await prisma.concert.update({
           where: { id: concert.id },
           data: {
@@ -98,11 +105,10 @@ export class AnalysisService {
           },
         });
 
-        results.push({ id: concert.id, success: true, candidates: topCandidates.length });
+        results.push({ id: concert.id, success: true, groups: groupedResults.length });
       } catch (error) {
         console.error('Pipeline failed for concert ' + concert.id + ':', error);
-        // Revert to ANALYZING_REQUEST or set to REJECTED/Error state?
-        // For now, leaving it as ANALYZING so we can inspect stuck jobs.
+        // Error State handling? For now keep as is or set to REJECTED?
         results.push({ id: concert.id, success: false, error });
       }
     }
@@ -111,48 +117,56 @@ export class AnalysisService {
   }
 
   /**
-   * Step 3: Publish (Review Approval)
-   * Admin selects a candidate (or manual input) and publishes.
-   * Lazy creates Artist if not exists.
+   * Step 3: Publish (Review Approval) - MULTI ARTIST VERSION
+   * Accepts multiple selected candidates.
    */
-  static async publishConcert(concertId: string, selectedCandidate: Candidate) {
+  static async publishConcert(concertId: string, selectedCandidates: Candidate[]) {
     return prisma.$transaction(async (tx) => {
-      // 1. Ensure Artist Exists (Lazy Creation)
-      let artist = null;
+      // 1. Create/Connect Artists
+      for (const candidate of selectedCandidates) {
+        if (!candidate.spotifyId) continue; // Skip invalid
 
-      if (selectedCandidate.spotifyId) {
-        artist = await tx.artist.findUnique({
-          where: { spotifyArtistId: selectedCandidate.spotifyId },
+        let artist = await tx.artist.findUnique({
+          where: { spotifyArtistId: candidate.spotifyId },
         });
 
         if (!artist) {
           artist = await tx.artist.create({
             data: {
-              name: selectedCandidate.name,
-              spotifyArtistId: selectedCandidate.spotifyId,
-              image: selectedCandidate.imageUrl,
-              // genres: selectedCandidate.genres?.join(', '),
-              followerCount: selectedCandidate.followers || 0,
+              name: candidate.name,
+              spotifyArtistId: candidate.spotifyId,
+              image: candidate.imageUrl,
+              followerCount: candidate.followers || 0,
+            },
+          });
+        }
+
+        // 2. Link Concert -> Artist (Many-to-Many)
+        // Check if already linked to avoid duplicates
+        const existingRelation = await tx.concertArtist.findUnique({
+          where: {
+            concertId_artistId: {
+              concertId,
+              artistId: artist.id,
+            },
+          },
+        });
+
+        if (!existingRelation) {
+          await tx.concertArtist.create({
+            data: {
+              concertId,
+              artistId: artist.id,
+              role: 'MAIN', // Default
             },
           });
         }
       }
 
-      // If no Spotify ID (Manual without Spotify), try finding by name or create dummy?
-      // For MVP, we respect the architecture: "Spotify based".
-      // If we allow manual text without spotify, we might need a different handling.
-      // Assuming selectedCandidate ALWAYS has spotifyId for this flow.
-
-      if (!artist) {
-        throw new Error('Failed to resolve artist. Spotify ID is required.');
-      }
-
-      // 2. Link Concert -> Artist
-      // Also update the concert status
+      // 3. Update Status
       const updatedConcert = await tx.concert.update({
         where: { id: concertId },
         data: {
-          artistId: artist.id,
           publishStatus: PublishStatus.PUBLISHED,
         },
       });

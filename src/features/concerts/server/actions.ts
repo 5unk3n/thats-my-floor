@@ -14,7 +14,16 @@ import { AnalysisService, Candidate } from './services/analysis.service';
 
 export async function requestAnalysisAction(concertId: string) {
   try {
+    // 1. Set status to ANALYZING immediately
     await AnalysisService.requestAnalysis(concertId);
+
+    // 2. Trigger Pipeline asynchronously (Fire-and-forget)
+    // In a real serverless env, this might require Inngest/Queue.
+    // Here we just don't await the promise.
+    AnalysisService.runAnalysisPipeline(concertId).catch((err) =>
+      console.error('Async Pipeline Error:', err)
+    );
+
     revalidatePath('/admin/reviews');
     return { success: true };
   } catch (error) {
@@ -34,9 +43,9 @@ export async function runPipelineAction() {
   }
 }
 
-export async function publishConcertAction(concertId: string, candidate: Candidate) {
+export async function publishConcertAction(concertId: string, candidates: Candidate[]) {
   try {
-    const concert = await AnalysisService.publishConcert(concertId, candidate);
+    const concert = await AnalysisService.publishConcert(concertId, candidates);
 
     // Send notification to followers after successful publish
     await notificationService.notifyConcertRegistration(concert.id);
