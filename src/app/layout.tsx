@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   description: '좋아하는 아티스트의 공연 정보를 놓치지 마세요',
 };
 
+import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
 import { Header } from '@/shared/components/header/Header';
 import { Toaster } from '@/shared/components/ui/sonner';
 import Providers from '@/shared/providers';
@@ -34,6 +35,7 @@ export default function RootLayout({
           <Header />
           {children}
           <Toaster />
+          <FcmTokenManager />
         </Providers>
       </body>
     </html>

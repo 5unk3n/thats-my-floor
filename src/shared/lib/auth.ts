@@ -157,6 +157,15 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  events: {
+    async createUser({ user }) {
+      await prisma.notificationSettings.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    },
+  },
   callbacks: {
     async jwt({ token, account, user }) {
       // Initial sign in
