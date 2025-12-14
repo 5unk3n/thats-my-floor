@@ -80,65 +80,61 @@ export async function syncSpotifyArtists(artists: SpotifyArtist[]) {
     }
 
     const userId = session.user.id;
-    let successCount = 0;
 
-    // Using transaction for batch processing
-    // Note: Prisma upsert within loop is fine but for performance we might optimize later.
-    // For manual sync (usually < 50 artists), this is acceptable.
-    await prisma.$transaction(async (tx) => {
-      for (const artist of artists) {
-        // 1. Upsert Artist
-        const dbArtist = await tx.artist.upsert({
+    // 1. Upsert Artists (Parallel)
+    // Using $transaction to ensure data consistency, but processing in parallel for speed.
+    // Use upsert to ensure artist info is up-to-date.
+    const dbArtists = await prisma.$transaction(
+      artists.map((artist) =>
+        prisma.artist.upsert({
           where: { spotifyArtistId: artist.id },
           create: {
             name: artist.name,
             image: artist.images[0]?.url,
-            genre: artist.genres[0], // Take primary genre
+            genre: artist.genres[0],
             spotifyArtistId: artist.id,
             followerCount: 0,
           },
           update: {
-            // Update info if changed
             image: artist.images[0]?.url,
             genre: artist.genres[0],
           },
-        });
+        })
+      )
+    );
 
-        // 2. Create Follow Relation (ignore if exists)
-        // Using upsert on UserArtist or createMany with skipDuplicates?
-        // Prisma createMany skipDuplicates is supported in Postgres.
-        // But we need to do this per artist to update followerCount on Artist?
-        // Let's use simple link.
+    // 2. Bulk Insert UserArtist
+    // First, find existing relations to avoid unique constraint errors (though createMany has skipDuplicates)
+    // We need to count how many were actually added, so finding existing ones first is helpful.
+    const artistIds = dbArtists.map((a) => a.id);
 
-        const existingFollow = await tx.userArtist.findUnique({
-          where: {
-            userId_artistId: {
-              userId,
-              artistId: dbArtist.id,
-            },
-          },
-        });
-
-        if (!existingFollow) {
-          await tx.userArtist.create({
-            data: {
-              userId,
-              artistId: dbArtist.id,
-            },
-          });
-
-          // Increment follower count
-          await tx.artist.update({
-            where: { id: dbArtist.id },
-            data: { followerCount: { increment: 1 } },
-          });
-
-          successCount++;
-        }
-      }
+    const existingFollows = await prisma.userArtist.findMany({
+      where: {
+        userId,
+        artistId: { in: artistIds },
+      },
+      select: { artistId: true },
     });
 
-    return { success: true, count: successCount };
+    const existingArtistIds = new Set(existingFollows.map((f) => f.artistId));
+
+    const newFollows = dbArtists
+      .filter((a) => !existingArtistIds.has(a.id))
+      .map((a) => ({
+        userId,
+        artistId: a.id,
+      }));
+
+    let addedCount = 0;
+    if (newFollows.length > 0) {
+      const result = await prisma.userArtist.createMany({
+        data: newFollows,
+        skipDuplicates: true,
+      });
+      addedCount = result.count;
+    }
+
+    return { success: true, count: addedCount };
   } catch (error) {
     console.error('syncSpotifyArtists error:', error);
     return { success: false, error: '동기화 중 오류가 발생했습니다.' };
