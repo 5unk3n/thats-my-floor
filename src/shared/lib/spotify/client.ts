@@ -1,4 +1,4 @@
-import { SpotifyArtist, SpotifyTokenResponse } from './types';
+import { SpotifyArtist, SpotifyFollowedArtistsResponse,SpotifyTokenResponse } from './types';
 
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search';
@@ -83,6 +83,40 @@ export class SpotifyService {
     } catch (error) {
       console.error(`Spotify Search Error for "${query}":`, error);
       return [];
+    }
+  }
+  /**
+   * Get User's Followed Artists
+   * Requires User Access Token (Scope: user-follow-read)
+   */
+  static async getFollowedArtists(
+    accessToken: string,
+    limit = 20,
+    after?: string
+  ): Promise<SpotifyFollowedArtistsResponse | null> {
+    try {
+      const params = new URLSearchParams({
+        type: 'artist',
+        limit: limit.toString(),
+      });
+
+      if (after) {
+        params.append('after', after);
+      }
+
+      const response = await fetch(`https://api.spotify.com/v1/me/following?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        console.error(`Spotify Followed Artists Error: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to get followed artists:', error);
+      return null;
     }
   }
 }

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
+import SpotifyConnect from '@/features/artists/components/SpotifyConnect';
 import NotificationSettings from '@/features/notifications/components/NotificationSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { authOptions } from '@/shared/lib/auth';
@@ -59,6 +60,8 @@ export default async function MyPage() {
         </div>
 
         <div>
+          <SpotifyConnect isConnected={!!session.user.accessToken} />
+          <div className="h-6" />
           <NotificationSettings />
         </div>
       </div>

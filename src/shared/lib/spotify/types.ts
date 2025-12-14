@@ -12,3 +12,15 @@ export interface SpotifyArtist {
   followers: { total: number };
   genres: string[];
 }
+
+export interface SpotifyFollowedArtistsResponse {
+  artists: {
+    items: SpotifyArtist[];
+    next: string | null;
+    total: number;
+    cursors: {
+      after: string | null;
+      before: string | null;
+    };
+  };
+}

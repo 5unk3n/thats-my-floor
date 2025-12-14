@@ -1,0 +1,142 @@
+'use server';
+
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/shared/lib/auth';
+import { prisma } from '@/shared/lib/prisma';
+import { SpotifyService } from '@/shared/lib/spotify/client';
+import { SpotifyArtist } from '@/shared/lib/spotify/types';
+
+export type SyncArtistStatus = 'new' | 'exists' | 'following';
+
+export interface SpotifySyncArtist extends SpotifyArtist {
+  status: SyncArtistStatus;
+  dbId?: string;
+}
+
+export async function fetchMySpotifyArtists(after?: string): Promise<{
+  success: boolean;
+  data?: SpotifySyncArtist[];
+  nextCursor?: string | null;
+  error?: string;
+}> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.accessToken) {
+      return { success: false, error: 'Spotify 계정 연동이 필요합니다.' };
+    }
+
+    // 1. Fetch from Spotify
+    const response = await SpotifyService.getFollowedArtists(session.user.accessToken, 20, after);
+
+    if (!response) {
+      return { success: false, error: '아티스트 목록을 가져오는데 실패했습니다.' };
+    }
+
+    const spotifyArtists = response.artists.items;
+    const nextCursor = response.artists.cursors.after;
+
+    // 2. Check DB status
+    const spotifyIds = spotifyArtists.map((a) => a.id);
+    const existingArtists = await prisma.artist.findMany({
+      where: {
+        spotifyArtistId: { in: spotifyIds },
+      },
+      include: {
+        followers: {
+          where: { userId: session.user.id },
+        },
+      },
+    });
+
+    // 3. Merge data
+    const result: SpotifySyncArtist[] = spotifyArtists.map((artist) => {
+      const existing = existingArtists.find((e) => e.spotifyArtistId === artist.id);
+
+      let status: SyncArtistStatus = 'new';
+      if (existing) {
+        status = existing.followers.length > 0 ? 'following' : 'exists';
+      }
+
+      return {
+        ...artist,
+        status,
+        dbId: existing?.id,
+      };
+    });
+
+    return { success: true, data: result, nextCursor };
+  } catch (error) {
+    console.error('fetchMySpotifyArtists error:', error);
+    return { success: false, error: '서버 에러가 발생했습니다.' };
+  }
+}
+
+export async function syncSpotifyArtists(artists: SpotifyArtist[]) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      throw new Error('Unauthorized');
+    }
+
+    const userId = session.user.id;
+
+    // 1. Upsert Artists (Parallel)
+    // Using $transaction to ensure data consistency, but processing in parallel for speed.
+    // Use upsert to ensure artist info is up-to-date.
+    const dbArtists = await prisma.$transaction(
+      artists.map((artist) =>
+        prisma.artist.upsert({
+          where: { spotifyArtistId: artist.id },
+          create: {
+            name: artist.name,
+            image: artist.images[0]?.url,
+            genre: artist.genres[0],
+            spotifyArtistId: artist.id,
+            followerCount: 0,
+          },
+          update: {
+            image: artist.images[0]?.url,
+            genre: artist.genres[0],
+          },
+        })
+      )
+    );
+
+    // 2. Bulk Insert UserArtist
+    // First, find existing relations to avoid unique constraint errors (though createMany has skipDuplicates)
+    // We need to count how many were actually added, so finding existing ones first is helpful.
+    const artistIds = dbArtists.map((a) => a.id);
+
+    const existingFollows = await prisma.userArtist.findMany({
+      where: {
+        userId,
+        artistId: { in: artistIds },
+      },
+      select: { artistId: true },
+    });
+
+    const existingArtistIds = new Set(existingFollows.map((f) => f.artistId));
+
+    const newFollows = dbArtists
+      .filter((a) => !existingArtistIds.has(a.id))
+      .map((a) => ({
+        userId,
+        artistId: a.id,
+      }));
+
+    let addedCount = 0;
+    if (newFollows.length > 0) {
+      const result = await prisma.userArtist.createMany({
+        data: newFollows,
+        skipDuplicates: true,
+      });
+      addedCount = result.count;
+    }
+
+    return { success: true, count: addedCount };
+  } catch (error) {
+    console.error('syncSpotifyArtists error:', error);
+    return { success: false, error: '동기화 중 오류가 발생했습니다.' };
+  }
+}
