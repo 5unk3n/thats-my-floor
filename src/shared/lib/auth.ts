@@ -146,7 +146,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope:
-            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing',
+            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-follow-read',
         },
       },
     }),
