@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
+import { SearchInput } from '@/features/search/components/SearchInput';
 import { Header } from '@/shared/components/header/Header';
 import { Toaster } from '@/shared/components/ui/sonner';
 import Providers from '@/shared/providers';
@@ -32,7 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <Header />
+          <Header searchSlot={<SearchInput />} />
           {children}
           <Toaster />
           <FcmTokenManager />
