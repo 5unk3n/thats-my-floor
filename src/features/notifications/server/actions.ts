@@ -4,40 +4,88 @@ import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
 import { authOptions } from '@/shared/lib/auth';
+import { prisma } from '@/shared/lib/prisma';
 
-import {
-  getNotificationsFromDB,
-  markAllNotificationsAsReadInDB,
-  markNotificationAsReadInDB,
-} from './db';
-import { notificationService } from './services';
-
-export async function getNotifications() {
+export async function getNotifications(page = 1, limit = 20) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
-  return await getNotificationsFromDB(session.user.id);
+  const skip = (page - 1) * limit;
+
+  const [notifications, total] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { sentAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        concert: {
+          select: {
+            id: true,
+            poster: true,
+            prfnm: true,
+          },
+        },
+      },
+    }),
+    prisma.notification.count({
+      where: { userId: session.user.id },
+    }),
+  ]);
+
+  const unreadCount = await prisma.notification.count({
+    where: {
+      userId: session.user.id,
+      readAt: null,
+    },
+  });
+
+  return {
+    notifications,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+    unreadCount,
+  };
 }
 
-export async function markNotificationAsRead(notificationId: number) {
+export async function markAsRead(notificationId: number) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
-  await markNotificationAsReadInDB(notificationId, session.user.id);
-  revalidatePath('/notifications'); // Assuming a notifications page will exist
+  await prisma.notification.update({
+    where: {
+      id: notificationId,
+      userId: session.user.id, // Ensure ownership
+    },
+    data: {
+      readAt: new Date(),
+    },
+  });
+
+  revalidatePath('/notifications');
 }
 
-export async function markAllNotificationsAsRead() {
+export async function markAllAsRead() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
-  await markAllNotificationsAsReadInDB(session.user.id);
+  await prisma.notification.updateMany({
+    where: {
+      userId: session.user.id,
+      readAt: null,
+    },
+    data: {
+      readAt: new Date(),
+    },
+  });
+
   revalidatePath('/notifications');
 }
 
@@ -47,19 +95,36 @@ export async function getNotificationSettingsAction() {
     throw new Error('Unauthorized');
   }
 
-  return await notificationService.getNotificationSettings(session.user.id);
+  const settings = await prisma.notificationSettings.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  if (!settings) {
+    // Should be created on signup, but fallback just in case
+    return await prisma.notificationSettings.create({
+      data: { userId: session.user.id },
+    });
+  }
+
+  return settings;
 }
 
-export async function updateNotificationSettingsAction(settings: {
-  ticketOpenAlert?: boolean;
-  concertRegistrationAlert?: boolean;
-  emailNotification?: boolean;
-}) {
+export async function updateNotificationSettingsAction(
+  data: Partial<{
+    ticketOpenAlert: boolean;
+    concertRegistrationAlert: boolean;
+    emailNotification: boolean;
+  }>
+) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
-  await notificationService.updateNotificationSettings(session.user.id, settings);
+  await prisma.notificationSettings.update({
+    where: { userId: session.user.id },
+    data,
+  });
+
   revalidatePath('/mypage');
 }

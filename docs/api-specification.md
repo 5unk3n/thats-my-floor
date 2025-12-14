@@ -68,13 +68,34 @@
   - 설명: 사용자 프로필(이름, 이미지) 수정
   - 반환: `Promise<User>`
 
-- **`updateNotificationSettings(settings: NotificationSettings)`**
-  - 설명: 알림 설정 업데이트
+### 1.5 알림 (Notifications) - `features/notifications/server/actions.ts`
+
+- **`getNotifications(page: number, limit: number)`**
+  - 설명: 사용자 알림 목록 조회 (페이징)
+  - 반환: `Promise<{ notifications: Notification[], total: number, ... }>`
+
+- **`markAsRead(notificationId: number)`**
+  - 설명: 개별 알림 읽음 처리
+  - 반환: `Promise<void>`
+
+- **`markAllAsRead()`**
+  - 설명: 전체 알림 읽음 처리
+  - 반환: `Promise<void>`
+
+- **`getNotificationSettingsAction()`**
+  - 설명: 알림 설정 조회
   - 반환: `Promise<NotificationSettings>`
 
-- **`registerFCMToken(token: string, platform: 'web' | 'android' | 'ios')`**
-  - 설명: FCM 디바이스 토큰 등록
+- **`updateNotificationSettingsAction(settings: Partial<NotificationSettings>)`**
+  - 설명: 알림 설정 업데이트
   - 반환: `Promise<void>`
+
+### 1.6 FCM 토큰 등록 - `app/api/notifications/register/route.ts`
+
+- **`POST /api/notifications/register`**
+  - 설명: FCM 디바이스 토큰 등록
+  - Body: `{ token: string, platform: 'web' | 'android' | 'ios' }`
+  - 반환: `200 OK`
 
 ---
 

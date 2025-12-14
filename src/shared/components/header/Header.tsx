@@ -1,5 +1,6 @@
 'use client';
 
+import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
@@ -33,36 +34,44 @@ export function Header() {
         </div>
         <div className="flex items-center space-x-2">
           {session ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={session.user?.image || ''} alt={session.user?.name || ''} />
-                    <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{session.user?.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {session.user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/mypage">마이페이지</Link>
-                </DropdownMenuItem>
-                {session.user?.role === 'ADMIN' && (
+            <>
+              <Button variant="ghost" size="icon" asChild className="mr-2">
+                <Link href="/notifications">
+                  <Bell className="h-5 w-5" />
+                  <span className="sr-only">알림</span>
+                </Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={session.user?.image || ''} alt={session.user?.name || ''} />
+                      <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{session.user?.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {session.user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/admin/reviews">관리자</Link>
+                    <Link href="/mypage">마이페이지</Link>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => signOut()}>로그아웃</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {session.user?.role === 'ADMIN' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/reviews">관리자</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => signOut()}>로그아웃</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <Button onClick={() => signIn()} variant="default" size="sm">
               로그인
