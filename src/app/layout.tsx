@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 import { Header } from '@/shared/components/header/Header';
 import Providers from '@/shared/providers';
 
+import { Toaster } from '@/shared/components/ui/sonner';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,6 +34,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>
