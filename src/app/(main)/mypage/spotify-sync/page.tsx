@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SpotifySyncPage() {
-  const { success, data, error } = await fetchMySpotifyArtists();
+  const { success, data, nextCursor, error } = await fetchMySpotifyArtists();
 
   if (!success || !data) {
     // Check if error is due to missing auth or scope (simple check)
@@ -38,12 +38,9 @@ export default async function SpotifySyncPage() {
             스포티파이에서 팔로우한 아티스트 중, 알림을 받고 싶은 아티스트를 선택해주세요.
           </p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          총 <span className="font-bold text-foreground">{data.length}</span>명 가져옴
-        </div>
       </div>
 
-      <SpotifySyncList artists={data} />
+      <SpotifySyncList initialArtists={data} initialNextCursor={nextCursor} />
     </div>
   );
 }

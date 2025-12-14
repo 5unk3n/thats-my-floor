@@ -3,7 +3,8 @@
 import { Check, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { toast } from 'sonner';
 
 import { Badge } from '@/shared/components/ui/badge';
@@ -11,14 +12,27 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
-import { SpotifySyncArtist, syncSpotifyArtists } from '../server/spotify-actions';
+import {
+  fetchMySpotifyArtists,
+  SpotifySyncArtist,
+  syncSpotifyArtists,
+} from '../server/spotify-actions';
 
 interface SyncArtistListProps {
-  artists: SpotifySyncArtist[];
+  initialArtists: SpotifySyncArtist[];
+  initialNextCursor?: string | null;
 }
 
-export default function SpotifySyncList({ artists }: SyncArtistListProps) {
+export default function SpotifySyncList({
+  initialArtists,
+  initialNextCursor,
+}: SyncArtistListProps) {
   const router = useRouter();
+
+  const [artists, setArtists] = useState<SpotifySyncArtist[]>(initialArtists);
+  const [nextCursor, setNextCursor] = useState<string | null | undefined>(initialNextCursor);
+  const [isLoadingMore, startTransition] = useTransition();
+  const { ref, inView } = useInView();
 
   // Filter new artists (not already following)
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -26,6 +40,28 @@ export default function SpotifySyncList({ artists }: SyncArtistListProps) {
 
   // Allow selecting 'exists' (but not follow relation) and 'new'
   const availableArtists = artists.filter((a) => a.status !== 'following');
+
+  const loadMore = useCallback(() => {
+    startTransition(async () => {
+      if (!nextCursor) return;
+
+      const result = await fetchMySpotifyArtists(nextCursor);
+
+      if (result.success && result.data) {
+        setArtists((prev) => [...prev, ...result.data!]);
+        setNextCursor(result.nextCursor);
+      } else {
+        toast.error('추가 데이터를 불러오는데 실패했습니다.');
+      }
+    });
+  }, [startTransition, nextCursor, setArtists, setNextCursor]);
+
+  useEffect(() => {
+    if (inView && nextCursor && !isLoadingMore) {
+      loadMore();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, nextCursor, isLoadingMore]);
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
@@ -73,6 +109,10 @@ export default function SpotifySyncList({ artists }: SyncArtistListProps) {
 
   // Group by status for better visualization if needed,
   // but for now simple grid sorted by status
+  // Note: Sorting might jump items around as new items load.
+  // For infinite scroll, keeping fetch order might be better, or only sorting the chunks.
+  // However, users expect "New" artists or "Following" artists to be grouped.
+  // Let's keep sorting for now but be aware of UX.
   const sortedArtists = [...artists].sort((a, b) => {
     // Priority: new -> exists -> following
     const score = (status: string) => {
@@ -184,6 +224,16 @@ export default function SpotifySyncList({ artists }: SyncArtistListProps) {
           );
         })}
       </div>
+
+      {nextCursor && (
+        <div ref={ref} className="flex justify-center py-8">
+          {isLoadingMore ? (
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          ) : (
+            <div className="h-6" /> // Spacer for intersection observer
+          )}
+        </div>
+      )}
     </div>
   );
 }

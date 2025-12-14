@@ -14,9 +14,10 @@ export interface SpotifySyncArtist extends SpotifyArtist {
   dbId?: string;
 }
 
-export async function fetchMySpotifyArtists(): Promise<{
+export async function fetchMySpotifyArtists(after?: string): Promise<{
   success: boolean;
   data?: SpotifySyncArtist[];
+  nextCursor?: string | null;
   error?: string;
 }> {
   try {
@@ -26,13 +27,14 @@ export async function fetchMySpotifyArtists(): Promise<{
     }
 
     // 1. Fetch from Spotify
-    const response = await SpotifyService.getFollowedArtists(session.user.accessToken);
+    const response = await SpotifyService.getFollowedArtists(session.user.accessToken, 20, after);
 
     if (!response) {
       return { success: false, error: '아티스트 목록을 가져오는데 실패했습니다.' };
     }
 
     const spotifyArtists = response.artists.items;
+    const nextCursor = response.artists.cursors.after;
 
     // 2. Check DB status
     const spotifyIds = spotifyArtists.map((a) => a.id);
@@ -63,7 +65,7 @@ export async function fetchMySpotifyArtists(): Promise<{
       };
     });
 
-    return { success: true, data: result };
+    return { success: true, data: result, nextCursor };
   } catch (error) {
     console.error('fetchMySpotifyArtists error:', error);
     return { success: false, error: '서버 에러가 발생했습니다.' };
