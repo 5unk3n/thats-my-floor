@@ -25,6 +25,8 @@ description: 기능 개발 워크플로우 (Feature Development Workflow)
     - 작업 완료 전 다음 명령어를 실행하여 오류가 없는지 확인합니다.
       - `npm run lint`
       - `npm run build`
+    - `docs/`의 문서들을 확인하고 불일치 하는 코드가 있는지 확인합니다.
 
 5.  **PR 생성 (PR Creation)**:
     - **[.agent/rules/pr_convention.md]**를 참고하여 PR을 작성합니다.
+    - 작성 후 바로 생성하지 않고 유저에게 확인을 받습니다.
