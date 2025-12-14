@@ -2,6 +2,7 @@
 
 import { getToken, onMessage } from 'firebase/messaging';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { messaging } from '@/shared/lib/firebase/client';
 
@@ -69,7 +70,17 @@ export default function useFcmToken() {
   useEffect(() => {
     if (messaging) {
       const unsubscribe = onMessage(messaging, (payload) => {
-        console.log('Foreground push notification received:', payload);
+        if (payload.notification) {
+          toast(payload.notification.title, {
+            description: payload.notification.body,
+            action: payload.data?.url
+              ? {
+                  label: '확인',
+                  onClick: () => (window.location.href = payload.data!.url),
+                }
+              : undefined,
+          });
+        }
       });
       return () => unsubscribe();
     }
