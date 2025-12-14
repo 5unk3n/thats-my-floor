@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 
-import SyncArtistList from '@/features/spotify/components/SyncArtistList';
-import { fetchMySpotifyArtists } from '@/features/spotify/server/actions';
+import SpotifySyncList from '@/features/artists/components/SpotifySyncList';
+import { fetchMySpotifyArtists } from '@/features/artists/server/spotify-actions';
 import { Button } from '@/shared/components/ui/button';
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export default async function SpotifySyncPage() {
         </div>
       </div>
 
-      <SyncArtistList artists={data} />
+      <SpotifySyncList artists={data} />
     </div>
   );
 }

@@ -19,9 +19,8 @@ export const metadata: Metadata = {
 };
 
 import { Header } from '@/shared/components/header/Header';
-import Providers from '@/shared/providers';
-
 import { Toaster } from '@/shared/components/ui/sonner';
+import Providers from '@/shared/providers';
 
 export default function RootLayout({
   children,

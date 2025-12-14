@@ -11,13 +11,13 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
-import { SpotifySyncArtist, syncSpotifyArtists } from '../server/actions';
+import { SpotifySyncArtist, syncSpotifyArtists } from '../server/spotify-actions';
 
 interface SyncArtistListProps {
   artists: SpotifySyncArtist[];
 }
 
-export default function SyncArtistList({ artists }: SyncArtistListProps) {
+export default function SpotifySyncList({ artists }: SyncArtistListProps) {
   const router = useRouter();
 
   // Filter new artists (not already following)
