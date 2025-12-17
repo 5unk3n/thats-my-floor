@@ -1,12 +1,10 @@
-import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
+import { ConcertDetail as ConcertDetailType } from '@/features/concerts/server/db';
 
 import { ConcertImages } from './ConcertImages';
 import { ConcertInfo } from './ConcertInfo';
 
-type ConcertDetailData = KopisConcertDetailResponse['dbs']['db'];
-
 interface ConcertDetailProps {
-  concert: ConcertDetailData;
+  concert: ConcertDetailType;
 }
 
 export function ConcertDetail({ concert }: ConcertDetailProps) {

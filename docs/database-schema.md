@@ -451,34 +451,29 @@ model ConcertArtist {
   @@map("concert_artists")
 }
 
+
 model Concert {
   id             String    @id @default(uuid())
-  mt20id         String    @unique // 공연 ID
-  mt10id         String?   // 공연시설 ID
-  prfnm          String    // 공연명
-  prfpdfrom      DateTime  // 공연 시작일
-  prfpdto        DateTime  // 공연 종료일
-  fcltynm        String    // 공연 시설명
-  poster         String?   // 포스터 이미지 경로
-  genrenm        String?   // 공연 장르명
-  prfstate       String?   // 공연 상태
-  openrun        Boolean   @default(false) // 오픈런 여부
-  area           String?   // 지역 (서울, 경기, 인천 등)
+  kopisId        String    @unique @map("kopis_id") // 공연 ID (구 mt20id)
+  title          String    // 공연명 (구 prfnm)
+  posterUrl      String?   @map("poster_url") // 포스터 이미지 경로 (구 poster)
+  startDate      DateTime  @map("start_date") // 공연 시작일 (구 prfpdfrom)
+  endDate        DateTime  @map("end_date")   // 공연 종료일 (구 prfpdto)
+  place          String    // 공연 시설명 (구 fcltynm)
+  region         String?   @map("region")      // 지역 (서울, 경기, 인천 등 - 구 area)
+  status         String?   // 공연 상태 (구 prfstate)
 
-  // Extended KOPIS fields
-  prfcast        String?   // 공연출연진
-  prfcrew        String?   // 공연제작진
-  prfruntime     String?   // 공연 런타임
-  prfage         String?   // 관람 연령
-  entrpsnm       String?   // 제작사
-  pcseguidance   String?   // 티켓 가격
-  dtguidance     String?   // 공연 시간
-  sty            String?   // 줄거리
-  styurls        String[]  // 소개 이미지 목록
-  relates        Json?     // 예매처 목록 (JSON array: { relatenm, relateurl })
+  // Details
+  runtime        String?   // 공연 런타임 (구 prfruntime)
+  price          String?   // 티켓 가격 (구 pcseguidance)
+  schedule       String?   // 공연 시간 (구 dtguidance)
+  description    String?   // 줄거리 (구 sty)
+  images         String[]  // 소개 이미지 목록 (구 styurls)
+  relates        Json?     // 예매처 목록 (JSON)
 
-  visit          Boolean   @default(false) // 내한공연 여부
-  festival       Boolean   @default(false) // 페스티벌 여부
+  // Flags
+  isGlobal       Boolean   @default(false) @map("is_global") // 내한공연 여부 (구 visit)
+  isFestival     Boolean   @default(false) @map("is_festival") // 페스티벌 여부
 
   // Internal Logic Fields
   publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
@@ -488,8 +483,8 @@ model Concert {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   artists        ConcertArtist[]
-  setlists      Setlist[]
-  notifications Notification[]
+  setlists       Setlist[]
+  notifications  Notification[]
 
   @@map("concerts")
 }

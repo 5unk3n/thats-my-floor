@@ -43,14 +43,14 @@ export const collectConcerts = async () => {
 
   const newConcerts: Array<{
     id: string;
-    mt20id: string;
+    kopisId: string;
   }> = [];
 
   // Helper function to process items
   const processItem = async (item: { mt20id: string }, category: 'CONCERT' | 'FESTIVAL') => {
     try {
       const exists = await prisma.concert.findUnique({
-        where: { mt20id: item.mt20id },
+        where: { kopisId: item.mt20id },
       });
 
       if (exists) {
@@ -97,29 +97,23 @@ export const collectConcerts = async () => {
           : [];
 
       const savedConcert = await concertService.upsertConcert({
-        mt20id: detail.mt20id,
-        mt10id: detail.mt10id,
-        prfnm: detail.prfnm,
-        poster: detail.poster,
-        prfpdfrom: detail.prfpdfrom,
-        prfpdto: detail.prfpdto,
-        fcltynm: detail.fcltynm,
-        genrenm: detail.genrenm,
-        prfstate: detail.prfstate,
+        kopisId: detail.mt20id,
+        title: detail.prfnm,
+        posterUrl: detail.poster,
+        startDate: detail.prfpdfrom,
+        endDate: detail.prfpdto,
+        place: detail.fcltynm,
         area: detail.area,
+        status: detail.prfstate,
+        runtime: detail.prfruntime,
         artistId,
-        visit: detail.visit === 'Y',
-        festival: detail.festival === 'Y',
-        openrun: detail.openrun === 'Y',
-        prfcast: detail.prfcast,
-        prfcrew: detail.prfcrew,
-        prfruntime: detail.prfruntime,
-        prfage: detail.prfage,
-        entrpsnm: detail.entrpsnm,
-        pcseguidance: detail.pcseguidance,
-        dtguidance: detail.dtguidance,
-        sty: detail.sty,
-        styurls: storyUrls,
+        isGlobal: detail.visit === 'Y',
+        isFestival: detail.festival === 'Y',
+
+        price: detail.pcseguidance,
+        schedule: detail.dtguidance,
+        description: detail.sty,
+        images: storyUrls,
         relates,
       });
 

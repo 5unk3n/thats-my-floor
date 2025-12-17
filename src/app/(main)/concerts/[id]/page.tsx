@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { ConcertDetail } from '@/features/concerts/components/ConcertDetail';
-import { kopisClient } from '@/shared/lib/kopis/client';
+import { concertService } from '@/features/concerts/server/db';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,17 +10,18 @@ interface PageProps {
 export default async function ConcertDetailPage({ params }: PageProps) {
   const { id } = await params;
 
+  let concert;
+
   try {
-    const data = await kopisClient.getConcertDetail(id);
-    const concert = data?.dbs?.db;
-
-    if (!concert) {
-      notFound();
-    }
-
-    return <ConcertDetail concert={concert} />;
+    concert = await concertService.getConcertDetail(id);
   } catch (error) {
     console.error('Failed to fetch concert detail:', error);
     throw error;
   }
+
+  if (!concert) {
+    notFound();
+  }
+
+  return <ConcertDetail concert={concert} />;
 }

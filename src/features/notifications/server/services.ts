@@ -47,11 +47,11 @@ export const notificationService = {
     const uniqueFollowers = Array.from(uniqueFollowersMap.values());
 
     console.log(
-      `[NotificationService] Concert ${concert.prfnm}: Found ${uniqueFollowers.length} followers to notify.`
+      `[NotificationService] Concert ${concert.title}: Found ${uniqueFollowers.length} followers to notify.`
     );
 
     const title = '새로운 공연 소식';
-    const body = `'${artistNames}'의 새 공연 '${concert.prfnm}' 정보가 등록되었습니다.`;
+    const body = `'${artistNames}'의 새 공연 '${concert.title}' 정보가 등록되었습니다.`;
 
     for (const user of uniqueFollowers) {
       // Correctly typed from Prisma result, but if implicit any occurs, use specific type or unknown

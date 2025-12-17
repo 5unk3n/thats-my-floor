@@ -115,11 +115,11 @@ export function NotificationList() {
 
             {/* Icon / Image */}
             <div className="flex-shrink-0">
-              {notification.concert?.poster ? (
+              {notification.concert?.posterUrl ? (
                 <div className="relative w-12 h-16 bg-gray-100 rounded overflow-hidden">
                   <Image
-                    src={notification.concert.poster}
-                    alt={notification.concert.prfnm}
+                    src={notification.concert.posterUrl}
+                    alt={notification.concert.title}
                     fill
                     className="object-cover"
                   />

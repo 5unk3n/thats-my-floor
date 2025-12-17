@@ -28,14 +28,11 @@ export function ConcertCard({ concert }: ConcertCardProps) {
             </div>
           )}
           <div className="absolute top-2 right-2 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
-            {concert.state}
+            {concert.status}
           </div>
         </div>
 
         <CardContent className="flex flex-1 flex-col p-4">
-          <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-400">
-            {concert.genre}
-          </div>
           <h3 className="mb-2 line-clamp-2 text-lg font-bold text-gray-900 dark:text-white">
             {concert.title}
           </h3>
@@ -48,7 +45,7 @@ export function ConcertCard({ concert }: ConcertCardProps) {
             </div>
             <div className="flex items-center gap-2">
               <span>📍</span>
-              <span className="line-clamp-1">{concert.venue}</span>
+              <span className="line-clamp-1">{concert.place}</span>
             </div>
           </div>
         </CardContent>

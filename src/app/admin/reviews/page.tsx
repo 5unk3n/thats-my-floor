@@ -93,7 +93,7 @@ export default async function AdminReviewsPage() {
           <div className="grid grid-cols-1 gap-4">
             {analyzing.map((concert) => (
               <div key={concert.id} className="p-4 border rounded shadow-sm opacity-70">
-                <h3 className="font-bold">{concert.prfnm}</h3>
+                <h3 className="font-bold">{concert.title}</h3>
                 <p className="text-sm text-gray-500">상태: {concert.publishStatus}</p>
               </div>
             ))}
@@ -120,13 +120,14 @@ export default async function AdminReviewsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {published.map((concert) => (
               <div key={concert.id} className="p-4 border rounded shadow-sm bg-green-50">
-                <h3 className="font-bold text-sm">{concert.prfnm}</h3>
+                <h3 className="font-bold text-sm">{concert.title}</h3>
                 <p className="text-xs text-gray-600">
                   🎤 {concert.artists.map((a) => a.artist.name).join(', ') || '알 수 없음'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  📅 {new Date(concert.prfpdfrom).toLocaleDateString()}
-                </p>
+                <div className="font-medium">{concert.title}</div>
+                <div className="text-sm text-gray-500">
+                  {new Date(concert.startDate).toLocaleDateString()}
+                </div>
               </div>
             ))}
             {published.length === 0 && (
@@ -140,7 +141,7 @@ export default async function AdminReviewsPage() {
           <div className="grid grid-cols-1 gap-4">
             {rejected.map((concert) => (
               <div key={concert.id} className="p-4 border rounded shadow-sm bg-gray-100 opacity-60">
-                <h3 className="font-bold text-sm">{concert.prfnm}</h3>
+                <h3 className="font-bold text-sm">{concert.title}</h3>
                 <p className="text-xs text-gray-500">❌ 반려됨</p>
               </div>
             ))}
