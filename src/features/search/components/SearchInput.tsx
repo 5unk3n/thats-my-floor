@@ -11,7 +11,11 @@ import { search } from '../server/actions';
 import { SearchResult } from '../types';
 import { SearchResults } from './SearchResults';
 
-export function SearchInput() {
+interface SearchInputProps {
+  type?: 'all' | 'concert' | 'artist';
+}
+
+export function SearchInput({ type = 'all' }: SearchInputProps) {
   const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<SearchResult | null>(null);
@@ -31,7 +35,7 @@ export function SearchInput() {
 
       setIsLoading(true);
       try {
-        const data = await search(debouncedQuery);
+        const data = await search(debouncedQuery, type);
         setResults(data);
         setIsOpen(true);
       } catch (error) {
@@ -42,7 +46,7 @@ export function SearchInput() {
     };
 
     fetchResults();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, type]);
 
   const handleClear = () => {
     setQuery('');

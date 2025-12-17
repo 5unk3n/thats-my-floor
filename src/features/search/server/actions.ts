@@ -6,46 +6,54 @@ import { SpotifyService } from '@/shared/lib/spotify/client';
 
 import { SearchResult } from '../types';
 
-export async function search(query: string): Promise<SearchResult> {
+export async function search(
+  query: string,
+  type: 'all' | 'concert' | 'artist' = 'all'
+): Promise<SearchResult> {
   if (!query || query.trim().length === 0) {
     return { concerts: [], artists: [] };
   }
 
   const normalizedQuery = query.trim();
+  const cacheKey = `${normalizedQuery}:${type}`;
 
   // 1. Check Cache
-  if (searchCache.has(normalizedQuery)) {
-    console.log(`[Cache Hit] Serving search results for: "${normalizedQuery}"`);
-    return searchCache.get(normalizedQuery) as SearchResult;
+  if (searchCache.has(cacheKey)) {
+    console.log(`[Cache Hit] Serving search results for: "${normalizedQuery}" (type: ${type})`);
+    return searchCache.get(cacheKey) as SearchResult;
   }
 
-  console.log(`[Cache Miss] Fetching fresh data for: "${normalizedQuery}"`);
+  console.log(`[Cache Miss] Fetching fresh data for: "${normalizedQuery}" (type: ${type})`);
 
   const [concerts, spotifyArtists] = await Promise.all([
-    // Search Concerts (DB)
-    prisma.concert.findMany({
-      where: {
-        OR: [
-          { prfnm: { contains: normalizedQuery, mode: 'insensitive' } },
-          { fcltynm: { contains: normalizedQuery, mode: 'insensitive' } },
-        ],
-      },
-      take: 5,
-      select: {
-        id: true,
-        prfnm: true,
-        poster: true,
-        prfpdfrom: true,
-        prfpdto: true,
-        fcltynm: true,
-        prfstate: true,
-      },
-      orderBy: {
-        prfpdfrom: 'desc',
-      },
-    }),
-    // Search Artists (Spotify API)
-    SpotifyService.searchArtists(normalizedQuery, 5),
+    // Search Concerts (DB) - Run only if type is 'all' or 'concert'
+    type === 'all' || type === 'concert'
+      ? prisma.concert.findMany({
+          where: {
+            OR: [
+              { prfnm: { contains: normalizedQuery, mode: 'insensitive' } },
+              { fcltynm: { contains: normalizedQuery, mode: 'insensitive' } },
+            ],
+          },
+          take: 5,
+          select: {
+            id: true,
+            prfnm: true,
+            poster: true,
+            prfpdfrom: true,
+            prfpdto: true,
+            fcltynm: true,
+            prfstate: true,
+          },
+          orderBy: {
+            prfpdfrom: 'desc',
+          },
+        })
+      : Promise.resolve([]),
+    // Search Artists (Spotify API) - Run only if type is 'all' or 'artist'
+    type === 'all' || type === 'artist'
+      ? SpotifyService.searchArtists(normalizedQuery, 5)
+      : Promise.resolve([]),
   ]);
 
   const result: SearchResult = {
@@ -66,7 +74,7 @@ export async function search(query: string): Promise<SearchResult> {
   };
 
   // 2. Set Cache
-  searchCache.set(normalizedQuery, result);
+  searchCache.set(cacheKey, result);
 
   return result;
 }
