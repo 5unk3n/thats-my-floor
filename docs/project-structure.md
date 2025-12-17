@@ -30,7 +30,7 @@ concert-notification-service/
 │   ├── shared/                 # [Shared] 재사용 가능한 UI 및 유틸리티
 │   │   ├── components/         # UI Library (Button, Modal etc.)
 │   │   ├── hooks/              # Utility Hooks
-│   │   ├── lib/                # Utils (prisma, date-fns)
+│   │   ├── lib/                # Utils (prisma, date-fns, lru-cache)
 │   │   └── providers/          # Global Providers (QueryClient, Session)
 │   ├── types/                  # Global Types (declarations)
 │   └── proxy.ts                # [Interceptor] Lightweight Request Proxy

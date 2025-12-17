@@ -15,7 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 
-export function Header() {
+interface HeaderProps {
+  searchSlot?: React.ReactNode;
+}
+
+export function Header({ searchSlot }: HeaderProps) {
   const { data: session } = useSession();
 
   return (
@@ -32,6 +36,7 @@ export function Header() {
             {/* Add other nav items if needed */}
           </nav>
         </div>
+        <div className="mx-4 flex flex-1 items-center justify-center">{searchSlot}</div>
         <div className="flex items-center space-x-2">
           {session ? (
             <>
