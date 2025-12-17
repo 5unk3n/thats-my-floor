@@ -3,7 +3,15 @@ import Link from 'next/link';
 
 import ArtistCard from '@/features/artists/components/ArtistCard';
 import { getFollowedArtists } from '@/features/artists/server/actions';
+import { SearchInput } from '@/features/search/components/SearchInput';
 import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/shared/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +42,21 @@ export default async function FollowedArtistsPage() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>아티스트 추가 방법</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>🔍 검색해서 추가하기 (준비중)</DropdownMenuItem>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  🔍 검색해서 추가하기
+                </DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>아티스트 검색</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center space-x-2 py-4">
+                  <SearchInput />
+                </div>
+              </DialogContent>
+            </Dialog>
             <DropdownMenuItem asChild>
               <Link href="/mypage/spotify-sync" className="cursor-pointer">
                 🟢 스포티파이 가져오기
@@ -51,9 +73,19 @@ export default async function FollowedArtistsPage() {
             좋아하는 아티스트를 추가하고 공연 알림을 받아보세요!
           </p>
           <div className="flex justify-center gap-4">
-            <Button variant="outline" disabled>
-              아티스트 검색
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">아티스트 검색</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>아티스트 검색</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center space-x-2 py-4">
+                  <SearchInput />
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button asChild className="bg-[#1DB954] hover:bg-[#1ed760] text-white border-0">
               <Link href="/mypage/spotify-sync">스포티파이 연동</Link>
             </Button>
