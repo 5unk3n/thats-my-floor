@@ -207,7 +207,7 @@ export async function getConcerts(params: {
     });
 
     return concerts.map((item) => ({
-      id: item.kopisId,
+      id: item.id,
       title: item.title,
       startDate: item.startDate.toISOString().slice(0, 10).replace(/-/g, '.'),
       endDate: item.endDate.toISOString().slice(0, 10).replace(/-/g, '.'),

@@ -59,7 +59,7 @@ export async function search(
 
   const result: SearchResult = {
     concerts: concerts.map((c) => ({
-      id: c.kopisId, // Use kopisId for consistency
+      id: c.id, // Use UUID for consistency
       title: c.title,
       posterUrl: c.posterUrl,
       startDate: c.startDate,

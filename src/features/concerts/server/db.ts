@@ -1,6 +1,5 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 
-import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
 export interface Concert {
@@ -34,72 +33,73 @@ export const concertService = {
     page: number;
     size: number;
   }): Promise<Concert[]> => {
-    const response = await kopisClient.getConcertList({
-      stdate: params.startDate.replace(/-/g, ''),
-      eddate: params.endDate.replace(/-/g, ''),
-      cpage: params.page.toString(),
-      rows: params.size.toString(),
+    const concerts = await prisma.concert.findMany({
+      where: {
+        endDate: { gte: new Date(params.startDate) },
+        startDate: { lte: new Date(params.endDate) },
+      },
+      skip: (params.page - 1) * params.size,
+      take: params.size,
+      orderBy: { startDate: 'desc' },
     });
 
-    const db = response.dbs?.db;
-    if (!db) return [];
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0].replace(/-/g, '.');
+    };
 
-    const list = Array.isArray(db) ? db : [db];
-
-    return list.map((item) => ({
-      id: item.mt20id,
-      title: item.prfnm,
-      posterUrl: item.poster,
-      startDate: item.prfpdfrom,
-      endDate: item.prfpdto,
-      place: item.fcltynm,
-      status: item.prfstate,
+    return concerts.map((item) => ({
+      id: item.id,
+      title: item.title,
+      posterUrl: item.posterUrl || '',
+      startDate: formatDate(item.startDate),
+      endDate: formatDate(item.endDate),
+      place: item.place,
+      status: item.status || 'OPEN',
     }));
   },
 
   getConcertDetail: async (id: string): Promise<ConcertDetail | null> => {
     try {
-      const response = await kopisClient.getConcertDetail(id);
-      const item = response.dbs?.db;
+      const concert = await prisma.concert.findUnique({
+        where: { id },
+        include: {
+          artists: {
+            include: {
+              artist: true,
+            },
+          },
+        },
+      });
 
-      if (!item) return null;
+      if (!concert) return null;
 
-      // Parse relates (booking links)
-      const relatesData = item.relates?.relate;
+      // Parse relates (booking links) safely
       let relates: BookingLink[] = [];
-
-      if (relatesData) {
-        if (Array.isArray(relatesData)) {
-          relates = relatesData.map((r) => ({
-            name: r.relatenm,
-            url: r.relateurl,
-          }));
-        } else if (relatesData.relatenm && relatesData.relateurl) {
-          relates = [{ name: relatesData.relatenm, url: relatesData.relateurl }];
-        }
+      if (concert.relates && Array.isArray(concert.relates)) {
+        relates = concert.relates as unknown as BookingLink[];
       }
 
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0].replace(/-/g, '.');
+      };
+
       return {
-        id: item.mt20id,
-        title: item.prfnm,
-        posterUrl: item.poster,
-        startDate: item.prfpdfrom,
-        endDate: item.prfpdto,
-        place: item.fcltynm,
-        status: item.prfstate,
-        runtime: item.prfruntime,
-        price: item.pcseguidance,
-        description: item.sty,
-        images: Array.isArray(item.styurls?.styurl)
-          ? item.styurls.styurl
-          : item.styurls?.styurl
-            ? [item.styurls.styurl]
-            : [],
-        schedule: item.dtguidance,
+        id: concert.id,
+        title: concert.title,
+        posterUrl: concert.posterUrl || '',
+        startDate: formatDate(concert.startDate),
+        endDate: formatDate(concert.endDate),
+        place: concert.place,
+        status: concert.status || 'OPEN',
+        runtime: concert.runtime || '',
+        price: concert.price || '',
+        description: concert.description || '',
+        images: concert.images,
+        schedule: concert.schedule || '',
         relates,
       };
     } catch (error) {
-      console.error('Failed to fetch concert detail:', error);
+      console.error('Failed to fetch concert detail from DB:', error);
       return null;
     }
   },
