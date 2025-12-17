@@ -3,11 +3,9 @@ export interface Concert {
   title: string;
   startDate: string;
   endDate: string;
-  venue: string;
+  place: string;
   posterUrl: string;
-  genre: string;
-  state: string;
-  openRun: boolean;
+  status: string;
 }
 
 export interface ConcertFilterState {
@@ -38,6 +36,6 @@ export const REGIONS = [
 
 export const CONCERT_TYPES = [
   { code: 'DOMESTIC', name: '국내공연' },
-  { code: 'VISIT', name: '내한공연' },
+  { code: 'GLOBAL', name: '내한공연' },
   { code: 'FESTIVAL', name: '페스티벌' },
 ];

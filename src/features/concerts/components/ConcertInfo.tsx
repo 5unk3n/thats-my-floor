@@ -1,30 +1,23 @@
-import Link from 'next/link';
+import { ExternalLink } from 'lucide-react';
 
+import { ConcertDetail } from '@/features/concerts/server/db';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { KopisConcertDetailResponse } from '@/shared/lib/kopis/types';
-
-type ConcertDetailData = KopisConcertDetailResponse['dbs']['db'];
 
 interface ConcertInfoProps {
-  concert: ConcertDetailData;
+  concert: ConcertDetail;
 }
 
 export function ConcertInfo({ concert }: ConcertInfoProps) {
-  // Get all booking links (handle both single object and array)
-  const relateData = concert.relates?.relate;
-  const bookingLinks = relateData ? (Array.isArray(relateData) ? relateData : [relateData]) : [];
-
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-          <CardTitle className="text-2xl font-bold break-keep">{concert.prfnm}</CardTitle>
+          <CardTitle className="text-2xl font-bold break-keep">{concert.title}</CardTitle>
           <div className="flex gap-2 shrink-0">
-            <Badge variant="outline">{concert.genrenm}</Badge>
-            <Badge variant={concert.prfstate === '공연중' ? 'default' : 'secondary'}>
-              {concert.prfstate}
+            <Badge variant={concert.status === '공연중' ? 'default' : 'secondary'}>
+              {concert.status}
             </Badge>
           </div>
         </div>
@@ -34,48 +27,33 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">공연 기간</h4>
             <p className="font-medium">
-              {concert.prfpdfrom} ~ {concert.prfpdto}
+              {concert.startDate} ~ {concert.endDate}
             </p>
           </div>
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">공연 장소</h4>
-            <p className="font-medium">{concert.fcltynm}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">관람 연령</h4>
-            <p className="font-medium">{concert.prfage}</p>
+            <p className="font-medium">{concert.place}</p>
           </div>
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">티켓 가격</h4>
-            <p className="font-medium">{concert.pcseguidance}</p>
+            <p className="font-medium">{concert.price}</p>
           </div>
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">런타임</h4>
-            <p className="font-medium">{concert.prfruntime}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">출연진</h4>
-            <p className="font-medium">{concert.prfcast || '-'}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">제작진</h4>
-            <p className="font-medium">{concert.prfcrew || '-'}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">제작사</h4>
-            <p className="font-medium">{concert.entrpsnm || '-'}</p>
+            <p className="font-medium">{concert.runtime}</p>
           </div>
         </div>
 
-        {bookingLinks.length > 0 && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">예매하기</h4>
-            <div className="flex flex-col gap-2">
-              {bookingLinks.map((booking, index) => (
-                <Button key={index} asChild variant="default" size="lg">
-                  <Link href={booking.relateurl} target="_blank" rel="noopener noreferrer">
-                    {booking.relatenm}
-                  </Link>
+        {concert.relates && concert.relates.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">예매처</h4>
+            <div className="flex flex-wrap gap-2">
+              {concert.relates.map((link, index) => (
+                <Button key={index} variant="outline" size="sm" asChild>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.name}
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
                 </Button>
               ))}
             </div>

@@ -59,7 +59,7 @@ export class AnalysisService {
         }
 
         // 1. AI Search (Perplexity) - Get Array of Artist Names
-        const artistNames = await PerplexityService.searchConcertLineup(concert.prfnm);
+        const artistNames = await PerplexityService.searchConcertLineup(concert.title);
         // Clean and unique names
         const uniqueNames = Array.from(new Set(artistNames.map((n) => n.trim()).filter(Boolean)));
 

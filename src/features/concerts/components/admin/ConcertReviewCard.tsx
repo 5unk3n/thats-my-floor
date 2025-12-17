@@ -100,26 +100,25 @@ export function ConcertReviewCard({ concert, mode }: ConcertReviewCardProps) {
       {/* Left: KOPIS Info */}
       <div className="w-full md:w-1/3 bg-slate-50 p-4 border-r flex flex-col">
         <div className="relative w-full aspect-3/4 mb-4 bg-gray-200 rounded shrink-0">
-          {concert.poster && (
+          {concert.posterUrl && (
             <Image
-              src={concert.poster}
-              alt={concert.prfnm}
+              src={concert.posterUrl}
+              alt={concert.title}
               fill
               className="object-cover rounded"
               unoptimized
             />
           )}
         </div>
-        <h3 className="font-bold text-lg mb-2">{concert.prfnm}</h3>
+        <h3 className="font-bold text-lg mb-2">{concert.title}</h3>
         <div className="text-sm text-gray-600 space-y-1">
           <p>
-            📅 {new Date(concert.prfpdfrom).toLocaleDateString()} ~{' '}
-            {new Date(concert.prfpdto).toLocaleDateString()}
+            📅 {new Date(concert.startDate).toLocaleDateString()} ~{' '}
+            {new Date(concert.endDate).toLocaleDateString()}
           </p>
-          <p>📍 {concert.fcltynm}</p>
-          <p>🎭 {concert.genrenm}</p>
+          <p>📍 {concert.place}</p>
         </div>
-        <div className="mt-4 text-xs text-gray-400 break-all">ID: {concert.mt20id}</div>
+        <div className="mt-4 text-xs text-gray-400 break-all">ID: {concert.kopisId}</div>
 
         {mode === 'draft' && (
           <div className="mt-auto pt-4">
@@ -276,7 +275,8 @@ export function ConcertReviewCard({ concert, mode }: ConcertReviewCardProps) {
                  Currently moved to Left Column for visibility. */}
             <div className="text-center">
               <p className="mb-2">출연진 정보 (KOPIS):</p>
-              <p className="font-medium text-black mb-4">{concert.prfcast || '정보 없음'}</p>
+              {/* prfcast removed from schema, maybe fetch from detail if needed or remove this display */}
+              <p className="font-medium text-black mb-4">정보 없음 (schema updated)</p>
               <p className="text-xs">왼쪽의 [AI 분석 요청] 버튼을 눌러주세요.</p>
             </div>
           </div>

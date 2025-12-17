@@ -33,9 +33,9 @@ export function SearchResults({ results, onSelect }: SearchResultsProps) {
                   className="flex w-full items-center gap-3 px-3 py-2 hover:bg-accent hover:text-accent-foreground text-left"
                 >
                   <div className="relative h-10 w-8 shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
-                    {concert.poster ? (
+                    {concert.posterUrl ? (
                       <Image
-                        src={concert.poster}
+                        src={concert.posterUrl}
                         alt={concert.title}
                         fill
                         className="object-cover"

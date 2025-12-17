@@ -24,8 +24,10 @@ export async function getNotifications(page = 1, limit = 20) {
         concert: {
           select: {
             id: true,
-            poster: true,
-            prfnm: true,
+            title: true,
+            posterUrl: true,
+
+            startDate: true,
           },
         },
       },
@@ -43,7 +45,17 @@ export async function getNotifications(page = 1, limit = 20) {
   });
 
   return {
-    notifications,
+    notifications: notifications.map((n) => ({
+      ...n,
+      concert: n.concert
+        ? {
+            id: n.concert.id,
+            title: n.concert.title,
+            posterUrl: n.concert.posterUrl,
+            openDate: n.concert.startDate,
+          }
+        : null,
+    })),
     total,
     totalPages: Math.ceil(total / limit),
     currentPage: page,

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const domesticConcerts = await getConcerts({ type: 'DOMESTIC', page: 1, size: 8 });
-  const intlConcerts = await getConcerts({ type: 'VISIT', page: 1, size: 8 });
+  const intlConcerts = await getConcerts({ type: 'GLOBAL', page: 1, size: 8 });
   const festivals = await getConcerts({ type: 'FESTIVAL', page: 1, size: 8 });
 
   return (
@@ -27,7 +27,7 @@ export default async function Home() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">내한 공연</h2>
           <Button variant="link" asChild>
-            <Link href="/concerts?type=VISIT">더보기</Link>
+            <Link href="/concerts?type=GLOBAL">더보기</Link>
           </Button>
         </div>
         <ConcertList concerts={intlConcerts} />

@@ -1,4 +1,3 @@
-
 export const checkTicketOpenAndSendNotifications = async () => {
   console.log(
     '[TicketOpenScheduler] Feature disabled due to schema changes (ticketOpenDate removed).'
@@ -81,7 +80,7 @@ export const checkTicketOpenAndSendNotifications = async () => {
       }
 
       const title = '티켓 오픈 임박!';
-      const body = `'${concert.artist?.name}'의 공연 '${concert.prfnm}' 티켓 오픈이 1시간 남았습니다.`;
+      const body = `'${concert.title}' ticket opening tomorrow!`;
 
       // Send FCM
       try {

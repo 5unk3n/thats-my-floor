@@ -18,7 +18,7 @@ export default async function ConcertsPage({ searchParams }: ConcertsPageProps) 
   const { page: pageParam, region, type } = await searchParams;
   const page = Number(pageParam) || 1;
 
-  const validTypes = ['DOMESTIC', 'VISIT', 'FESTIVAL'] as const;
+  const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
   const concertType = validTypes.find((t) => t === type) || undefined;
 
   const concerts = await getConcerts({

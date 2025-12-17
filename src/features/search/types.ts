@@ -6,7 +6,7 @@ export interface SearchResult {
 export interface SearchConcert {
   id: string;
   title: string;
-  poster: string | null;
+  posterUrl: string | null;
   startDate: Date;
   endDate: Date;
   place: string;

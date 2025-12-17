@@ -110,36 +110,33 @@ model ConcertArtist {
 
 model Concert {
   id             String    @id @default(uuid())
-  mt20id         String    @unique // 공연 ID
-  mt10id         String?   // 공연시설 ID
-  prfnm          String    // 공연명
-  prfpdfrom      DateTime  // 공연 시작일
-  prfpdto        DateTime  // 공연 종료일
-  fcltynm        String    // 공연 시설명
-  poster         String?   // 포스터 이미지 경로
-  genrenm        String?   // 공연 장르명
-  prfstate       String?   // 공연 상태
-  openrun        Boolean   @default(false) // 오픈런 여부
-  area           String?   // 지역 (서울, 경기, 인천 등)
-  
-  // Extended KOPIS fields
-  prfcast        String?   // 공연출연진
-  prfcrew        String?   // 공연제작진
-  prfruntime     String?   // 공연 런타임
-  prfage         String?   // 관람 연령
-  entrpsnm       String?   // 제작사
-  pcseguidance   String?   // 티켓 가격
-  dtguidance     String?   // 공연 시간
-  sty            String?   // 줄거리
-  styurls        String[]  // 소개 이미지 목록
-  relates        Json?     // 예매처 목록 (JSON array: { relatenm, relateurl })
-  
-  visit          Boolean   @default(false) // 내한공연 여부
-  festival       Boolean   @default(false) // 페스티벌 여부
+  kopisId        String    @unique @map("kopis_id") // 외부 식별자 (KOPIS ID)
 
-  // Internal Logic Fields
-  // artistId field REMOVED
+  // 1. Core Info
+  title          String    // 공연명
+  startDate      DateTime  @map("start_date") // 공연 시작일
+  endDate        DateTime  @map("end_date")   // 공연 종료일
+  place          String    // 공연 시설명
+  posterUrl      String?   @map("poster_url")    // 포스터 이미지 경로
+  status         String?   // 공연 상태
   
+  // 2. Details
+  description    String?   // 줄거리
+  images         String[]  // 소개 이미지 목록
+  price          String?   // 티켓 가격
+  schedule       String?   // 공연 시간
+  runtime        String?   // 공연 런타임
+  
+  // 3. Flags
+  isGlobal       Boolean   @default(false) @map("is_global")    // 내한공연 여부
+  isFestival     Boolean   @default(false) @map("is_festival") // 페스티벌 여부
+  
+  region         String?   // 지역 (서울, 경기, 인천 등)
+  
+  // 4. Booking
+  relates        Json? // 예매처 목록 (JSON array or object)
+  
+  // Internal Logic Fields
   publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
   analysisResult Json?         @map("analysis_result")
   
@@ -147,8 +144,8 @@ model Concert {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   artists        ConcertArtist[]
-  setlists      Setlist[]
-  notifications Notification[]
+  setlists       Setlist[]
+  notifications  Notification[]
 
   @@map("concerts")
 }

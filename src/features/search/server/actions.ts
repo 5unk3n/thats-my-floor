@@ -31,22 +31,23 @@ export async function search(
       ? prisma.concert.findMany({
           where: {
             OR: [
-              { prfnm: { contains: normalizedQuery, mode: 'insensitive' } },
-              { fcltynm: { contains: normalizedQuery, mode: 'insensitive' } },
+              { title: { contains: normalizedQuery, mode: 'insensitive' } },
+              { place: { contains: normalizedQuery, mode: 'insensitive' } },
             ],
           },
           take: 5,
           select: {
             id: true,
-            prfnm: true,
-            poster: true,
-            prfpdfrom: true,
-            prfpdto: true,
-            fcltynm: true,
-            prfstate: true,
+            kopisId: true,
+            title: true,
+            posterUrl: true,
+            startDate: true,
+            endDate: true,
+            place: true,
+            status: true,
           },
           orderBy: {
-            prfpdfrom: 'desc',
+            startDate: 'desc',
           },
         })
       : Promise.resolve([]),
@@ -58,13 +59,13 @@ export async function search(
 
   const result: SearchResult = {
     concerts: concerts.map((c) => ({
-      id: c.id,
-      title: c.prfnm,
-      poster: c.poster,
-      startDate: c.prfpdfrom,
-      endDate: c.prfpdto,
-      place: c.fcltynm,
-      status: c.prfstate,
+      id: c.kopisId, // Use kopisId for consistency
+      title: c.title,
+      posterUrl: c.posterUrl,
+      startDate: c.startDate,
+      endDate: c.endDate,
+      place: c.place,
+      status: c.status,
     })),
     artists: spotifyArtists.map((a) => ({
       id: a.id,
