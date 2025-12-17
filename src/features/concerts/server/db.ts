@@ -24,6 +24,7 @@ export interface ConcertDetail extends Concert {
   images: string[];
   schedule: string;
   relates: BookingLink[];
+  artists: { id: string; name: string }[];
 }
 
 export const concertService = {
@@ -97,6 +98,7 @@ export const concertService = {
         images: concert.images,
         schedule: concert.schedule || '',
         relates,
+        artists: concert.artists.map((a) => ({ id: a.artist.id, name: a.artist.name })),
       };
     } catch (error) {
       console.error('Failed to fetch concert detail from DB:', error);

@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 import { ConcertDetail } from '@/features/concerts/server/db';
 import { Badge } from '@/shared/components/ui/badge';
@@ -41,6 +42,28 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">런타임</h4>
             <p className="font-medium">{concert.runtime}</p>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-1">출연진</h4>
+            <div className="flex flex-wrap gap-2 text-base font-medium">
+              {concert.artists && concert.artists.length > 0 ? (
+                concert.artists.map((artist, index) => (
+                  <span key={artist.id}>
+                    <Link
+                      href={`/artists/${artist.id}`}
+                      className="text-primary hover:underline hover:text-primary/80 transition-colors"
+                    >
+                      {artist.name}
+                    </Link>
+                    {index < concert.artists.length - 1 && (
+                      <span className="text-muted-foreground ml-2">,</span>
+                    )}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
+            </div>
           </div>
         </div>
 
