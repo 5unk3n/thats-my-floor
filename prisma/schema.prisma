@@ -110,28 +110,28 @@ model ConcertArtist {
 
 model Concert {
   id             String    @id @default(uuid())
-  kopisId        String    @unique @map("mt20id") // 외부 식별자 (KOPIS ID)
+  kopisId        String    @unique @map("kopis_id") // 외부 식별자 (KOPIS ID)
 
   // 1. Core Info
-  title          String    @map("prfnm")     // 공연명
-  startDate      DateTime  @map("prfpdfrom") // 공연 시작일
-  endDate        DateTime  @map("prfpdto")   // 공연 종료일
-  place          String    @map("fcltynm")   // 공연 시설명
-  posterUrl      String?   @map("poster")    // 포스터 이미지 경로
-  status         String?   @map("prfstate")  // 공연 상태
+  title          String    // 공연명
+  startDate      DateTime  @map("start_date") // 공연 시작일
+  endDate        DateTime  @map("end_date")   // 공연 종료일
+  place          String    // 공연 시설명
+  posterUrl      String?   @map("poster_url")    // 포스터 이미지 경로
+  status         String?   // 공연 상태
   
   // 2. Details
-  description    String?   @map("sty")       // 줄거리
-  images         String[]  @map("styurls")   // 소개 이미지 목록
-  price          String?   @map("pcseguidance") // 티켓 가격
-  schedule       String?   @map("dtguidance")   // 공연 시간
-  runtime        String?   @map("prfruntime")   // 공연 런타임
+  description    String?   // 줄거리
+  images         String[]  // 소개 이미지 목록
+  price          String?   // 티켓 가격
+  schedule       String?   // 공연 시간
+  runtime        String?   // 공연 런타임
   
   // 3. Flags
-  isGlobal       Boolean   @default(false) @map("visit")    // 내한공연 여부
-  isFestival     Boolean   @default(false) @map("festival") // 페스티벌 여부
+  isGlobal       Boolean   @default(false) @map("is_global")    // 내한공연 여부
+  isFestival     Boolean   @default(false) @map("is_festival") // 페스티벌 여부
   
-  region         String?   @map("area")      // 지역 (서울, 경기, 인천 등) - Restored
+  region         String?   // 지역 (서울, 경기, 인천 등)
   
   // 4. Booking
   relates        Json? // 예매처 목록 (JSON array or object)
