@@ -13,13 +13,18 @@ export interface Concert {
   status: string;
 }
 
+export interface BookingLink {
+  name: string;
+  url: string;
+}
+
 export interface ConcertDetail extends Concert {
   runtime: string;
   price: string;
   description: string;
   images: string[];
   schedule: string;
-  relates?: any; // To be typed properly later or use valid Prisma JSON type
+  relates: BookingLink[];
 }
 
 export const concertService = {
@@ -59,6 +64,21 @@ export const concertService = {
 
       if (!item) return null;
 
+      // Parse relates (booking links)
+      const relatesData = item.relates?.relate;
+      let relates: BookingLink[] = [];
+
+      if (relatesData) {
+        if (Array.isArray(relatesData)) {
+          relates = relatesData.map((r) => ({
+            name: r.relatenm,
+            url: r.relateurl,
+          }));
+        } else if (relatesData.relatenm && relatesData.relateurl) {
+          relates = [{ name: relatesData.relatenm, url: relatesData.relateurl }];
+        }
+      }
+
       return {
         id: item.mt20id,
         title: item.prfnm,
@@ -76,7 +96,8 @@ export const concertService = {
             ? [item.styurls.styurl]
             : [],
         schedule: item.dtguidance,
-      } as any; // Cast to any or update ConcertDetail interface properly. I should probably update ConcertDetail too.
+        relates,
+      };
     } catch (error) {
       console.error('Failed to fetch concert detail:', error);
       return null;

@@ -12,16 +12,14 @@ export function ConcertImages({ concert }: ConcertImagesProps) {
   return (
     <div className="space-y-8">
       <div className="flex justify-center bg-muted/30 p-8 rounded-lg">
-        <div className="relative aspect-3/4 overflow-hidden rounded-md bg-gray-100">
-          {concert.posterUrl && (
-            <Image
-              src={concert.posterUrl}
-              alt={concert.title}
-              fill
-              className="object-cover"
-              priority
-            />
-          )}
+        <div className="relative w-full max-w-sm aspect-3/4 shadow-xl rounded-lg overflow-hidden">
+          <Image
+            src={concert.posterUrl}
+            alt={concert.title}
+            fill
+            className="object-cover"
+            priority
+          />
         </div>
       </div>
 
