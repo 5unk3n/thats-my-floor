@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import ArtistCard from '@/features/artists/components/ArtistCard';
 import { getFollowedArtists } from '@/features/artists/server/actions';
+import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -34,7 +35,7 @@ export default async function FollowedArtistsPage() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>아티스트 추가 방법</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>🔍 검색해서 추가하기 (준비중)</DropdownMenuItem>
+            <ArtistSearchTrigger variant="dropdown" />
             <DropdownMenuItem asChild>
               <Link href="/mypage/spotify-sync" className="cursor-pointer">
                 🟢 스포티파이 가져오기
@@ -51,9 +52,7 @@ export default async function FollowedArtistsPage() {
             좋아하는 아티스트를 추가하고 공연 알림을 받아보세요!
           </p>
           <div className="flex justify-center gap-4">
-            <Button variant="outline" disabled>
-              아티스트 검색
-            </Button>
+            <ArtistSearchTrigger variant="button" />
             <Button asChild className="bg-[#1DB954] hover:bg-[#1ed760] text-white border-0">
               <Link href="/mypage/spotify-sync">스포티파이 연동</Link>
             </Button>

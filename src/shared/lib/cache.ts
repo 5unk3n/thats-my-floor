@@ -13,4 +13,4 @@ const options = {
 };
 
 // Create a singleton cache instance for Search Results
-export const searchCache = new LRUCache<string, {}>(options);
+export const searchCache = new LRUCache<string, object>(options);

@@ -5,24 +5,29 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 
 import { Input } from '@/shared/components/ui/input';
+import { useDebounce } from '@/shared/hooks/use-debounce';
 
 import { search } from '../server/actions';
 import { SearchResult } from '../types';
 import { SearchResults } from './SearchResults';
 
-export function SearchInput() {
+interface SearchInputProps {
+  type?: 'all' | 'concert' | 'artist';
+}
+
+export function SearchInput({ type = 'all' }: SearchInputProps) {
   const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  // Custom debounce logic if hook not found, but let's check hook first.
-  // For now I'll implement standard useEffect debounce to be safe.
+  // Custom debounce logic using hook
+  const debouncedQuery = useDebounce(query, 300);
 
   React.useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (query.trim().length === 0) {
+    const fetchResults = async () => {
+      if (debouncedQuery.trim().length === 0) {
         setResults(null);
         setIsOpen(false);
         return;
@@ -30,7 +35,7 @@ export function SearchInput() {
 
       setIsLoading(true);
       try {
-        const data = await search(query);
+        const data = await search(debouncedQuery, type);
         setResults(data);
         setIsOpen(true);
       } catch (error) {
@@ -38,10 +43,10 @@ export function SearchInput() {
       } finally {
         setIsLoading(false);
       }
-    }, 300);
+    };
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    fetchResults();
+  }, [debouncedQuery, type]);
 
   const handleClear = () => {
     setQuery('');
