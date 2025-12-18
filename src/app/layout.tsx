@@ -1,11 +1,12 @@
 import './globals.css';
 
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Noto_Sans_KR } from 'next/font/google';
 
-const inter = Inter({
+const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-noto-sans-kr',
+  weight: ['400', '500', '700'],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${notoSansKr.variable} antialiased`}>
         <Providers>
           <Header searchSlot={<SearchInput />} />
           {children}
