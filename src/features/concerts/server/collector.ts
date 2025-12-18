@@ -90,11 +90,16 @@ export const collectConcerts = async () => {
           : [];
 
       // Parse relates
-      const relates = Array.isArray(detail.relates?.relate)
+      const rawRelates = Array.isArray(detail.relates?.relate)
         ? detail.relates.relate
         : detail.relates?.relate
           ? [detail.relates.relate]
           : [];
+
+      const relates = rawRelates.map((item: { relatenm: string; relateurl: string }) => ({
+        name: item.relatenm,
+        url: item.relateurl,
+      }));
 
       const savedConcert = await concertService.upsertConcert({
         kopisId: detail.mt20id,
