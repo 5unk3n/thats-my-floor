@@ -10,15 +10,20 @@ export default function proxy(request: NextRequest) {
 
   // 2. 인증 리다이렉트 (Lightweight Auth Check)
   // NextAuth 기본 쿠키 이름 확인 (프로덕션/개발 환경 대응)
-  const hasSession = 
-    request.cookies.has('next-auth.session-token') || 
+  const hasSession =
+    request.cookies.has('next-auth.session-token') ||
     request.cookies.has('__Secure-next-auth.session-token');
-    
+
+  const isLoginPage = request.nextUrl.pathname === '/login';
+
+  // 인증된 사용자가 로그인 페이지 접근 시 홈으로 리다이렉트
+  if (isLoginPage && hasSession) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   // 보호된 경로 정의
   const protectedPaths = ['/mypage', '/api/artists/follow'];
-  const isProtected = protectedPaths.some((path) => 
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
   if (isProtected && !hasSession) {
     const loginUrl = new URL('/login', request.url);
