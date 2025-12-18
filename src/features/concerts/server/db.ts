@@ -77,8 +77,15 @@ export const concertService = {
       // Parse relates (booking links) safely
       let relates: BookingLink[] = [];
       if (concert.relates && Array.isArray(concert.relates)) {
-        relates = (concert.relates as any[])
-          .map((item: any) => ({
+        relates = (
+          concert.relates as Array<{
+            relatenm?: string;
+            name?: string;
+            relateurl?: string;
+            url?: string;
+          }>
+        )
+          .map((item) => ({
             name: item.relatenm || item.name || '',
             url: item.relateurl || item.url || '',
           }))
