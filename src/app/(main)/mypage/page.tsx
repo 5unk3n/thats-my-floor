@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
 import SpotifyConnect from '@/features/artists/components/SpotifyConnect';
+import LinkedAccounts from '@/features/auth/components/LinkedAccounts';
+import { getLinkedAccounts } from '@/features/auth/server/actions';
 import NotificationSettings from '@/features/notifications/components/NotificationSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { authOptions } from '@/shared/lib/auth';
@@ -15,6 +17,7 @@ export const metadata = {
 
 export default async function MyPage() {
   const session = await getServerSession(authOptions);
+  const linkedProviders = await getLinkedAccounts();
 
   if (!session?.user) {
     return <div>로그인이 필요합니다.</div>;
@@ -59,9 +62,9 @@ export default async function MyPage() {
           </Link>
         </div>
 
-        <div>
+        <div className="space-y-6">
+          <LinkedAccounts linkedProviders={linkedProviders} />
           <SpotifyConnect isConnected={!!session.user.accessToken} />
-          <div className="h-6" />
           <NotificationSettings />
         </div>
       </div>
