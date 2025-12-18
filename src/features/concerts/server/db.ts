@@ -77,7 +77,19 @@ export const concertService = {
       // Parse relates (booking links) safely
       let relates: BookingLink[] = [];
       if (concert.relates && Array.isArray(concert.relates)) {
-        relates = concert.relates as unknown as BookingLink[];
+        relates = (
+          concert.relates as Array<{
+            relatenm?: string;
+            name?: string;
+            relateurl?: string;
+            url?: string;
+          }>
+        )
+          .map((item) => ({
+            name: item.relatenm || item.name || '',
+            url: item.relateurl || item.url || '',
+          }))
+          .filter((link) => link.name && link.url);
       }
 
       const formatDate = (date: Date) => {
