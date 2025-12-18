@@ -90,6 +90,9 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
     'generated/**',
+    'public/sw.js',
+    'public/sw.js.map',
+    'public/workbox-*.js',
   ]),
 ]);
 
