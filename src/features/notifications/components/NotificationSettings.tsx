@@ -75,6 +75,7 @@ export default function NotificationSettings() {
         <CardDescription>원하는 알림을 선택하여 받아보세요.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Ticket Open Alert - Hidden for MVP
         <div className="flex items-center justify-between space-x-2">
           <div className="space-y-1">
             <Label htmlFor="ticket-open">티켓 오픈 알림</Label>
@@ -88,6 +89,7 @@ export default function NotificationSettings() {
             onCheckedChange={() => handleToggle('ticketOpenAlert')}
           />
         </div>
+        */}
 
         <div className="flex items-center justify-between space-x-2">
           <div className="space-y-1">
@@ -103,6 +105,7 @@ export default function NotificationSettings() {
           />
         </div>
 
+        {/* Email Notification - Hidden for MVP
         <div className="flex items-center justify-between space-x-2">
           <div className="space-y-1">
             <Label htmlFor="email-notification">이메일 알림</Label>
@@ -114,6 +117,7 @@ export default function NotificationSettings() {
             onCheckedChange={() => handleToggle('emailNotification')}
           />
         </div>
+        */}
       </CardContent>
     </Card>
   );
