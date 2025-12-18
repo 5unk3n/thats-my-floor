@@ -11,8 +11,8 @@ interface ConcertCardProps {
 
 export function ConcertCard({ concert }: ConcertCardProps) {
   return (
-    <Link href={`/concerts/${concert.id}`} className="group block">
-      <Card className="relative flex flex-col overflow-hidden transition-all hover:shadow-md">
+    <Link href={`/concerts/${concert.id}`} className="group block h-full">
+      <Card className="relative flex h-full flex-col overflow-hidden transition-all hover:shadow-md">
         <div className="relative aspect-3/4 w-full overflow-hidden bg-gray-100">
           {concert.posterUrl ? (
             <Image
@@ -32,22 +32,10 @@ export function ConcertCard({ concert }: ConcertCardProps) {
           </div>
         </div>
 
-        <CardContent className="flex flex-1 flex-col p-4">
-          <h3 className="mb-2 line-clamp-2 text-lg font-bold text-gray-900 dark:text-white">
+        <CardContent className="flex flex-1 flex-col justify-center p-3">
+          <h3 className="line-clamp-2 text-sm font-bold text-gray-900 dark:text-white">
             {concert.title}
           </h3>
-          <div className="mt-auto space-y-1 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span>📅</span>
-              <span>
-                {concert.startDate} ~ {concert.endDate}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>📍</span>
-              <span className="line-clamp-1">{concert.place}</span>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </Link>
