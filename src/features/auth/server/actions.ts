@@ -19,3 +19,16 @@ export async function getLinkedAccounts() {
 
   return accounts.map((account) => account.provider);
 }
+
+export async function getUserProfile() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  return prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, name: true, email: true, image: true },
+  });
+}
