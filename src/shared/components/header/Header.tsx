@@ -27,14 +27,9 @@ export function Header({ searchSlot }: HeaderProps) {
       <div className="container flex h-14 items-center justify-between">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="text-xl font-bold">Concert App</span>
+            <span className="text-xl font-bold">That&apos;s My Floor</span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground">
-              홈
-            </Link>
-            {/* Add other nav items if needed */}
-          </nav>
+          {/* Logo already links to home */}
         </div>
         <div className="mx-4 flex flex-1 items-center justify-center">{searchSlot}</div>
         <div className="flex items-center space-x-2">
