@@ -1,5 +1,13 @@
+import './globals.css';
+
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
+
+import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
+import { SearchInput } from '@/features/search/components/SearchInput';
+import { Header } from '@/shared/components/header/Header';
+import { Toaster } from '@/shared/components/ui/sonner';
+import Providers from '@/shared/providers';
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
@@ -49,12 +57,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#000000',
 };
-
-import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
-import { SearchInput } from '@/features/search/components/SearchInput';
-import { Header } from '@/shared/components/header/Header';
-import { Toaster } from '@/shared/components/ui/sonner';
-import Providers from '@/shared/providers';
 
 export default function RootLayout({
   children,
