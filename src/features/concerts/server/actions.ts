@@ -69,6 +69,20 @@ export async function rejectConcertAction(concertId: string) {
   }
 }
 
+export async function restoreToReviewAction(concertId: string) {
+  try {
+    await prisma.concert.update({
+      where: { id: concertId },
+      data: { publishStatus: PublishStatus.REVIEWING },
+    });
+    revalidatePath('/admin/reviews');
+    return { success: true };
+  } catch (error) {
+    console.error('Restore Failed:', error);
+    return { success: false, error: 'Restore Failed' };
+  }
+}
+
 // --- Manual Spotify Search ---
 
 export async function searchSpotifyArtistsAction(query: string): Promise<Candidate[]> {
