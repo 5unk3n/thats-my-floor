@@ -11,9 +11,9 @@ interface LinkedAccountsProps {
 }
 
 const PROVIDERS = [
-  { id: 'google', name: 'Google' },
+  // { id: 'google', name: 'Google' },
   { id: 'spotify', name: 'Spotify' },
-  { id: 'kakao', name: 'Kakao' },
+  // { id: 'kakao', name: 'Kakao' },
 ];
 
 export default function LinkedAccounts({ linkedProviders }: LinkedAccountsProps) {

@@ -20,6 +20,7 @@ export function LoginButton() {
 
   return (
     <div className="flex gap-4">
+      {/* 
       <Button onClick={() => signIn('google')} className="bg-blue-500 hover:bg-blue-600">
         Sign in with Google
       </Button>
@@ -29,6 +30,7 @@ export function LoginButton() {
       >
         Sign in with Kakao
       </Button>
+      */}
       <Button onClick={() => signIn('spotify')} className="bg-green-500 hover:bg-green-600">
         Sign in with Spotify
       </Button>
