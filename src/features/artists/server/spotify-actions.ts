@@ -46,8 +46,19 @@ export async function fetchMySpotifyArtists(after?: string): Promise<{
         followers: {
           where: { userId: session.user.id },
         },
+        concerts: {
+          include: {
+            concert: {
+              select: {
+                endDate: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    const now = new Date();
 
     // 3. Merge data
     const result: SpotifySyncArtist[] = spotifyArtists.map((artist) => {
@@ -55,7 +66,15 @@ export async function fetchMySpotifyArtists(after?: string): Promise<{
 
       let status: SyncArtistStatus = 'new';
       if (existing) {
-        status = existing.followers.length > 0 ? 'following' : 'exists';
+        if (existing.followers.length > 0) {
+          status = 'following';
+        } else {
+          // Check if there is any upcoming concert
+          const hasUpcomingConcert = existing.concerts.some(
+            ({ concert }) => concert.endDate >= now
+          );
+          status = hasUpcomingConcert ? 'exists' : 'new';
+        }
       }
 
       return {

@@ -204,7 +204,7 @@ export default function SpotifySyncList({
                         variant="outline"
                         className="text-[10px] h-5 px-1 border-primary text-primary"
                       >
-                        공연 정보 있음
+                        공연 예정
                       </Badge>
                     )}
                   </div>
