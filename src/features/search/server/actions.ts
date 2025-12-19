@@ -30,6 +30,7 @@ export async function search(
     type === 'all' || type === 'concert'
       ? prisma.concert.findMany({
           where: {
+            publishStatus: 'PUBLISHED',
             OR: [
               { title: { contains: normalizedQuery, mode: 'insensitive' } },
               { place: { contains: normalizedQuery, mode: 'insensitive' } },
