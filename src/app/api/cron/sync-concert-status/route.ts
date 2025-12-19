@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { SyncService } from '@/features/concerts/server/services/sync-service';
+import { syncAllConcertStatus } from '@/features/concerts/server/services/sync.service';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const result = await SyncService.syncAllConcertStatus();
+    const result = await syncAllConcertStatus();
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error('[Cron] Concert status sync failed:', error);
