@@ -50,9 +50,12 @@ if [ -n "$1" ]; then
     ticket|ticket-open)
       run_cron "ticket-open" "Ticket Open Notification"
       ;;
+    sync|sync-concert-status)
+      run_cron "sync-concert-status" "Sync Concert Status"
+      ;;
     *)
       echo "Unknown job: $1"
-      echo "Available jobs: collect-concerts, ticket-open"
+      echo "Available jobs: collect-concerts, ticket-open, sync-concert-status"
       exit 1
       ;;
   esac
@@ -65,6 +68,9 @@ else
   echo ""
   
   run_cron "ticket-open" "Ticket Open Notification"
+  echo ""
+
+  run_cron "sync-concert-status" "Sync Concert Status"
 fi
 
 echo "========================================="
