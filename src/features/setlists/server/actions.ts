@@ -4,7 +4,12 @@ import { prisma } from '@/shared/lib/prisma';
 
 import { CreateSetlistInput, Setlist } from '../types';
 
-export async function getSetlistByConcertId(concertId: string): Promise<Setlist | null> {
+import { ActionResponse } from '@/shared/types/action-response';
+import { ERROR_CODES } from '@/shared/constants/error-codes';
+
+export async function getSetlistByConcertId(
+  concertId: string
+): Promise<ActionResponse<Setlist | null>> {
   try {
     const setlist = await prisma.setlist.findFirst({
       where: { concertId },
@@ -17,14 +22,17 @@ export async function getSetlistByConcertId(concertId: string): Promise<Setlist 
       },
     });
 
-    return setlist;
+    return { success: true, data: setlist };
   } catch (error) {
     console.error('Failed to fetch setlist:', error);
-    return null;
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Failed to fetch setlist' },
+    };
   }
 }
 
-export async function createSetlist(data: CreateSetlistInput): Promise<Setlist | null> {
+export async function createSetlist(data: CreateSetlistInput): Promise<ActionResponse<Setlist>> {
   try {
     const setlist = await prisma.setlist.create({
       data: {
@@ -46,9 +54,12 @@ export async function createSetlist(data: CreateSetlistInput): Promise<Setlist |
       },
     });
 
-    return setlist;
+    return { success: true, data: setlist };
   } catch (error) {
     console.error('Failed to create setlist:', error);
-    return null;
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Failed to create setlist' },
+    };
   }
 }
