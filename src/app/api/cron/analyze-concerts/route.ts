@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { AnalysisService } from '@/features/concerts/server/services/analysis.service';
+import * as AnalysisService from '@/features/concerts/server/services/analysis.service';
 
 /**
  * Cron endpoint for running the concert-artist analysis pipeline.

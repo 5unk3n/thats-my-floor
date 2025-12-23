@@ -4,11 +4,12 @@ import { Prisma, PublishStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 // eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
-import { notificationService } from '@/features/notifications/server/services';
+import * as notificationService from '@/features/notifications/server/services/notification.service';
 import { prisma } from '@/shared/lib/prisma';
 
 import { Concert } from '../types';
-import { AnalysisService, Candidate } from './services/analysis.service';
+import * as AnalysisService from './services/analysis.service';
+import { Candidate } from './services/analysis.service';
 
 // --- Admin Pipeline Actions ---
 

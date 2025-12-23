@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { collectConcerts } from '@/features/concerts/server/collector';
-import { notificationService } from '@/features/notifications/server/services';
+import * as notificationService from '@/features/notifications/server/services/notification.service';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
