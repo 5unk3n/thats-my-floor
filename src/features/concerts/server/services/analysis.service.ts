@@ -13,11 +13,6 @@ export interface Candidate {
   genres?: string[];
 }
 
-interface AnalysisResult {
-  candidates: Candidate[];
-  searchKeyword: string;
-}
-
 /**
  * Step 1: Request Analysis (Selection)
  * Admin selects a Draft concert to be analyzed.
@@ -84,7 +79,7 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
               genres: c.genres,
             })),
           });
-        } catch (e) {
+        } catch {
           // Fallback for this name
           groupedResults.push({ query: name, candidates: [] });
         }

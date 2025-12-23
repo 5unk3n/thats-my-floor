@@ -2,11 +2,10 @@
 
 import { getServerSession } from 'next-auth';
 
+import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { prisma } from '@/shared/lib/prisma';
-
 import { ActionResponse } from '@/shared/types/action-response';
-import { ERROR_CODES } from '@/shared/constants/error-codes';
 
 export async function getLinkedAccounts(): Promise<ActionResponse<string[]>> {
   const session = await getServerSession(authOptions);
@@ -36,7 +35,7 @@ export async function getLinkedAccounts(): Promise<ActionResponse<string[]>> {
   }
 }
 
-export async function getUserProfile(): Promise<ActionResponse<any>> {
+export async function getUserProfile(): Promise<ActionResponse<unknown>> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {

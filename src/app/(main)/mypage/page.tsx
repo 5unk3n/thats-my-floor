@@ -26,7 +26,10 @@ export default async function MyPage() {
   ]);
 
   const linkedProviders = linkedAccountsResponse.success ? linkedAccountsResponse.data : [];
-  const user = userProfileResponse.success ? userProfileResponse.data : null;
+  // Cast user data to expected type since action returns unknown
+  const user = userProfileResponse.success
+    ? (userProfileResponse.data as { name?: string | null; email?: string | null })
+    : null;
 
   if (!session?.user || !user) {
     return <div>로그인이 필요합니다.</div>;

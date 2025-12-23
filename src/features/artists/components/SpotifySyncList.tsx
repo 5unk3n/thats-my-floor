@@ -45,11 +45,13 @@ export default function SpotifySyncList({
     startTransition(async () => {
       if (!nextCursor) return;
 
-      const result = await fetchMySpotifyArtistsAction(nextCursor);
+      const response = await fetchMySpotifyArtistsAction(nextCursor);
 
-      if (result.success && result.data) {
-        setArtists((prev) => [...prev, ...result.data!]);
-        setNextCursor(result.nextCursor);
+      if (response.success && response.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { artists: newArtists, nextCursor: newNextCursor } = response.data as any;
+        setArtists((prev) => [...prev, ...newArtists]);
+        setNextCursor(newNextCursor);
       } else {
         toast.error('추가 데이터를 불러오는데 실패했습니다.');
       }
@@ -84,8 +86,8 @@ export default function SpotifySyncList({
 
       const result = await syncSpotifyArtistsAction(targets);
 
-      if (result.success) {
-        toast.success(`${result.count}명의 아티스트를 팔로우했습니다.`);
+      if (result.success && result.data) {
+        toast.success(`${result.data.count}명의 아티스트를 팔로우했습니다.`);
         router.refresh();
         router.push('/mypage/artists'); // Go to followed artists page
       } else {

@@ -55,7 +55,7 @@ export async function getFollowStatus(artistId: string): Promise<ActionResponse<
   }
 }
 
-export async function getFollowedArtists(): Promise<ActionResponse<any[]>> {
+export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return {

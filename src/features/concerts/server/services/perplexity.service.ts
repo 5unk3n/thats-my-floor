@@ -66,7 +66,7 @@ function parseJsonArray(text: string): string[] {
         // We use JSON.parse to correctly handle escapes
         const str = JSON.parse(match[0]);
         results.push(str);
-      } catch (e) {
+      } catch {
         // Ignore malformed strings
       }
     }

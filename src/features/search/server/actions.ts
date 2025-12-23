@@ -1,15 +1,13 @@
 'use server';
 
+import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { searchCache } from '@/shared/lib/cache';
 import { prisma } from '@/shared/lib/prisma';
 import { SpotifyService } from '@/shared/lib/spotify/client';
+import { ActionResponse } from '@/shared/types/action-response';
 
 import { SearchResult } from '../types';
 
-import { ActionResponse } from '@/shared/types/action-response';
-import { ERROR_CODES } from '@/shared/constants/error-codes';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function search(
   query: string,
   type: 'all' | 'concert' | 'artist' = 'all'
