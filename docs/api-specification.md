@@ -42,7 +42,7 @@
     type GetConcertsParams = {
       page: number;
       size?: number;
-      region?: string;
+      // region?: string; (Removed)
       type?: 'DOMESTIC' | 'VISIT' | 'FESTIVAL';
       startDate?: string;
       endDate?: string;
@@ -179,15 +179,25 @@
 
 ## 3. 에러 처리 (Server Actions)
 
-Server Actions는 `try-catch` 블록 내에서 실행되며, 에러 발생 시 표준화된 에러 객체를 반환하거나 `throw` 합니다.
+Server Actions는 `try-catch` 블록 내에서 실행되며, 에러 발생 시 표준화된 `ActionResponse` 객체를 반환합니다.
 
 ```typescript
-type ActionResponse<T> = {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-  };
+// src/shared/types/action-response.ts
+
+type ActionError = {
+  code: string; // e.g., 'AUTH_001', 'SYS_500'
+  message?: string;
 };
+
+type ActionResponse<T = void> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error: ActionError };
 ```
+
+### 주요 에러 코드 (ERROR_CODES)
+
+- `AUTH_001` (UNAUTHORIZED): 인증 필요
+- `AUTH_003` (FORBIDDEN): 접근 권한 없음
+- `DATA_001` (NOT_FOUND): 데이터 없음
+- `VAL_001` (VALIDATION_ERROR): 유효성 검사 실패
+- `SYS_500` (INTERNAL_SERVER_ERROR): 서버 내부 오류
