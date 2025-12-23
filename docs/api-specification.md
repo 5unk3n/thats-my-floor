@@ -19,7 +19,11 @@
 
 클라이언트 컴포넌트에서 직접 호출하거나, `src/app`의 서버 페이지에서 사용하는 함수들입니다.
 
+## 2. Server Actions를 사용하지 않는 인증/데이터 함수
+
 ### 1.1 인증 (Auth) - `features/auth/server/actions.ts`
+
+(참고: 인증은 NextAuth.js의 `signIn`, `signOut`을 Client Component에서 주로 사용하거나, Server Action에서 래핑하여 사용합니다.)
 
 - **`signIn(provider: 'google' | 'kakao')`**
   - 설명: NextAuth.js 소셜 로그인 개시
@@ -47,20 +51,64 @@
     ```
   - 반환: `Promise<Concert[]>`
 
+### 2. Internal Data Access (Server Component Only)
+
+> **Note**: 이 함수들은 Server Action이 아니며, Server Component에서 직접 호출하여 데이터를 조회합니다. (`db.ts`)
+
 - **`getConcertDetail(id: string)`**
   - 설명: 공연 상세 정보 조회
   - 반환: `Promise<ConcertDetail>`
 
-### 1.3 아티스트 (Artists) - `features/artists/server/actions.ts`
-
-- **`toggleFollowArtist(artistId: string)`**
-  - 설명: 아티스트 팔로우/언팔로우 토글
-  - 인증: 필수
-  - 반환: `Promise<{ isFollowing: boolean }>`
-
 - **`getArtistDetail(id: string)`**
   - 설명: 아티스트 상세 정보 및 예정 공연 조회
   - 반환: `Promise<ArtistDetail>`
+
+### 3. Server Actions (Client Callable)
+
+#### A. Concerts (`features/concerts/server/actions.ts`)
+
+- **`getConcerts(params)`**
+  - 설명: 공연 목록 조회 (필터링 포함)
+  - 반환: `Promise<Concert[]>`
+
+- **`searchSpotifyArtistsAction(query: string)`**
+  - 설명: 스포티파이 아티스트 검색 (Admin/Manual)
+  - 반환: `Promise<Candidate[]>`
+
+**Admin Pipeline Actions**
+
+- **`requestAnalysisAction(concertId: string)`**
+  - 설명: 공연 분석 요청 (Status: `ANALYZING`)
+- **`runPipelineAction()`**
+  - 설명: 분석 파이프라인 수동 실행
+- **`publishConcertAction(concertId: string, candidates: Candidate[])`**
+  - 설명: 공연 게시 및 아티스트 연결 (Status: `PUBLISHED`)
+- **`rejectConcertAction(concertId: string)`**
+  - 설명: 분석 반려 (Status: `REJECTED`)
+
+#### B. Artists (`features/artists/server/actions.ts`)
+
+- **`toggleFollow(artistId: string)`**
+  - 설명: 아티스트 팔로우/언팔로우 토글
+  - 인증: 필수
+  - 반환: `Promise<boolean>`
+
+- **`getFollowStatus(artistId: string)`**
+  - 설명: 팔로우 여부 조회
+  - 반환: `Promise<boolean>`
+
+- **`getFollowedArtists()`**
+  - 설명: 팔로우한 아티스트 목록 조회
+  - 반환: `Promise<UserArtist[]>`
+
+**Spotify Sync Actions**
+
+- **`fetchMySpotifyArtistsAction(after?: string)`**
+  - 설명: 내 스포티파이 계정의 팔로우 아티스트 가져오기
+- **`syncSpotifyArtistsAction(artists: SpotifyArtist[])`**
+  - 설명: 선택한 스포티파이 아티스트를 DB에 동기화 및 팔로우 처리
+
+#### C. Users (`features/users/server/actions.ts`)
 
 ### 1.4 사용자 (Users) - `features/users/server/actions.ts`
 
