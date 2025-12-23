@@ -80,35 +80,6 @@ CREATE TABLE accounts (
 );
 ```
 
-### 1-2. sessions (세션)
-
-데이터베이스 세션 관리를 위한 테이블입니다.
-
-```sql
-CREATE TABLE sessions (
-  id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_token VARCHAR(255) UNIQUE NOT NULL,
-  user_id VARCHAR(36) REFERENCES users(id) ON DELETE CASCADE,
-  expires TIMESTAMP NOT NULL
-);
-```
-
-### 1-3. verification_tokens (인증 토큰)
-
-이메일 로그인 등을 위한 검증 토큰입니다.
-
-```sql
-CREATE TABLE verification_tokens (
-  identifier VARCHAR(255) NOT NULL,
-  token VARCHAR(255) UNIQUE NOT NULL,
-  expires TIMESTAMP NOT NULL,
-
-  UNIQUE(identifier, token)
-);
-```
-
----
-
 ### 2. artists (아티스트)
 
 아티스트 정보를 저장합니다.
@@ -356,7 +327,6 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   accounts Account[]
-  sessions Session[]
 
   // Custom Relations
   followedArtists      UserArtist[]
@@ -388,28 +358,6 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
 }
 
 model Artist {
