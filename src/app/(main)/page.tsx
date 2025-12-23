@@ -7,9 +7,14 @@ import { Button } from '@/shared/components/ui/button';
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const domesticConcerts = await getConcerts({ type: 'DOMESTIC', page: 1, size: 8 });
-  const intlConcerts = await getConcerts({ type: 'GLOBAL', page: 1, size: 8 });
-  const festivals = await getConcerts({ type: 'FESTIVAL', page: 1, size: 8 });
+  const domesticRes = await getConcerts({ type: 'DOMESTIC', page: 1, size: 8 });
+  const domesticConcerts = domesticRes.success ? domesticRes.data! : [];
+
+  const intlRes = await getConcerts({ type: 'GLOBAL', page: 1, size: 8 });
+  const intlConcerts = intlRes.success ? intlRes.data! : [];
+
+  const festivalsRes = await getConcerts({ type: 'FESTIVAL', page: 1, size: 8 });
+  const festivals = festivalsRes.success ? festivalsRes.data! : [];
 
   return (
     <main className="container mx-auto space-y-12 py-8">

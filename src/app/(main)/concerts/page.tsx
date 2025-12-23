@@ -21,11 +21,13 @@ export default async function ConcertsPage({ searchParams }: ConcertsPageProps) 
   const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
   const concertType = validTypes.find((t) => t === type) || undefined;
 
-  const concerts = await getConcerts({
+  const response = await getConcerts({
     page,
     region,
     type: concertType,
   });
+
+  const concerts = response.success ? response.data! : [];
 
   // Check if there are more results for pagination
   // This is a simplified check. Ideally, the API should return total count.
