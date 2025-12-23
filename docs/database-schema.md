@@ -49,9 +49,11 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE,
   email_verified TIMESTAMP,
   image TEXT,
+  role VARCHAR(20) DEFAULT 'USER', -- 'USER', 'ADMIN'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 ```
 
 ### 1-1. accounts (계정 - OAuth)
@@ -142,38 +144,35 @@ CREATE INDEX idx_artists_spotify ON artists(spotify_artist_id);
 
 ### 3. concerts (공연)
 
-공연 정보를 저장합니다. KOPIS API 데이터를 기반으로 확장된 필드를 포함합니다.
+공연 정보를 저장합니다. KOPIS API 데이터를 기반으로 하지만, **영문 필드명**으로 매핑하여 저장합니다.
 
 ```sql
 CREATE TABLE concerts (
   id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  mt20id VARCHAR(100) UNIQUE, -- 공연 ID (KOPIS)
-  mt10id VARCHAR(100),        -- 공연시설 ID
-  prfnm VARCHAR(255) NOT NULL, -- 공연명
-  prfpdfrom TIMESTAMP NOT NULL, -- 공연 시작일
-  prfpdto TIMESTAMP NOT NULL,   -- 공연 종료일
-  fcltynm VARCHAR(255) NOT NULL, -- 공연 시설명
-  poster TEXT,                 -- 포스터 이미지 경로
-  genrenm VARCHAR(100),       -- 공연 장르명
-  prfstate VARCHAR(50),       -- 공연 상태
-  openrun BOOLEAN DEFAULT FALSE, -- 오픈런 여부
-  area VARCHAR(50),           -- 지역 (서울, 경기, 인천 등)
+  kopis_id VARCHAR(100) UNIQUE, -- 외부 식별자 (KOPIS ID)
 
-  -- Extended KOPIS fields
-  prfcast TEXT,               -- 공연출연진
-  prfcrew TEXT,               -- 공연제작진
-  prfruntime VARCHAR(50),     -- 공연 런타임
-  prfage VARCHAR(50),         -- 관람 연령
-  entrpsnm VARCHAR(255),      -- 제작사
-  pcseguidance TEXT,          -- 티켓 가격
-  dtguidance TEXT,            -- 공연 시간
-  sty TEXT,                   -- 줄거리
-  styurls TEXT[],             -- 소개 이미지 목록 (Array)
+  -- Core Info
+  title VARCHAR(255) NOT NULL, -- 공연명
+  start_date TIMESTAMP NOT NULL, -- 공연 시작일
+  end_date TIMESTAMP NOT NULL,   -- 공연 종료일
+  place VARCHAR(255) NOT NULL, -- 공연 시설명
+  poster_url TEXT,             -- 포스터 이미지 경로
+  status VARCHAR(50),          -- 공연 상태 (공연예정, 공연중 등)
+  region VARCHAR(50),          -- 지역 (서울, 경기, 인천 등)
+
+  -- Details
+  description TEXT,           -- 줄거리
+  images TEXT[],              -- 소개 이미지 목록 (Array)
+  price TEXT,                 -- 티켓 가격
+  schedule TEXT,              -- 공연 시간
+  runtime VARCHAR(50),        -- 공연 런타임
   relates JSONB,              -- 예매처 목록 (JSON)
 
-  visit BOOLEAN DEFAULT FALSE,    -- 내한공연 여부
-  festival BOOLEAN DEFAULT FALSE, -- 페스티벌 여부
+  -- Flags
+  is_global BOOLEAN DEFAULT FALSE,    -- 내한공연 여부
+  is_festival BOOLEAN DEFAULT FALSE,  -- 페스티벌 여부
 
+  -- Internal Logic
   publish_status VARCHAR(20) DEFAULT 'DRAFT', -- 발행 상태 (Enum)
   analysis_result JSONB,          -- AI 분석 결과 (JSON)
 
@@ -184,21 +183,13 @@ CREATE TABLE concerts (
 
 **컬럼 설명:**
 
-- `mt20id`: KOPIS 공연 고유 ID
-- `mt10id`: 공연시설 ID
-- `prfnm`: 공연명
-- `prfpdfrom`/`prfpdto`: 공연 기간
-- `fcltynm`: 공연장명
-- `area`: 지역
-- `genrenm`: 장르
-- `prfstate`: 공연 상태 (공연예정, 공연중 등)
-- `relates`: 예매처 정보 (JSON)
-- `styurls`: 소개 이미지 URL 목록
-- `visit`: 내한 공연 여부
-- `festival`: 페스티벌 여부
-
-- `publishStatus`: 발행 상태 (`DRAFT`, `ANALYZING`, `REVIEWING`, `PUBLISHED`, `REJECTED`)
-- `analysisResult`: AI 분석 후보군 데이터
+- `kopis_id`: KOPIS 공연 고유 ID (구 `mt20id`)
+- `title`: 공연명 (구 `prfnm`)
+- `start_date`/`end_date`: 공연 기간
+- `place`: 공연 시설명 (구 `fcltynm`)
+- `region`: 지역 (구 `area`)
+- `publish_status`: 발행 상태 (`DRAFT`, `ANALYZING`, `REVIEWING`, `PUBLISHED`, `REJECTED`)
+- `analysis_result`: AI 분석 후보군 데이터
 
 ---
 
