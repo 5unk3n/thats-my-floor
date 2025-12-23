@@ -16,7 +16,17 @@ export const metadata = {
 
 export default async function MyPage() {
   const session = await getServerSession(authOptions);
-  const [linkedProviders, user] = await Promise.all([getLinkedAccounts(), getUserProfile()]);
+  /* 
+    Refactored to handle ActionResponse.
+    Note: Both return ActionResponse<{...}>
+  */
+  const [linkedAccountsResponse, userProfileResponse] = await Promise.all([
+    getLinkedAccounts(),
+    getUserProfile(),
+  ]);
+
+  const linkedProviders = linkedAccountsResponse.success ? linkedAccountsResponse.data : [];
+  const user = userProfileResponse.success ? userProfileResponse.data : null;
 
   if (!session?.user || !user) {
     return <div>로그인이 필요합니다.</div>;

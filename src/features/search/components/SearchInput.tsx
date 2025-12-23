@@ -35,9 +35,14 @@ export function SearchInput({ type = 'all' }: SearchInputProps) {
 
       setIsLoading(true);
       try {
-        const data = await search(debouncedQuery, type);
-        setResults(data);
-        setIsOpen(true);
+        const response = await search(debouncedQuery, type);
+        if (response.success && response.data) {
+          setResults(response.data);
+          setIsOpen(true);
+        } else {
+          console.error('Search failed:', response.error);
+          setResults(null);
+        }
       } catch (error) {
         console.error('Search failed:', error);
       } finally {
