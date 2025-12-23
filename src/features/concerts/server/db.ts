@@ -214,4 +214,11 @@ export const concertService = {
       },
     });
   },
+
+  updateConcertStatus: async (id: string, status: string) => {
+    return prisma.concert.update({
+      where: { id },
+      data: { status },
+    });
+  },
 };

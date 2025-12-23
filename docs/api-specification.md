@@ -114,6 +114,19 @@
 - **`GET /api/webhooks/spotify`**
   - 설명: Spotify 데이터 동기화 트리거 (필요 시)
 
+### 2.3 Cron Jobs (Scheduled Tasks)
+
+- **`GET /api/cron/collect-concerts`**
+  - 설명: 신규 공연 수집 및 알림 발송
+  - 주기: 매일 오전 2시 (기본)
+  - 인증: `CRON_SECRET` Bearer 토큰
+
+- **`GET /api/cron/sync-concert-status`**
+  - 설명: 기존 공연의 상태(status) 최신화 동기화
+  - 대상: `endDate`가 현재 이후인 `PUBLISHED` 공연
+  - 주기: 매일 오전 4시 (기본)
+  - 인증: `CRON_SECRET` Bearer 토큰
+
 ---
 
 ## 3. 에러 처리 (Server Actions)

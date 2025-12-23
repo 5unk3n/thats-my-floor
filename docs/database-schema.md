@@ -636,8 +636,9 @@ WHERE ua.artist_id = $1
 ## 데이터 마이그레이션 전략
 
 1. **초기 데이터**: kOPIS API에서 공연 데이터 수집 (최근 6개월)
-2. **주기적 동기화**: 매일 자정 신규 공연 데이터 수집
-3. **아티스트 정규화**: 공연 등록 시 아티스트 이름으로 매칭, 없으면 신규 생성
-4. **Spotify 연동**: 아티스트명으로 Spotify API 검색, `spotify_artist_id` 저장
+2. **주기적 동기화**: 매일 새벽 신규 공연 데이터 수집 (`/api/cron/collect-concerts`)
+3. **상태 동기화**: 매일 새벽 기존 공연의 상태(예정/중/완료) 최신화 (`/api/cron/sync-concert-status`)
+4. **아티스트 정규화**: 공연 등록 시 아티스트 이름으로 매칭, 없으면 신규 생성
+5. **Spotify 연동**: 아티스트명으로 Spotify API 검색, `spotify_artist_id` 저장
 ```
 ````
