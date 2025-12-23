@@ -6,6 +6,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/lib/auth';
 
 import { getFollowedArtistsFromDB, getFollowStatusFromDB, toggleFollowInDB } from './db';
+import * as SpotifySyncService from './services/spotify-sync.service';
+
+// --- Types re-exported for Client use ---
+export type { SpotifySyncArtist, SyncArtistStatus } from './services/spotify-sync.service';
+import { SpotifyArtist } from '@/shared/lib/spotify/types';
 
 export async function toggleFollow(artistId: string) {
   const session = await getServerSession(authOptions);
@@ -35,4 +40,28 @@ export async function getFollowedArtists() {
   }
 
   return await getFollowedArtistsFromDB(session.user.id);
+}
+
+// --- Spotify Sync Actions ---
+
+export async function fetchMySpotifyArtistsAction(after?: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.accessToken || !session.user.id) {
+    return { success: false, error: 'Spotify 계정 연동이 필요합니다.' };
+  }
+
+  return await SpotifySyncService.fetchMySpotifyArtists(
+    session.user.accessToken,
+    session.user.id,
+    after
+  );
+}
+
+export async function syncSpotifyArtistsAction(artists: SpotifyArtist[]) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  return await SpotifySyncService.syncSpotifyArtists(session.user.id, artists);
 }

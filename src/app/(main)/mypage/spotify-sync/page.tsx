@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 import SpotifySyncList from '@/features/artists/components/SpotifySyncList';
-import { fetchMySpotifyArtists } from '@/features/artists/server/spotify-actions';
+import { fetchMySpotifyArtistsAction } from '@/features/artists/server/actions';
 import { Button } from '@/shared/components/ui/button';
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SpotifySyncPage() {
-  const { success, data, nextCursor, error } = await fetchMySpotifyArtists();
+  const { success, data, nextCursor, error } = await fetchMySpotifyArtistsAction();
 
   if (!success || !data) {
     // Check if error is due to missing auth or scope (simple check)

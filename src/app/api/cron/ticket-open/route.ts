@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { checkTicketOpenAndSendNotifications } from '@/features/notifications/server/scheduler';
+import * as SchedulerService from '@/features/notifications/server/services/scheduler.service';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    await checkTicketOpenAndSendNotifications();
+    await SchedulerService.checkTicketOpenAndSendNotifications();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Cron job failed:', error);
