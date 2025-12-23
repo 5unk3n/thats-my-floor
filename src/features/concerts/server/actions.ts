@@ -5,7 +5,9 @@ import { revalidatePath } from 'next/cache';
 
 // eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
 import * as notificationService from '@/features/notifications/server/services/notification.service';
+import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
+import { ActionResponse } from '@/shared/types/action-response';
 
 import { Concert } from '../types';
 import * as AnalysisService from './services/analysis.service';
@@ -13,38 +15,45 @@ import { Candidate } from './services/analysis.service';
 
 // --- Admin Pipeline Actions ---
 
-export async function requestAnalysisAction(concertId: string) {
+export async function requestAnalysisAction(concertId: string): Promise<ActionResponse> {
   try {
     // 1. Set status to ANALYZING immediately
     await AnalysisService.requestAnalysis(concertId);
 
     // 2. Trigger Pipeline asynchronously (Fire-and-forget)
-    // In a real serverless env, this might require Inngest/Queue.
-    // Here we just don't await the promise.
     AnalysisService.runAnalysisPipeline(concertId).catch((err) =>
       console.error('Async Pipeline Error:', err)
     );
 
     revalidatePath('/admin/reviews');
-    return { success: true };
+    return { success: true, data: undefined };
   } catch (error) {
     console.error('Request Analysis Failed:', error);
-    return { success: false, error: 'Failed' };
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Analysis Request Failed' },
+    };
   }
 }
 
-export async function runPipelineAction() {
+export async function runPipelineAction(): Promise<ActionResponse<{ count: number }>> {
   try {
     const results = await AnalysisService.runAnalysisPipeline();
     revalidatePath('/admin/reviews');
-    return { success: true, count: results.length };
+    return { success: true, data: { count: results.length } };
   } catch (error) {
     console.error('Pipeline Run Failed:', error);
-    return { success: false, error: 'Pipeline Failed' };
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Pipeline Failed' },
+    };
   }
 }
 
-export async function publishConcertAction(concertId: string, candidates: Candidate[]) {
+export async function publishConcertAction(
+  concertId: string,
+  candidates: Candidate[]
+): Promise<ActionResponse> {
   try {
     const concert = await AnalysisService.publishConcert(concertId, candidates);
 
@@ -52,35 +61,44 @@ export async function publishConcertAction(concertId: string, candidates: Candid
     await notificationService.notifyConcertRegistration(concert.id);
 
     revalidatePath('/admin/reviews');
-    return { success: true };
+    return { success: true, data: undefined };
   } catch (error) {
     console.error('Publish Failed:', error);
-    return { success: false, error: 'Publish Failed' };
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Publish Failed' },
+    };
   }
 }
 
-export async function rejectConcertAction(concertId: string) {
+export async function rejectConcertAction(concertId: string): Promise<ActionResponse> {
   try {
     await AnalysisService.rejectConcert(concertId);
     revalidatePath('/admin/reviews');
-    return { success: true };
+    return { success: true, data: undefined };
   } catch (error) {
     console.error('Reject Failed:', error);
-    return { success: false, error: 'Reject Failed' };
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Reject Failed' },
+    };
   }
 }
 
-export async function restoreToReviewAction(concertId: string) {
+export async function restoreToReviewAction(concertId: string): Promise<ActionResponse> {
   try {
     await prisma.concert.update({
       where: { id: concertId },
       data: { publishStatus: PublishStatus.REVIEWING },
     });
     revalidatePath('/admin/reviews');
-    return { success: true };
+    return { success: true, data: undefined };
   } catch (error) {
     console.error('Restore Failed:', error);
-    return { success: false, error: 'Restore Failed' };
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Restore Failed' },
+    };
   }
 }
 
@@ -161,8 +179,8 @@ export async function getConcerts(params: {
   startDate?: string;
   endDate?: string;
   keyword?: string;
-}): Promise<Concert[]> {
-  const { page = 1, size = 20, region, type, startDate, endDate, keyword } = params;
+}): Promise<ActionResponse<Concert[]>> {
+  const { page = 1, size = 20, type, startDate, endDate, keyword } = params;
 
   // Default date range: Today to 1 month later if not specified
   const today = new Date();
@@ -221,17 +239,23 @@ export async function getConcerts(params: {
       orderBy: { startDate: 'asc' },
     });
 
-    return concerts.map((item) => ({
-      id: item.id,
-      title: item.title,
-      startDate: item.startDate.toISOString().slice(0, 10).replace(/-/g, '.'),
-      endDate: item.endDate.toISOString().slice(0, 10).replace(/-/g, '.'),
-      place: item.place,
-      posterUrl: item.posterUrl || '',
-      status: item.status || '',
-    }));
+    return {
+      success: true,
+      data: concerts.map((item) => ({
+        id: item.id,
+        title: item.title,
+        startDate: item.startDate.toISOString().slice(0, 10).replace(/-/g, '.'),
+        endDate: item.endDate.toISOString().slice(0, 10).replace(/-/g, '.'),
+        place: item.place,
+        posterUrl: item.posterUrl || '',
+        status: item.status || '',
+      })),
+    };
   } catch (error) {
     console.error('Failed to fetch concerts from DB:', error);
-    return [];
+    return {
+      success: false,
+      error: { code: ERROR_CODES.NOT_FOUND, message: 'Failed to fetch concerts' },
+    };
   }
 }
