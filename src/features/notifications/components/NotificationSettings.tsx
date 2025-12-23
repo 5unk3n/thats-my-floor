@@ -33,12 +33,12 @@ export default function NotificationSettings() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const data = await getNotificationSettingsAction();
-        if (data) {
+        const response = await getNotificationSettingsAction();
+        if (response.success && response.data) {
           setSettings({
-            ticketOpenAlert: data.ticketOpenAlert,
-            concertRegistrationAlert: data.concertRegistrationAlert,
-            emailNotification: data.emailNotification,
+            ticketOpenAlert: response.data.ticketOpenAlert,
+            concertRegistrationAlert: response.data.concertRegistrationAlert,
+            emailNotification: response.data.emailNotification,
           });
         }
       } catch (error) {
@@ -56,7 +56,10 @@ export default function NotificationSettings() {
     setSettings(newSettings); // Optimistic update
 
     try {
-      await updateNotificationSettingsAction({ [key]: newSettings[key] });
+      const response = await updateNotificationSettingsAction({ [key]: newSettings[key] });
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Failed to update');
+      }
       router.refresh();
     } catch (error) {
       console.error('Failed to update settings:', error);

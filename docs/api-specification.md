@@ -19,11 +19,23 @@
 
 클라이언트 컴포넌트에서 직접 호출하거나, `src/app`의 서버 페이지에서 사용하는 함수들입니다.
 
+## 2. Server Actions를 사용하지 않는 인증/데이터 함수
+
 ### 1.1 인증 (Auth) - `features/auth/server/actions.ts`
 
+(참고: 인증은 NextAuth.js의 `signIn`, `signOut`을 Client Component에서 주로 사용하거나, Server Action에서 래핑하여 사용합니다.)
+
 - **`signIn(provider: 'google' | 'kakao')`**
-  - 설명: NextAuth.js 소셜 로그인 개시
+  - 설명: NextAuth.js 소셜 로그인 개시 (Client or Server Action Wrapper)
   - 반환: `Promise<void>` (리다이렉트)
+
+- **`getLinkedAccounts()`**
+  - 설명: 연결된 소셜 계정 목록 조회
+  - 반환: `Promise<ActionResponse<string[]>>`
+
+- **`getUserProfile()`**
+  - 설명: 사용자 프로필 조회
+  - 반환: `Promise<ActionResponse<UserProfile>>`
 
 - **`signOut()`**
   - 설명: 로그아웃 처리
@@ -38,7 +50,7 @@
     type GetConcertsParams = {
       page: number;
       size?: number;
-      region?: string;
+      // region?: string; (Removed)
       type?: 'DOMESTIC' | 'VISIT' | 'FESTIVAL';
       startDate?: string;
       endDate?: string;
@@ -47,48 +59,100 @@
     ```
   - 반환: `Promise<Concert[]>`
 
+### 2. Internal Data Access (Server Component Only)
+
+> **Note**: 이 함수들은 Server Action이 아니며, Server Component에서 직접 호출하여 데이터를 조회합니다. (`db.ts`)
+
 - **`getConcertDetail(id: string)`**
   - 설명: 공연 상세 정보 조회
   - 반환: `Promise<ConcertDetail>`
-
-### 1.3 아티스트 (Artists) - `features/artists/server/actions.ts`
-
-- **`toggleFollowArtist(artistId: string)`**
-  - 설명: 아티스트 팔로우/언팔로우 토글
-  - 인증: 필수
-  - 반환: `Promise<{ isFollowing: boolean }>`
 
 - **`getArtistDetail(id: string)`**
   - 설명: 아티스트 상세 정보 및 예정 공연 조회
   - 반환: `Promise<ArtistDetail>`
 
-### 1.4 사용자 (Users) - `features/users/server/actions.ts`
+### 3. Server Actions (Client Callable)
 
-- **`updateProfile(data: UpdateProfileData)`**
-  - 설명: 사용자 프로필(이름, 이미지) 수정
-  - 반환: `Promise<User>`
+#### A. Concerts (`features/concerts/server/actions.ts`)
+
+- **`getConcerts(params)`**
+  - 설명: 공연 목록 조회 (필터링 포함)
+  - 반환: `Promise<Concert[]>`
+
+- **`searchSpotifyArtistsAction(query: string)`**
+  - 설명: 스포티파이 아티스트 검색 (Admin/Manual)
+  - 반환: `Promise<Candidate[]>`
+
+**Admin Pipeline Actions**
+
+- **`requestAnalysisAction(concertId: string)`**
+  - 설명: 공연 분석 요청 (Status: `ANALYZING`)
+- **`runPipelineAction()`**
+  - 설명: 분석 파이프라인 수동 실행
+- **`publishConcertAction(concertId: string, candidates: Candidate[])`**
+  - 설명: 공연 게시 및 아티스트 연결 (Status: `PUBLISHED`)
+- **`rejectConcertAction(concertId: string)`**
+  - 설명: 분석 반려 (Status: `REJECTED`)
+
+#### B. Artists (`features/artists/server/actions.ts`)
+
+- **`toggleFollow(artistId: string)`**
+  - 설명: 아티스트 팔로우/언팔로우 토글
+  - 인증: 필수
+  - 반환: `Promise<boolean>`
+
+- **`getFollowStatus(artistId: string)`**
+  - 설명: 팔로우 여부 조회
+  - 반환: `Promise<boolean>`
+
+- **`getFollowedArtists()`**
+  - 설명: 팔로우한 아티스트 목록 조회
+  - 반환: `Promise<UserArtist[]>`
+
+**Spotify Sync Actions**
+
+- **`fetchMySpotifyArtistsAction(after?: string)`**
+  - 설명: 내 스포티파이 계정의 팔로우 아티스트 가져오기
+- **`syncSpotifyArtistsAction(artists: SpotifyArtist[])`**
+  - 설명: 선택한 스포티파이 아티스트를 DB에 동기화 및 팔로우 처리
+
+#### D. Search (`features/search/server/actions.ts`)
+
+- **`search(query: string, type: 'all' | 'concert' | 'artist')`**
+  - 설명: 통합 검색 (공연/아티스트)
+  - 반환: `Promise<ActionResponse<SearchResult>>`
+
+#### E. Setlists (`features/setlists/server/actions.ts`)
+
+- **`getSetlistByConcertId(concertId: string)`**
+  - 설명: 공연 셋리스트 조회
+  - 반환: `Promise<ActionResponse<Setlist>>`
+
+- **`createSetlist(data: CreateSetlistInput)`**
+  - 설명: 셋리스트 생성
+  - 반환: `Promise<ActionResponse<Setlist>>`
 
 ### 1.5 알림 (Notifications) - `features/notifications/server/actions.ts`
 
 - **`getNotifications(page: number, limit: number)`**
   - 설명: 사용자 알림 목록 조회 (페이징)
-  - 반환: `Promise<{ notifications: Notification[], total: number, ... }>`
+  - 반환: `Promise<ActionResponse<{ notifications: Notification[], total: number, ... }>>`
 
 - **`markAsRead(notificationId: number)`**
   - 설명: 개별 알림 읽음 처리
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 - **`markAllAsRead()`**
   - 설명: 전체 알림 읽음 처리
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 - **`getNotificationSettingsAction()`**
   - 설명: 알림 설정 조회
-  - 반환: `Promise<NotificationSettings>`
+  - 반환: `Promise<ActionResponse<NotificationSettings>>`
 
 - **`updateNotificationSettingsAction(settings: Partial<NotificationSettings>)`**
   - 설명: 알림 설정 업데이트
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 ### 1.6 FCM 토큰 등록 - `app/api/notifications/register/route.ts`
 
@@ -131,15 +195,25 @@
 
 ## 3. 에러 처리 (Server Actions)
 
-Server Actions는 `try-catch` 블록 내에서 실행되며, 에러 발생 시 표준화된 에러 객체를 반환하거나 `throw` 합니다.
+Server Actions는 `try-catch` 블록 내에서 실행되며, 에러 발생 시 표준화된 `ActionResponse` 객체를 반환합니다.
 
 ```typescript
-type ActionResponse<T> = {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-  };
+// src/shared/types/action-response.ts
+
+type ActionError = {
+  code: string; // e.g., 'AUTH_001', 'SYS_500'
+  message?: string;
 };
+
+type ActionResponse<T = void> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error: ActionError };
 ```
+
+### 주요 에러 코드 (ERROR_CODES)
+
+- `AUTH_001` (UNAUTHORIZED): 인증 필요
+- `AUTH_003` (FORBIDDEN): 접근 권한 없음
+- `DATA_001` (NOT_FOUND): 데이터 없음
+- `VAL_001` (VALIDATION_ERROR): 유효성 검사 실패
+- `SYS_500` (INTERNAL_SERVER_ERROR): 서버 내부 오류

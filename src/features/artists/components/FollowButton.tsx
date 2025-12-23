@@ -26,8 +26,18 @@ export function FollowButton({ artistId, initialIsFollowing, className }: Follow
     startTransition(async () => {
       try {
         const result = await toggleFollow(artistId);
-        setIsFollowing(result);
-        router.refresh();
+        if (result.success && result.data !== undefined) {
+          setIsFollowing(result.data);
+          router.refresh();
+        } else {
+          // If logic failed (e.g. auth), revert
+          setIsFollowing((prev) => !prev);
+          if (result.error?.code === 'AUTH_001') {
+            router.push('/login');
+          } else {
+            console.error('Failed to toggle follow:', result.error);
+          }
+        }
       } catch (error) {
         // Revert on error
         setIsFollowing((prev) => !prev);

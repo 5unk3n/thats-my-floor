@@ -7,7 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
 interface LinkedAccountsProps {
-  linkedProviders: string[];
+  linkedProviders: string[]; // Passed from parent (Server Component or Parent Client Component)
 }
 
 const PROVIDERS = [

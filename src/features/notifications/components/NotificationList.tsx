@@ -19,21 +19,33 @@ export function NotificationList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => getNotifications(1, 100), // Fetching first 100 for now
+    queryFn: async () => {
+      const response = await getNotifications(1, 100);
+      if (!response.success) throw new Error(response.error?.message);
+      return response.data;
+    },
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: markAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: (response) => {
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      } else {
+        toast.error('읽음 처리에 실패했습니다.');
+      }
     },
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: markAllAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('모든 알림을 읽음 처리했습니다.');
+    onSuccess: (response) => {
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        toast.success('모든 알림을 읽음 처리했습니다.');
+      } else {
+        toast.error('전체 읽음 처리에 실패했습니다.');
+      }
     },
   });
 
@@ -114,7 +126,7 @@ export function NotificationList() {
             )}
 
             {/* Icon / Image */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {notification.concert?.posterUrl ? (
                 <div className="relative w-12 h-16 bg-gray-100 rounded overflow-hidden">
                   <Image
@@ -141,7 +153,7 @@ export function NotificationList() {
                 >
                   {notification.title}
                 </p>
-                <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+                <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
                   {formatDistanceToNow(new Date(notification.sentAt), {
                     addSuffix: true,
                     locale: ko,

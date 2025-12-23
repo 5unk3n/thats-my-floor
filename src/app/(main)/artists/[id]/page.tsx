@@ -12,7 +12,11 @@ interface PageProps {
 
 export default async function ArtistDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [artist, isFollowing] = await Promise.all([getArtistDetail(id), getFollowStatus(id)]);
+  const [artist, followStatusResponse] = await Promise.all([
+    getArtistDetail(id),
+    getFollowStatus(id),
+  ]);
+  const isFollowing = followStatusResponse.success ? followStatusResponse.data : false;
 
   if (!artist) {
     notFound();

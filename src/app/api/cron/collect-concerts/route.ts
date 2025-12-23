@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { collectConcerts } from '@/features/concerts/server/collector';
-import { notificationService } from '@/features/notifications/server/services';
+import * as CollectorService from '@/features/concerts/server/services/collector.service';
+import * as notificationService from '@/features/notifications/server/services/notification.service';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const newConcerts = await collectConcerts();
+    const newConcerts = await CollectorService.collectConcerts();
 
     for (const concert of newConcerts) {
       // Attempt to notify. Service checks internally if there are linked artists.

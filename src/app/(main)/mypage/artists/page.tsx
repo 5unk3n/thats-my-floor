@@ -20,7 +20,10 @@ export const metadata = {
 };
 
 export default async function FollowedArtistsPage() {
-  const followedArtists = await getFollowedArtists();
+  const response = await getFollowedArtists();
+  const followedArtists =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    response.success && Array.isArray(response.data) ? (response.data as any[]) : [];
 
   return (
     <div className="container mx-auto px-4 py-8">

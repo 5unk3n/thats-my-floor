@@ -23,7 +23,7 @@ concert-notification-service/
 │   │   │   ├── components/     # UI Components (Client/Server)
 │   │   │   ├── hooks/          # Feature Hooks
 │   │   │   ├── server/         # [Isolated] Server Actions & DB Logic
-│   │   │   │   ├── services/   # Business Logic Services (Analysis, Notification etc.)
+│   │   │   │   ├── services/   # Business Logic Services (*.service.ts, Functional Style)
 │   │   │   │   ├── actions.ts  # Public Server Actions
 │   │   │   │   └── db.ts       # Internal DB Access
 │   │   │   └── types.ts
@@ -231,7 +231,7 @@ export async function getConcerts(params: {
 
 기능 간의 의존성이 필요한 경우(예: 공연 상세에 아티스트 카드 표시), 직접 import 대신 **Page 레벨 조합**을 사용합니다.
 
-```typescript
+````typescript
 // src/app/(main)/concerts/[id]/page.tsx
 // Page 파일이 '접착제' 역할을 하여 두 기능을 조합
 import { ConcertDetail } from '@/features/concerts/components';
@@ -244,4 +244,23 @@ export default function Page() {
     </ConcertDetail>
   );
 }
+
+### 4. Service Layer Convention (서비스 레이어 규칙)
+
+- **파일 명명**: `[name].service.ts` (예: `sync.service.ts`, `analysis.service.ts`)
+- **위치**: `src/features/[feature]/server/services/`
+- **스타일**: **Functional Style** (Class나 Object Literal 지양)
+- **Export**: 개별 함수를 `export` 하고, 사용하는 곳에서 `import * as [Name]Service` 형태로 사용 권장.
+
+```typescript
+// Good
+export async function syncConcerts() { ... }
+
+// Bad
+export class SyncService { ... }
+export const syncService = { ... }
+````
+
+```
+
 ```

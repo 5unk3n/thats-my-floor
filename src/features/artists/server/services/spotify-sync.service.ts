@@ -1,8 +1,3 @@
-'use server';
-
-import { getServerSession } from 'next-auth';
-
-import { authOptions } from '@/shared/lib/auth';
 import { prisma } from '@/shared/lib/prisma';
 import { SpotifyService } from '@/shared/lib/spotify/client';
 import { SpotifyArtist } from '@/shared/lib/spotify/types';
@@ -14,20 +9,19 @@ export interface SpotifySyncArtist extends SpotifyArtist {
   dbId?: string;
 }
 
-export async function fetchMySpotifyArtists(after?: string): Promise<{
+export async function fetchMySpotifyArtists(
+  accessToken: string,
+  userId: string,
+  after?: string
+): Promise<{
   success: boolean;
   data?: SpotifySyncArtist[];
   nextCursor?: string | null;
   error?: string;
 }> {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.accessToken) {
-      return { success: false, error: 'Spotify 계정 연동이 필요합니다.' };
-    }
-
     // 1. Fetch from Spotify
-    const response = await SpotifyService.getFollowedArtists(session.user.accessToken, 20, after);
+    const response = await SpotifyService.getFollowedArtists(accessToken, 20, after);
 
     if (!response) {
       return { success: false, error: '아티스트 목록을 가져오는데 실패했습니다.' };
@@ -44,7 +38,7 @@ export async function fetchMySpotifyArtists(after?: string): Promise<{
       },
       include: {
         followers: {
-          where: { userId: session.user.id },
+          where: { userId: userId },
         },
         concerts: {
           include: {
@@ -91,15 +85,8 @@ export async function fetchMySpotifyArtists(after?: string): Promise<{
   }
 }
 
-export async function syncSpotifyArtists(artists: SpotifyArtist[]) {
+export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[]) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      throw new Error('Unauthorized');
-    }
-
-    const userId = session.user.id;
-
     // 1. Upsert Artists (Parallel)
     // Using $transaction to ensure data consistency, but processing in parallel for speed.
     // Use upsert to ensure artist info is up-to-date.
