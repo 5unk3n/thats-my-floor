@@ -26,8 +26,16 @@
 (참고: 인증은 NextAuth.js의 `signIn`, `signOut`을 Client Component에서 주로 사용하거나, Server Action에서 래핑하여 사용합니다.)
 
 - **`signIn(provider: 'google' | 'kakao')`**
-  - 설명: NextAuth.js 소셜 로그인 개시
+  - 설명: NextAuth.js 소셜 로그인 개시 (Client or Server Action Wrapper)
   - 반환: `Promise<void>` (리다이렉트)
+
+- **`getLinkedAccounts()`**
+  - 설명: 연결된 소셜 계정 목록 조회
+  - 반환: `Promise<ActionResponse<string[]>>`
+
+- **`getUserProfile()`**
+  - 설명: 사용자 프로필 조회
+  - 반환: `Promise<ActionResponse<UserProfile>>`
 
 - **`signOut()`**
   - 설명: 로그아웃 처리
@@ -108,35 +116,43 @@
 - **`syncSpotifyArtistsAction(artists: SpotifyArtist[])`**
   - 설명: 선택한 스포티파이 아티스트를 DB에 동기화 및 팔로우 처리
 
-#### C. Users (`features/users/server/actions.ts`)
+#### D. Search (`features/search/server/actions.ts`)
 
-### 1.4 사용자 (Users) - `features/users/server/actions.ts`
+- **`search(query: string, type: 'all' | 'concert' | 'artist')`**
+  - 설명: 통합 검색 (공연/아티스트)
+  - 반환: `Promise<ActionResponse<SearchResult>>`
 
-- **`updateProfile(data: UpdateProfileData)`**
-  - 설명: 사용자 프로필(이름, 이미지) 수정
-  - 반환: `Promise<User>`
+#### E. Setlists (`features/setlists/server/actions.ts`)
+
+- **`getSetlistByConcertId(concertId: string)`**
+  - 설명: 공연 셋리스트 조회
+  - 반환: `Promise<ActionResponse<Setlist>>`
+
+- **`createSetlist(data: CreateSetlistInput)`**
+  - 설명: 셋리스트 생성
+  - 반환: `Promise<ActionResponse<Setlist>>`
 
 ### 1.5 알림 (Notifications) - `features/notifications/server/actions.ts`
 
 - **`getNotifications(page: number, limit: number)`**
   - 설명: 사용자 알림 목록 조회 (페이징)
-  - 반환: `Promise<{ notifications: Notification[], total: number, ... }>`
+  - 반환: `Promise<ActionResponse<{ notifications: Notification[], total: number, ... }>>`
 
 - **`markAsRead(notificationId: number)`**
   - 설명: 개별 알림 읽음 처리
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 - **`markAllAsRead()`**
   - 설명: 전체 알림 읽음 처리
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 - **`getNotificationSettingsAction()`**
   - 설명: 알림 설정 조회
-  - 반환: `Promise<NotificationSettings>`
+  - 반환: `Promise<ActionResponse<NotificationSettings>>`
 
 - **`updateNotificationSettingsAction(settings: Partial<NotificationSettings>)`**
   - 설명: 알림 설정 업데이트
-  - 반환: `Promise<void>`
+  - 반환: `Promise<ActionResponse>`
 
 ### 1.6 FCM 토큰 등록 - `app/api/notifications/register/route.ts`
 
