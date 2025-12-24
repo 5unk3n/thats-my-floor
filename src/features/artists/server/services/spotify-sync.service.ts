@@ -87,27 +87,25 @@ export async function fetchMySpotifyArtists(
 
 export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[]) {
   try {
-    // 1. Upsert Artists (Parallel)
-    // Using $transaction to ensure data consistency, but processing in parallel for speed.
-    // Use upsert to ensure artist info is up-to-date.
-    const dbArtists = await prisma.$transaction(
-      artists.map((artist) =>
-        prisma.artist.upsert({
-          where: { spotifyArtistId: artist.id },
-          create: {
-            name: artist.name,
-            image: artist.images[0]?.url,
-            genre: artist.genres[0],
-            spotifyArtistId: artist.id,
-            followerCount: 0,
-          },
-          update: {
-            image: artist.images[0]?.url,
-            genre: artist.genres[0],
-          },
-        })
-      )
-    );
+    // 1. Bulk Insert Artists (Performance Optimized)
+    // Updates are less critical, so we use createMany to avoid timeouts with large batches.
+    await prisma.artist.createMany({
+      data: artists.map((artist) => ({
+        name: artist.name,
+        image: artist.images[0]?.url,
+        genre: artist.genres[0],
+        spotifyArtistId: artist.id,
+        followerCount: 0,
+      })),
+      skipDuplicates: true,
+    });
+
+    // Fetch currently stored artists to get their internal IDs
+    const dbArtists = await prisma.artist.findMany({
+      where: {
+        spotifyArtistId: { in: artists.map((a) => a.id) },
+      },
+    });
 
     // 2. Bulk Insert UserArtist
     // First, find existing relations to avoid unique constraint errors (though createMany has skipDuplicates)
