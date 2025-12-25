@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { ArtistConcerts } from '@/features/artists/components/ArtistConcerts';
 import { ArtistProfile } from '@/features/artists/components/ArtistProfile';
 import { getArtistProfile } from '@/features/artists/server/db';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,10 +29,7 @@ export default async function ArtistDetailPage({ params }: PageProps) {
           fallback={
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"
-                />
+                <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
               ))}
             </div>
           }
