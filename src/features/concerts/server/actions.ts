@@ -1,7 +1,7 @@
 'use server';
 
 import { Prisma, PublishStatus } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import * as notificationService from '@/features/notifications/server/services/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
@@ -59,9 +59,18 @@ export async function publishConcertAction(
     // Send notification to followers after successful publish
     await notificationService.notifyConcertRegistration(concert.id);
 
+    // Invalidate Cache
     revalidatePath('/admin/reviews');
     revalidatePath('/'); // Refresh main page explicitly
     revalidatePath(`/concerts/${concertId}`); // Refresh detail page
+
+    // Invalidate artist pages (ISR/Cache)
+    if (concert.artists) {
+      concert.artists.forEach((ca) => {
+        revalidateTag(`artist-concerts-${ca.artistId}`, { expire: 0 });
+      });
+    }
+
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Publish Failed:', error);
