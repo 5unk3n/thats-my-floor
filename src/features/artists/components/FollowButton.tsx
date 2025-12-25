@@ -1,8 +1,8 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
 
 import { getFollowStatus, toggleFollow } from '@/features/artists/server/actions';
 import { Button } from '@/shared/components/ui/button';
@@ -20,65 +20,58 @@ export function FollowButton({
   className,
 }: FollowButtonProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
-  const [isLoading, setIsLoading] = useState(!initialIsFollowing); // Loading if not provided
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // If initialIsFollowing was explicitly provided (e.g. from SSR), we might skip.
-    // But here we design for Static Shell, so we always fetch or fetch if not provided.
-    // Let's fetch to be safe/fresh.
-    const fetchStatus = async () => {
-      try {
-        const result = await getFollowStatus(artistId);
-        if (result.success && result.data !== undefined) {
-          setIsFollowing(result.data);
+  const { data: isFollowing, isLoading } = useQuery({
+    queryKey: ['followStatus', artistId],
+    queryFn: async () => {
+      const result = await getFollowStatus(artistId);
+      if (!result.success) throw new Error(result.error?.message);
+      return result.data ?? false;
+    },
+    initialData: initialIsFollowing,
+    enabled: !!artistId,
+  });
+
+  const { mutate: toggle, isPending } = useMutation({
+    mutationFn: async () => {
+      const result = await toggleFollow(artistId);
+      if (!result.success) {
+        if (result.error?.code === 'AUTH_001') {
+          throw new Error('Unauthorized');
         }
-      } catch (error) {
-        console.error('Failed to fetch follow status:', error);
-      } finally {
-        setIsLoading(false);
+        throw new Error(result.error?.message);
       }
-    };
+      return result.data;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['followStatus', artistId] });
+      const previousStatus = queryClient.getQueryData(['followStatus', artistId]);
 
-    fetchStatus();
-  }, [artistId]);
+      queryClient.setQueryData(['followStatus', artistId], (old: boolean) => !old);
 
-  const handleToggle = async () => {
-    // Optimistic Update
-    setIsFollowing((prev) => !prev);
-
-    startTransition(async () => {
-      try {
-        const result = await toggleFollow(artistId);
-        if (result.success && result.data !== undefined) {
-          setIsFollowing(result.data);
-          router.refresh();
-        } else {
-          // If logic failed (e.g. auth), revert
-          setIsFollowing((prev) => !prev);
-          if (result.error?.code === 'AUTH_001') {
-            router.push('/login');
-          } else {
-            console.error('Failed to toggle follow:', result.error);
-          }
-        }
-      } catch (error) {
-        // Revert on error
-        setIsFollowing((prev) => !prev);
-        if (error instanceof Error && error.message === 'Unauthorized') {
-          router.push('/login');
-        } else {
-          console.error('Failed to toggle follow:', error);
-        }
+      return { previousStatus };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousStatus !== undefined) {
+        queryClient.setQueryData(['followStatus', artistId], context.previousStatus);
       }
-    });
-  };
+      if (err.message === 'Unauthorized') {
+        router.push('/login');
+      } else {
+        console.error('Failed to toggle follow:', err);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['followStatus', artistId] });
+      router.refresh();
+    },
+  });
 
   return (
     <Button
-      onClick={handleToggle}
-      disabled={isPending}
+      onClick={() => toggle()}
+      disabled={isLoading || isPending}
       variant={isFollowing ? 'secondary' : 'default'}
       size="lg"
       className={cn(
