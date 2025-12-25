@@ -23,7 +23,7 @@ export async function generateStaticParams() {
     },
   });
 
-  return latestConcerts.map((concert) => ({
+  return latestConcerts.map((concert: { id: string }) => ({
     id: concert.id,
   }));
 }
