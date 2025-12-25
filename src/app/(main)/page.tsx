@@ -4,16 +4,17 @@ import { ConcertList } from '@/features/concerts/components/ConcertList';
 import { getConcerts } from '@/features/concerts/server/actions';
 import { Button } from '@/shared/components/ui/button';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export default async function Home() {
-  const domesticRes = await getConcerts({ type: 'DOMESTIC', page: 1, size: 8 });
+  const [domesticRes, intlRes, festivalsRes] = await Promise.all([
+    getConcerts({ type: 'DOMESTIC', page: 1, size: 8 }),
+    getConcerts({ type: 'GLOBAL', page: 1, size: 8 }),
+    getConcerts({ type: 'FESTIVAL', page: 1, size: 8 }),
+  ]);
+
   const domesticConcerts = domesticRes.success ? domesticRes.data! : [];
-
-  const intlRes = await getConcerts({ type: 'GLOBAL', page: 1, size: 8 });
   const intlConcerts = intlRes.success ? intlRes.data! : [];
-
-  const festivalsRes = await getConcerts({ type: 'FESTIVAL', page: 1, size: 8 });
   const festivals = festivalsRes.success ? festivalsRes.data! : [];
 
   return (

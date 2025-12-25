@@ -61,6 +61,7 @@ export async function publishConcertAction(
     await notificationService.notifyConcertRegistration(concert.id);
 
     revalidatePath('/admin/reviews');
+    revalidatePath('/'); // Refresh main page explicitly
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Publish Failed:', error);
