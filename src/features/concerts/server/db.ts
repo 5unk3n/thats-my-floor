@@ -221,4 +221,20 @@ export const concertService = {
       data: { status },
     });
   },
+
+  getRecentConcertsForStaticParams: async (take: number = 100) => {
+    return prisma.concert.findMany({
+      where: {
+        status: 'OPEN',
+        publishStatus: PublishStatus.PUBLISHED,
+      },
+      orderBy: {
+        startDate: 'desc',
+      },
+      take,
+      select: {
+        id: true,
+      },
+    });
+  },
 };
