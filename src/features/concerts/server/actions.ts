@@ -3,7 +3,6 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-// eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
 import * as notificationService from '@/features/notifications/server/services/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
@@ -62,6 +61,7 @@ export async function publishConcertAction(
 
     revalidatePath('/admin/reviews');
     revalidatePath('/'); // Refresh main page explicitly
+    revalidatePath(`/concerts/${concertId}`); // Refresh detail page
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Publish Failed:', error);
@@ -76,6 +76,7 @@ export async function rejectConcertAction(concertId: string): Promise<ActionResp
   try {
     await AnalysisService.rejectConcert(concertId);
     revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Reject Failed:', error);
@@ -93,6 +94,7 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
       data: { publishStatus: PublishStatus.REVIEWING },
     });
     revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Restore Failed:', error);
