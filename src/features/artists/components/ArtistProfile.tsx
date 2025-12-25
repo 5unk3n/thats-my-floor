@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 
-import { ArtistDetail } from '../types';
+import { Artist } from '../types';
 import { FollowButton } from './FollowButton';
 
 interface ArtistProfileProps {
-  artist: ArtistDetail;
-  isFollowing: boolean;
+  artist: Artist;
 }
 
-export function ArtistProfile({ artist, isFollowing }: ArtistProfileProps) {
+export function ArtistProfile({ artist }: ArtistProfileProps) {
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       <div className="relative w-full md:w-1/3 aspect-square rounded-xl overflow-hidden shadow-lg bg-gray-100">
@@ -46,7 +45,7 @@ export function ArtistProfile({ artist, isFollowing }: ArtistProfileProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <FollowButton artistId={artist.id} initialIsFollowing={isFollowing} />
+            <FollowButton artistId={artist.id} />
 
             {artist.spotifyArtistId && (
               <Button

@@ -2,22 +2,47 @@
 
 import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
-import { toggleFollow } from '@/features/artists/server/actions';
+import { getFollowStatus, toggleFollow } from '@/features/artists/server/actions';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
 interface FollowButtonProps {
   artistId: string;
-  initialIsFollowing: boolean;
+  initialIsFollowing?: boolean;
   className?: string;
 }
 
-export function FollowButton({ artistId, initialIsFollowing, className }: FollowButtonProps) {
+export function FollowButton({
+  artistId,
+  initialIsFollowing = false,
+  className,
+}: FollowButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isLoading, setIsLoading] = useState(!initialIsFollowing); // Loading if not provided
+
+  useEffect(() => {
+    // If initialIsFollowing was explicitly provided (e.g. from SSR), we might skip.
+    // But here we design for Static Shell, so we always fetch or fetch if not provided.
+    // Let's fetch to be safe/fresh.
+    const fetchStatus = async () => {
+      try {
+        const result = await getFollowStatus(artistId);
+        if (result.success && result.data !== undefined) {
+          setIsFollowing(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch follow status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStatus();
+  }, [artistId]);
 
   const handleToggle = async () => {
     // Optimistic Update
@@ -70,7 +95,9 @@ export function FollowButton({ artistId, initialIsFollowing, className }: Follow
           isFollowing ? 'fill-current scale-110' : 'scale-100 group-hover:scale-110'
         )}
       />
-      <span className="font-semibold">{isFollowing ? 'Following' : 'Follow'}</span>
+      <span className="font-semibold">
+        {isLoading ? 'Loading...' : isFollowing ? 'Following' : 'Follow'}
+      </span>
     </Button>
   );
 }
