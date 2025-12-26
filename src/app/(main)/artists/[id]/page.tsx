@@ -1,26 +1,22 @@
-import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { ArtistConcerts } from '@/features/artists/components/ArtistConcerts';
-import { ArtistProfile } from '@/features/artists/components/ArtistProfile';
-import { getArtistProfile } from '@/features/artists/server/db';
+import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
+import { ArtistProfileSkeleton } from '@/features/artists/components/skeletons/ArtistProfileSkeleton';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ArtistDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const artist = await getArtistProfile(id);
-
-  if (!artist) {
-    notFound();
-  }
+export default function ArtistDetailPage({ params }: PageProps) {
+  const idPromise = params.then((p) => p.id);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-16">
-      <ArtistProfile artist={artist} />
+      <Suspense fallback={<ArtistProfileSkeleton />}>
+        <ArtistProfileFetcher artistId={idPromise} />
+      </Suspense>
 
       <section className="space-y-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">🎟️ 참여하는 공연</h2>
@@ -34,7 +30,7 @@ export default async function ArtistDetailPage({ params }: PageProps) {
             </div>
           }
         >
-          <ArtistConcerts artistId={id} />
+          <ArtistConcerts artistId={idPromise} />
         </Suspense>
       </section>
     </div>

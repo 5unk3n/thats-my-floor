@@ -12,9 +12,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [new URL('http://www.kopis.or.kr/**'), new URL('https://i.scdn.co/**')],
   },
-  experimental: {
-    useCache: true,
-  },
+  cacheComponents: true,
 };
 
 export default withSerwist(nextConfig);

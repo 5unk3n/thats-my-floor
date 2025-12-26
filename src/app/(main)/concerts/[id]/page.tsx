@@ -10,6 +10,10 @@ interface PageProps {
 export async function generateStaticParams() {
   const latestConcerts = await concertService.getRecentConcertsForStaticParams(100);
 
+  if (latestConcerts.length === 0) {
+    return [{ id: '__placeholder__' }];
+  }
+
   return latestConcerts.map((concert: { id: string }) => ({
     id: concert.id,
   }));
@@ -17,6 +21,10 @@ export async function generateStaticParams() {
 
 export default async function ConcertDetailPage({ params }: PageProps) {
   const { id } = await params;
+
+  if (id === '__placeholder__') {
+    notFound();
+  }
 
   let concert;
 

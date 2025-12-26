@@ -3,11 +3,12 @@ import { ConcertCard } from '@/features/concerts/components/ConcertCard';
 import { Concert } from '@/features/concerts/types';
 
 interface ArtistConcertsProps {
-  artistId: string;
+  artistId: Promise<string> | string;
 }
 
 export async function ArtistConcerts({ artistId }: ArtistConcertsProps) {
-  const concerts = await getArtistConcerts(artistId);
+  const id = await artistId;
+  const concerts = await getArtistConcerts(id);
 
   if (concerts.length === 0) {
     return (
