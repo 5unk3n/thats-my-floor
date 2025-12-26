@@ -245,22 +245,41 @@ export default function Page() {
   );
 }
 
-### 4. Service Layer Convention (서비스 레이어 규칙)
+### 4. Server Layer Roles & Guidelines (서버 계층 역할 및 규칙)
 
-- **파일 명명**: `[name].service.ts` (예: `sync.service.ts`, `analysis.service.ts`)
-- **위치**: `src/features/[feature]/server/services/`
-- **스타일**: **Functional Style** (Class나 Object Literal 지양)
-- **Export**: 개별 함수를 `export` 하고, 사용하는 곳에서 `import * as [Name]Service` 형태로 사용 권장.
+Vertical Slice 아키텍처 내에서 서버 모듈들의 역할과 책임을 명확히 합니다.
 
-```typescript
-// Good
-export async function syncConcerts() { ... }
+#### A. Data Access Layer (`features/*/server/db.ts`)
+- **역할**: 순수 데이터베이스 접근 (Repository Pattern).
+- **규칙**:
+  - **Functional Style**: `export const findUser = ...` 형태로 개별 함수 내보내기 (Class/Object 지양).
+  - **No Business Logic**: 복잡한 로직이나 데이터 가공 금지. ORM이 반환하는 Raw Data 반환.
+  - **No Caching**: `use cache` 사용 금지. (Service 계층이 캐싱 정책을 결정해야 함).
 
-// Bad
-export class SyncService { ... }
-export const syncService = { ... }
+#### B. Service Layer (`features/*/server/services/*.service.ts`)
+- **역할**: 비즈니스 로직, **캐싱(`use cache`)**, 오케스트레이션.
+- **명명 규칙**:
+  - 핵심 도메인 로직: `[feature].service.ts` (예: `concert.service.ts`, `user.service.ts`)
+  - 보조 역할 로직: `[role].service.ts` (예: `collector.service.ts`, `sync.service.ts`)
+- **규칙**:
+  - **Caching**: 조회(Read) 로직에 `'use cache'` 및 `cacheTag` 적용 권장.
+  - **Orchestration**: 여러 DB 함수를 조합하거나 트랜잭션 단위 관리.
+  - **Logic**: 데이터 가공, 기본값 설정, 외부 API 통신 등 수행.
+
+#### C. Server Actions (`features/*/server/actions.ts`)
+- **역할**: 클라이언트 진입점 (Controller 역할), **캐시 무효화**.
+- **규칙**:
+  - **Entry Point**: `'use server'` 지시어 사용.
+  - **Validation**: 사용자 입력값 검증 및 권한 체크.
+  - **Delegation**: 비즈니스 로직은 직접 구현하지 않고 **Service Layer에 위임**.
+  - **Revalidation**: 데이터 변경(Write) 완료 후 `revalidateTag` 호출로 캐시 갱신.
+
+#### D. Caching Strategy Q&A
+- **Q. 단순한 DB 조회도 Service를 만들어야 하나요?**
+  - **A.** 캐싱이 필요 없다면 Component나 Action에서 `db.ts`를 직접 호출해도 됩니다 (Short-circuiting 허용).
+  - **A.** 단, **캐싱이 필요하다면 반드시 Service 함수로 감싸서(Wrapping)** `'use cache'`를 적용해야 합니다. `db.ts`에 직접 캐싱을 적용하지 마세요.
+
+```
+
+```
 ````
-
-```
-
-```
