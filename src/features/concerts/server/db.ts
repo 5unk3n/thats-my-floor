@@ -1,4 +1,5 @@
 import { Prisma, PublishStatus } from '@prisma/client';
+import { cacheTag } from 'next/cache';
 
 import { prisma } from '@/shared/lib/prisma';
 
@@ -10,6 +11,15 @@ export interface Concert {
   endDate: string;
   place: string;
   status: string;
+}
+
+export interface ConcertFilterParams {
+  page?: number;
+  size?: number;
+  type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
+  startDate?: string;
+  endDate?: string;
+  keyword?: string;
 }
 
 export interface BookingLink {
@@ -28,20 +38,54 @@ export interface ConcertDetail extends Concert {
 }
 
 export const concertService = {
-  getConcerts: async (params: {
-    startDate: string;
-    endDate: string;
-    page: number;
-    size: number;
-  }): Promise<Concert[]> => {
-    const concerts = await prisma.concert.findMany({
-      where: {
-        endDate: { gte: new Date(params.startDate) },
-        startDate: { lte: new Date(params.endDate) },
+  getConcerts: async (params: ConcertFilterParams): Promise<Concert[]> => {
+    'use cache';
+    cacheTag('concerts');
+    if (params.type) {
+      cacheTag(`concerts-${params.type}`);
+    }
+
+    const { page = 1, size = 20, type, startDate, endDate, keyword } = params;
+
+    // Default date range: Today to 1 month later if not specified
+    const today = new Date();
+    const nextMonth = new Date();
+    nextMonth.setMonth(today.getMonth() + 1);
+
+    const st = startDate
+      ? new Date(startDate.slice(0, 4) + '-' + startDate.slice(4, 6) + '-' + startDate.slice(6, 8))
+      : today;
+
+    const ed = endDate
+      ? new Date(endDate.slice(0, 4) + '-' + endDate.slice(4, 6) + '-' + endDate.slice(6, 8))
+      : nextMonth;
+
+    const where: Prisma.ConcertWhereInput = {
+      publishStatus: PublishStatus.PUBLISHED,
+      startDate: {
+        gte: st,
+        lte: ed,
       },
-      skip: (params.page - 1) * params.size,
-      take: params.size,
-      orderBy: { startDate: 'desc' },
+    };
+
+    if (type === 'GLOBAL') {
+      where.isGlobal = true;
+    } else if (type === 'FESTIVAL') {
+      where.isFestival = true;
+    } else if (type === 'DOMESTIC') {
+      where.isGlobal = false;
+      where.isFestival = false;
+    }
+
+    if (keyword) {
+      where.title = { contains: keyword, mode: 'insensitive' };
+    }
+
+    const concerts = await prisma.concert.findMany({
+      where,
+      skip: (page - 1) * size,
+      take: size,
+      orderBy: { startDate: 'asc' },
     });
 
     const formatDate = (date: Date) => {
@@ -60,6 +104,8 @@ export const concertService = {
   },
 
   getConcertDetail: async (id: string): Promise<ConcertDetail | null> => {
+    'use cache';
+    cacheTag(`concert-detail-${id}`);
     try {
       const concert = await prisma.concert.findUnique({
         where: { id },
