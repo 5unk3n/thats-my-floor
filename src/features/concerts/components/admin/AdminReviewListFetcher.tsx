@@ -21,10 +21,9 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
 
   const concerts = await prisma.concert.findMany({
     where: { publishStatus: status },
-    orderBy: status === PublishStatus.DRAFT ? { createdAt: 'desc' } : { updatedAt: 'desc' },
+    orderBy: { updatedAt: 'desc' },
     take: 50,
-    include:
-      status === PublishStatus.PUBLISHED ? { artists: { include: { artist: true } } } : undefined,
+    include: { artists: { include: { artist: true } } },
   });
 
   if (concerts.length === 0) {
@@ -116,7 +115,6 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
           >
             <h3 className="font-bold text-sm">{concert.title}</h3>
             <p className="text-xs text-gray-600">
-              {/* @ts-ignore - include is conditionally applied above but TS doesn't infer it perfectly here without specific type guards */}
               🎤 {concert.artists?.map((a) => a.artist.name).join(', ') || '알 수 없음'}
             </p>
             <div className="text-sm text-gray-500">

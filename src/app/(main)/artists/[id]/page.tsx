@@ -1,38 +1,32 @@
 import { Suspense } from 'react';
 
-import { ArtistConcerts } from '@/features/artists/components/ArtistConcerts';
 import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
 import { ArtistProfileSkeleton } from '@/features/artists/components/skeletons/ArtistProfileSkeleton';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
+import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 
-interface PageProps {
+interface ArtistDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function ArtistDetailPage({ params }: PageProps) {
+export default function ArtistDetailPage({ params }: ArtistDetailPageProps) {
+  // Extract id promise for specialized components
   const idPromise = params.then((p) => p.id);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-16">
+    <main className="min-h-screen bg-background pb-20">
       <Suspense fallback={<ArtistProfileSkeleton />}>
         <ArtistProfileFetcher artistId={idPromise} />
       </Suspense>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2">🎟️ 참여하는 공연</h2>
-
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-              ))}
-            </div>
-          }
-        >
-          <ArtistConcerts artistId={idPromise} />
-        </Suspense>
-      </section>
-    </div>
+      <div className="container mx-auto px-4 mt-8 space-y-8">
+        <section>
+          <h2 className="text-2xl font-bold mb-6">예정된 공연</h2>
+          <Suspense fallback={<ConcertListSkeleton />}>
+            <ArtistConcertList artistId={idPromise} />
+          </Suspense>
+        </section>
+      </div>
+    </main>
   );
 }

@@ -1,14 +1,14 @@
-import { getArtistConcerts } from '@/features/artists/server/db';
 import { ConcertCard } from '@/features/concerts/components/ConcertCard';
+import { concertService } from '@/features/concerts/server/db';
 import { Concert } from '@/features/concerts/types';
 
-interface ArtistConcertsProps {
+interface ArtistConcertListProps {
   artistId: Promise<string> | string;
 }
 
-export async function ArtistConcerts({ artistId }: ArtistConcertsProps) {
+export async function ArtistConcertList({ artistId }: ArtistConcertListProps) {
   const id = await artistId;
-  const concerts = await getArtistConcerts(id);
+  const concerts = await concertService.getConcertsByArtistId(id);
 
   if (concerts.length === 0) {
     return (

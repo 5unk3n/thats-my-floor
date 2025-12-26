@@ -237,4 +237,42 @@ export const concertService = {
       },
     });
   },
+
+  getConcertsByArtistId: async (artistId: string) => {
+    const concerts = await prisma.concert.findMany({
+      where: {
+        artists: {
+          some: {
+            artistId: artistId,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'desc',
+      },
+      select: {
+        id: true,
+        title: true,
+        posterUrl: true,
+        startDate: true,
+        endDate: true,
+        place: true,
+        status: true,
+      },
+    });
+
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0].replace(/-/g, '.');
+    };
+
+    return concerts.map((c) => ({
+      id: c.id,
+      title: c.title,
+      posterUrl: c.posterUrl || '',
+      startDate: formatDate(c.startDate),
+      endDate: formatDate(c.endDate),
+      place: c.place,
+      status: c.status || 'OPEN',
+    }));
+  },
 };

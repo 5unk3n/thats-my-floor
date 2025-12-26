@@ -2,10 +2,13 @@ import Link from 'next/link';
 
 import ArtistCard from '@/features/artists/components/ArtistCard';
 import { getFollowedArtists } from '@/features/artists/server/actions';
-import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
 import { Button } from '@/shared/components/ui/button';
 
-export async function FollowedArtistsFetcher() {
+interface FollowedArtistsFetcherProps {
+  searchTrigger: React.ReactNode;
+}
+
+export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsFetcherProps) {
   const response = await getFollowedArtists();
   const followedArtists =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,7 +22,7 @@ export async function FollowedArtistsFetcher() {
           좋아하는 아티스트를 추가하고 공연 알림을 받아보세요!
         </p>
         <div className="flex justify-center gap-4">
-          <ArtistSearchTrigger variant="button" />
+          {searchTrigger}
           <Button asChild className="bg-[#1DB954] hover:bg-[#1ed760] text-white border-0">
             <Link href="/mypage/spotify-sync">스포티파이 연동</Link>
           </Button>

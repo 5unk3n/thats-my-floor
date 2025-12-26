@@ -45,7 +45,7 @@ export default function FollowedArtistsPage() {
       </div>
 
       <Suspense fallback={<FollowedArtistsSkeleton />}>
-        <FollowedArtistsFetcher />
+        <FollowedArtistsFetcher searchTrigger={<ArtistSearchTrigger variant="button" />} />
       </Suspense>
     </div>
   );
