@@ -8,9 +8,10 @@ import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import { Concert, concertService } from './db';
+import { Concert } from './db';
 import * as AnalysisService from './services/analysis.service';
 import { Candidate } from './services/analysis.service';
+import * as concertService from './services/concert.service';
 
 // --- Admin Pipeline Actions ---
 

@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
 
 import { ConcertDetail } from '@/features/concerts/components/ConcertDetail';
-import { concertService } from '@/features/concerts/server/db';
+import * as concertRepository from '@/features/concerts/server/db';
+import * as concertService from '@/features/concerts/server/services/concert.service';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export async function generateStaticParams() {
-  const latestConcerts = await concertService.getRecentConcertsForStaticParams(100);
+  const latestConcerts = await concertRepository.getRecentConcertsForStaticParams(100);
 
   if (latestConcerts.length === 0) {
     return [{ id: '__placeholder__' }];

@@ -1,4 +1,5 @@
-import { concertService } from '@/features/concerts/server/db';
+import * as concertRepository from '@/features/concerts/server/db';
+import * as concertService from '@/features/concerts/server/services/concert.service';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
@@ -72,7 +73,8 @@ export const collectConcerts = async () => {
         const castNames = detail.prfcast.split(',').map((s) => s.trim());
         for (const name of castNames) {
           if (!name) continue;
-          const artist = await concertService.findArtistByName(name);
+          if (!name) continue;
+          const artist = await concertRepository.findArtistByName(name);
           if (artist) {
             artistId = artist.id;
             console.log(`[Collector] Matched artist: ${artist.name}`);
@@ -100,7 +102,7 @@ export const collectConcerts = async () => {
         url: item.relateurl,
       }));
 
-      const savedConcert = await concertService.upsertConcert({
+      const savedConcert = await concertService.syncConcert({
         kopisId: detail.mt20id,
         title: detail.prfnm,
         posterUrl: detail.poster,

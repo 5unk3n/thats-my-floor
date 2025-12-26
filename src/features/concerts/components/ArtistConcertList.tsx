@@ -1,5 +1,5 @@
 import { ConcertCard } from '@/features/concerts/components/ConcertCard';
-import { concertService } from '@/features/concerts/server/db';
+import * as concertRepository from '@/features/concerts/server/db';
 import { Concert } from '@/features/concerts/types';
 
 interface ArtistConcertListProps {
@@ -8,7 +8,7 @@ interface ArtistConcertListProps {
 
 export async function ArtistConcertList({ artistId }: ArtistConcertListProps) {
   const id = await artistId;
-  const concerts = await concertService.getConcertsByArtistId(id);
+  const concerts = await concertRepository.getConcertsByArtistId(id);
 
   if (concerts.length === 0) {
     return (
