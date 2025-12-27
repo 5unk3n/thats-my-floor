@@ -26,7 +26,7 @@ export const findArtistConcerts = async (id: string) => {
   });
 };
 
-export const toggleFollowInDB = async (userId: string, artistId: string) => {
+export const toggleArtistFollow = async (userId: string, artistId: string) => {
   const existing = await prisma.userArtist.findUnique({
     where: {
       userId_artistId: {
@@ -57,7 +57,7 @@ export const toggleFollowInDB = async (userId: string, artistId: string) => {
   }
 };
 
-export const getFollowStatusFromDB = async (userId: string, artistId: string) => {
+export const existsArtistFollow = async (userId: string, artistId: string) => {
   const count = await prisma.userArtist.count({
     where: {
       userId,
@@ -67,7 +67,7 @@ export const getFollowStatusFromDB = async (userId: string, artistId: string) =>
   return count > 0;
 };
 
-export const getFollowedArtistsFromDB = async (userId: string) => {
+export const findFollowedArtists = async (userId: string) => {
   const userArtists = await prisma.userArtist.findMany({
     where: { userId },
     include: { artist: true },

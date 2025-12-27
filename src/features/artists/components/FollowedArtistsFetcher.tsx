@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
 import ArtistCard from '@/features/artists/components/ArtistCard';
-import { getFollowedArtistsFromDB } from '@/features/artists/server/db';
+import { findFollowedArtists } from '@/features/artists/server/db';
 import { Button } from '@/shared/components/ui/button';
 import { authOptions } from '@/shared/lib/auth';
 
@@ -14,7 +14,7 @@ export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsF
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  const followedArtists = user ? await getFollowedArtistsFromDB(user.id) : [];
+  const followedArtists = user ? await findFollowedArtists(user.id) : [];
 
   if (followedArtists.length === 0) {
     return (
