@@ -1,51 +1,32 @@
-import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
-import { ArtistProfile } from '@/features/artists/components/ArtistProfile';
-import { getFollowStatus } from '@/features/artists/server/actions';
-import { getArtistDetail } from '@/features/artists/server/db';
-import { ConcertCard } from '@/features/concerts/components/ConcertCard';
-import { Concert } from '@/features/concerts/types';
+import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
+import { ArtistProfileSkeleton } from '@/features/artists/components/skeletons/ArtistProfileSkeleton';
+import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
+import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 
-interface PageProps {
+interface ArtistDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ArtistDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const [artist, followStatusResponse] = await Promise.all([
-    getArtistDetail(id),
-    getFollowStatus(id),
-  ]);
-  const isFollowing = followStatusResponse.success ? followStatusResponse.data : false;
-
-  if (!artist) {
-    notFound();
-  }
+export default function ArtistDetailPage({ params }: ArtistDetailPageProps) {
+  // Extract id promise for specialized components
+  const idPromise = params.then((p) => p.id);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-16">
-      <ArtistProfile artist={artist} isFollowing={isFollowing} />
+    <main className="min-h-screen bg-background pb-20">
+      <Suspense fallback={<ArtistProfileSkeleton />}>
+        <ArtistProfileFetcher artistId={idPromise} />
+      </Suspense>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          🎟️ 참여하는 공연
-          <span className="text-muted-foreground text-lg font-normal">
-            ({artist.concerts.length})
-          </span>
-        </h2>
-
-        {artist.concerts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {artist.concerts.map((concert) => (
-              <ConcertCard key={concert.id} concert={concert as unknown as Concert} />
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 text-center bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-            <p className="text-gray-500 text-lg">아직 예정된 공연이 없습니다.</p>
-          </div>
-        )}
-      </section>
-    </div>
+      <div className="container mx-auto px-4 mt-8 space-y-8">
+        <section>
+          <h2 className="text-2xl font-bold mb-6">예정된 공연</h2>
+          <Suspense fallback={<ConcertListSkeleton />}>
+            <ArtistConcertList artistId={idPromise} />
+          </Suspense>
+        </section>
+      </div>
+    </main>
   );
 }

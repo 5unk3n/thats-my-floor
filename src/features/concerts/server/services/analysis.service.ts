@@ -163,6 +163,9 @@ export async function publishConcert(concertId: string, selectedCandidates: Cand
       data: {
         publishStatus: PublishStatus.PUBLISHED,
       },
+      include: {
+        artists: true, // Include ConcertArtist relations to get artistIds
+      },
     });
 
     return updatedConcert;

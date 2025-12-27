@@ -3,7 +3,7 @@ import { PublishStatus } from '@prisma/client';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
-import { concertService } from '../db';
+import * as concertRepository from '../db';
 
 /**
  * 모든 유효한 공연의 상태를 KOPIS와 동기화합니다.
@@ -63,6 +63,6 @@ async function updateStatusFromKopis(id: string, kopisId: string) {
     throw new Error(`Invalid KOPIS detail for ${kopisId}`);
   }
 
-  await concertService.updateConcertStatus(id, detail.prfstate);
+  await concertRepository.updateConcertStatus(id, detail.prfstate);
   console.log(`[SyncService] Updated status for ${kopisId}: ${detail.prfstate}`);
 }

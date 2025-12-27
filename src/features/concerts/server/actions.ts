@@ -1,9 +1,8 @@
 'use server';
 
-import { Prisma, PublishStatus } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { PublishStatus } from '@prisma/client';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
-// eslint-disable-next-line boundaries/element-types -- MVP: Cross-feature notification for publish flow
 import * as notificationService from '@/features/notifications/server/services/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
@@ -12,6 +11,7 @@ import { ActionResponse } from '@/shared/types/action-response';
 import { Concert } from '../types';
 import * as AnalysisService from './services/analysis.service';
 import { Candidate } from './services/analysis.service';
+import * as concertService from './services/concert.service';
 
 // --- Admin Pipeline Actions ---
 
@@ -60,7 +60,22 @@ export async function publishConcertAction(
     // Send notification to followers after successful publish
     await notificationService.notifyConcertRegistration(concert.id);
 
+    // Invalidate Cache
+    // Invalidate Cache
     revalidatePath('/admin/reviews');
+    // revalidatePath('/'); // Refresh main page explicitly - unnecessary with tags
+    // revalidatePath(`/concerts/${concertId}`); // Refresh detail page - unnecessary with tags
+
+    revalidateTag('concerts', {});
+    revalidateTag(`concert-detail-${concertId}`, {});
+
+    // Invalidate artist pages (ISR/Cache)
+    if (concert.artists) {
+      concert.artists.forEach((ca) => {
+        revalidateTag(`artist-concerts-${ca.artistId}`, {}); // tag-based invalidation
+      });
+    }
+
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Publish Failed:', error);
@@ -75,6 +90,7 @@ export async function rejectConcertAction(concertId: string): Promise<ActionResp
   try {
     await AnalysisService.rejectConcert(concertId);
     revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Reject Failed:', error);
@@ -92,6 +108,7 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
       data: { publishStatus: PublishStatus.REVIEWING },
     });
     revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Restore Failed:', error);
@@ -176,83 +193,20 @@ export async function getConcerts(params: {
   size?: number;
   region?: string;
   type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
-  startDate?: string;
-  endDate?: string;
-  keyword?: string;
 }): Promise<ActionResponse<Concert[]>> {
-  const { page = 1, size = 20, type, startDate, endDate, keyword } = params;
-
-  // Default date range: Today to 1 month later if not specified
-  const today = new Date();
-  const nextMonth = new Date();
-  nextMonth.setMonth(today.getMonth() + 1);
-
-  // DB Query Filters
-  const where: Prisma.ConcertWhereInput = {
-    // Only show published concerts to users
-    publishStatus: PublishStatus.PUBLISHED,
-  };
-
-  // 1. Type Filter
-  if (type === 'GLOBAL') {
-    where.isGlobal = true;
-  } else if (type === 'FESTIVAL') {
-    where.isFestival = true;
-  } else if (type === 'DOMESTIC') {
-    where.isGlobal = false;
-    where.isFestival = false;
-  }
-
-  // 2. Keyword Search
-  if (keyword) {
-    where.title = { contains: keyword, mode: 'insensitive' };
-  }
-
-  // 3. Date Filter
-  const st = startDate
-    ? new Date(startDate.slice(0, 4) + '-' + startDate.slice(4, 6) + '-' + startDate.slice(6, 8))
-    : today;
-
-  const ed = endDate
-    ? new Date(endDate.slice(0, 4) + '-' + endDate.slice(4, 6) + '-' + endDate.slice(6, 8))
-    : nextMonth;
-
-  where.startDate = {
-    gte: st,
-    lte: ed,
-  };
-
-  // 4. Region Filter removed (area column deleted)
-  // If region filtering is still needed, it might need to rely on 'place' or another logic, but user deleted 'area'.
-  // I will comment it out or remove it.
-  /*
-  if (region) {
-    where.area = { contains: region, mode: 'insensitive' };
-  }
-  */
-
   try {
-    const concerts = await prisma.concert.findMany({
-      where,
-      skip: (page - 1) * size,
-      take: size,
-      orderBy: { startDate: 'asc' },
+    const concerts = await concertService.getConcerts({
+      page: params.page,
+      size: params.size,
+      type: params.type,
     });
 
     return {
       success: true,
-      data: concerts.map((item) => ({
-        id: item.id,
-        title: item.title,
-        startDate: item.startDate.toISOString().slice(0, 10).replace(/-/g, '.'),
-        endDate: item.endDate.toISOString().slice(0, 10).replace(/-/g, '.'),
-        place: item.place,
-        posterUrl: item.posterUrl || '',
-        status: item.status || '',
-      })),
+      data: concerts,
     };
   } catch (error) {
-    console.error('Failed to fetch concerts from DB:', error);
+    console.error('Failed to fetch concerts via Action:', error);
     return {
       success: false,
       error: { code: ERROR_CODES.NOT_FOUND, message: 'Failed to fetch concerts' },

@@ -1,4 +1,4 @@
-import { ConcertDetail } from '@/features/concerts/server/db';
+import { ConcertDetail } from '@/features/concerts/types';
 
 interface ConcertImagesProps {
   concert: ConcertDetail;

@@ -1,59 +1,77 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
 
-import { toggleFollow } from '@/features/artists/server/actions';
+import { getFollowStatus, toggleFollow } from '@/features/artists/server/actions';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
 interface FollowButtonProps {
   artistId: string;
-  initialIsFollowing: boolean;
+  initialIsFollowing?: boolean;
   className?: string;
 }
 
-export function FollowButton({ artistId, initialIsFollowing, className }: FollowButtonProps) {
+export function FollowButton({
+  artistId,
+  initialIsFollowing = false,
+  className,
+}: FollowButtonProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const queryClient = useQueryClient();
 
-  const handleToggle = async () => {
-    // Optimistic Update
-    setIsFollowing((prev) => !prev);
+  const { data: isFollowing, isLoading } = useQuery({
+    queryKey: ['followStatus', artistId],
+    queryFn: async () => {
+      const result = await getFollowStatus(artistId);
+      if (!result.success) throw new Error(result.error?.message);
+      return result.data ?? false;
+    },
+    initialData: initialIsFollowing,
+    enabled: !!artistId,
+  });
 
-    startTransition(async () => {
-      try {
-        const result = await toggleFollow(artistId);
-        if (result.success && result.data !== undefined) {
-          setIsFollowing(result.data);
-          router.refresh();
-        } else {
-          // If logic failed (e.g. auth), revert
-          setIsFollowing((prev) => !prev);
-          if (result.error?.code === 'AUTH_001') {
-            router.push('/login');
-          } else {
-            console.error('Failed to toggle follow:', result.error);
-          }
+  const { mutate: toggle, isPending } = useMutation({
+    mutationFn: async () => {
+      const result = await toggleFollow(artistId);
+      if (!result.success) {
+        if (result.error?.code === 'AUTH_001') {
+          throw new Error('Unauthorized');
         }
-      } catch (error) {
-        // Revert on error
-        setIsFollowing((prev) => !prev);
-        if (error instanceof Error && error.message === 'Unauthorized') {
-          router.push('/login');
-        } else {
-          console.error('Failed to toggle follow:', error);
-        }
+        throw new Error(result.error?.message);
       }
-    });
-  };
+      return result.data;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['followStatus', artistId] });
+      const previousStatus = queryClient.getQueryData(['followStatus', artistId]);
+
+      queryClient.setQueryData(['followStatus', artistId], (old: boolean) => !old);
+
+      return { previousStatus };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousStatus !== undefined) {
+        queryClient.setQueryData(['followStatus', artistId], context.previousStatus);
+      }
+      if (err.message === 'Unauthorized') {
+        router.push('/login');
+      } else {
+        console.error('Failed to toggle follow:', err);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['followStatus', artistId] });
+      router.refresh();
+    },
+  });
 
   return (
     <Button
-      onClick={handleToggle}
-      disabled={isPending}
+      onClick={() => toggle()}
+      disabled={isLoading || isPending}
       variant={isFollowing ? 'secondary' : 'default'}
       size="lg"
       className={cn(
@@ -70,7 +88,9 @@ export function FollowButton({ artistId, initialIsFollowing, className }: Follow
           isFollowing ? 'fill-current scale-110' : 'scale-100 group-hover:scale-110'
         )}
       />
-      <span className="font-semibold">{isFollowing ? 'Following' : 'Follow'}</span>
+      <span className="font-semibold">
+        {isLoading ? 'Loading...' : isFollowing ? 'Following' : 'Follow'}
+      </span>
     </Button>
   );
 }

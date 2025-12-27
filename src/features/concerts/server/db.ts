@@ -2,223 +2,188 @@ import { Prisma, PublishStatus } from '@prisma/client';
 
 import { prisma } from '@/shared/lib/prisma';
 
-export interface Concert {
-  id: string;
+export const findConcerts = async (params: {
+  where: Prisma.ConcertWhereInput;
+  page: number;
+  size: number;
+}) => {
+  return prisma.concert.findMany({
+    where: params.where,
+    skip: (params.page - 1) * params.size,
+    take: params.size,
+    orderBy: { startDate: 'asc' },
+  });
+};
+
+export const findConcertById = async (id: string) => {
+  return prisma.concert.findUnique({
+    where: { id },
+    include: {
+      artists: {
+        include: {
+          artist: true,
+        },
+      },
+    },
+  });
+};
+
+export const upsertConcertWithArtist = async (data: {
+  kopisId: string;
   title: string;
-  posterUrl: string;
   startDate: string;
   endDate: string;
   place: string;
-  status: string;
-}
+  area?: string;
+  posterUrl?: string;
+  status?: string;
+  runtime?: string;
+  price?: string;
+  schedule?: string;
+  description?: string;
+  images?: string[];
+  relates?: Prisma.InputJsonValue[];
+  isGlobal?: boolean;
+  isFestival?: boolean;
+  artistId?: string;
+}) => {
+  const concert = await prisma.concert.upsert({
+    where: { kopisId: data.kopisId },
+    update: {
+      title: data.title,
+      posterUrl: data.posterUrl,
+      startDate: new Date(data.startDate),
+      endDate: new Date(data.endDate),
+      place: data.place,
+      region: data.area,
+      status: data.status,
+      runtime: data.runtime,
+      price: data.price,
+      schedule: data.schedule,
+      description: data.description,
+      images: data.images || [],
+      relates: data.relates || [],
+      isGlobal: data.isGlobal || false,
+      isFestival: data.isFestival || false,
+    },
+    create: {
+      kopisId: data.kopisId,
+      title: data.title,
+      posterUrl: data.posterUrl,
+      startDate: new Date(data.startDate),
+      endDate: new Date(data.endDate),
+      place: data.place,
+      region: data.area,
+      status: data.status,
+      runtime: data.runtime,
+      price: data.price,
+      schedule: data.schedule,
+      description: data.description,
+      images: data.images || [],
+      relates: data.relates || [],
+      isGlobal: data.isGlobal || false,
+      isFestival: data.isFestival || false,
+      publishStatus: PublishStatus.DRAFT,
+    },
+  });
 
-export interface BookingLink {
-  name: string;
-  url: string;
-}
-
-export interface ConcertDetail extends Concert {
-  runtime: string;
-  price: string;
-  description: string;
-  images: string[];
-  schedule: string;
-  relates: BookingLink[];
-  artists: { id: string; name: string }[];
-}
-
-export const concertService = {
-  getConcerts: async (params: {
-    startDate: string;
-    endDate: string;
-    page: number;
-    size: number;
-  }): Promise<Concert[]> => {
-    const concerts = await prisma.concert.findMany({
+  if (data.artistId) {
+    const existing = await prisma.concertArtist.findUnique({
       where: {
-        endDate: { gte: new Date(params.startDate) },
-        startDate: { lte: new Date(params.endDate) },
+        concertId_artistId: {
+          concertId: concert.id,
+          artistId: data.artistId,
+        },
       },
-      skip: (params.page - 1) * params.size,
-      take: params.size,
-      orderBy: { startDate: 'desc' },
     });
 
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0].replace(/-/g, '.');
-    };
-
-    return concerts.map((item) => ({
-      id: item.id,
-      title: item.title,
-      posterUrl: item.posterUrl || '',
-      startDate: formatDate(item.startDate),
-      endDate: formatDate(item.endDate),
-      place: item.place,
-      status: item.status || 'OPEN',
-    }));
-  },
-
-  getConcertDetail: async (id: string): Promise<ConcertDetail | null> => {
-    try {
-      const concert = await prisma.concert.findUnique({
-        where: { id },
-        include: {
-          artists: {
-            include: {
-              artist: true,
-            },
-          },
+    if (!existing) {
+      await prisma.concertArtist.create({
+        data: {
+          concertId: concert.id,
+          artistId: data.artistId,
+          role: 'MAIN',
         },
       });
-
-      if (!concert) return null;
-
-      // Parse relates (booking links) safely
-      let relates: BookingLink[] = [];
-      if (concert.relates && Array.isArray(concert.relates)) {
-        relates = (
-          concert.relates as Array<{
-            relatenm?: string;
-            name?: string;
-            relateurl?: string;
-            url?: string;
-          }>
-        )
-          .map((item) => ({
-            name: item.relatenm || item.name || '',
-            url: item.relateurl || item.url || '',
-          }))
-          .filter((link) => link.name && link.url);
-      }
-
-      const formatDate = (date: Date) => {
-        return date.toISOString().split('T')[0].replace(/-/g, '.');
-      };
-
-      return {
-        id: concert.id,
-        title: concert.title,
-        posterUrl: concert.posterUrl || '',
-        startDate: formatDate(concert.startDate),
-        endDate: formatDate(concert.endDate),
-        place: concert.place,
-        status: concert.status || 'OPEN',
-        runtime: concert.runtime || '',
-        price: concert.price || '',
-        description: concert.description || '',
-        images: concert.images,
-        schedule: concert.schedule || '',
-        relates,
-        artists: concert.artists.map((a) => ({ id: a.artist.id, name: a.artist.name })),
-      };
-    } catch (error) {
-      console.error('Failed to fetch concert detail from DB:', error);
-      return null;
     }
-  },
+  }
 
-  upsertConcert: async (data: {
-    kopisId: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    place: string;
-    area?: string; // region in DB, area in KOPIS
-    posterUrl?: string;
-    status?: string;
-    runtime?: string;
-    price?: string;
-    schedule?: string;
-    description?: string;
-    images?: string[];
-    relates?: Prisma.InputJsonValue[];
-    isGlobal?: boolean;
-    isFestival?: boolean;
-    artistId?: string;
-  }) => {
-    const concert = await prisma.concert.upsert({
-      where: { kopisId: data.kopisId },
-      update: {
-        title: data.title,
-        posterUrl: data.posterUrl,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-        place: data.place,
-        region: data.area,
-        status: data.status,
-        runtime: data.runtime,
-        price: data.price,
-        schedule: data.schedule,
-        description: data.description,
-        images: data.images || [],
-        relates: data.relates || [],
-        isGlobal: data.isGlobal || false,
-        isFestival: data.isFestival || false,
+  return concert;
+};
+
+export const findArtistByName = async (name: string) => {
+  return prisma.artist.findFirst({
+    where: {
+      name: {
+        equals: name,
+        mode: 'insensitive',
       },
-      create: {
-        kopisId: data.kopisId,
-        title: data.title,
-        posterUrl: data.posterUrl,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-        place: data.place,
-        region: data.area,
-        status: data.status,
-        runtime: data.runtime,
-        price: data.price,
-        schedule: data.schedule,
-        description: data.description,
-        images: data.images || [],
-        relates: data.relates || [],
-        isGlobal: data.isGlobal || false,
-        isFestival: data.isFestival || false,
-        publishStatus: PublishStatus.DRAFT,
-      },
-    });
+    },
+  });
+};
 
-    if (data.artistId) {
-      // Check for existing relation to avoid duplicates
-      const existing = await prisma.concertArtist.findUnique({
-        where: {
-          concertId_artistId: {
-            concertId: concert.id,
-            artistId: data.artistId,
-          },
-        },
-      });
+export const updateConcertStatus = async (id: string, status: string) => {
+  return prisma.concert.update({
+    where: { id },
+    data: { status },
+  });
+};
 
-      if (!existing) {
-        await prisma.concertArtist.create({
-          data: {
-            concertId: concert.id,
-            artistId: data.artistId,
-            role: 'MAIN', // Default role for collector-matched artists
-          },
-        });
-      }
-    }
+export const getRecentConcertsForStaticParams = async (take: number = 100) => {
+  return prisma.concert.findMany({
+    where: {
+      publishStatus: PublishStatus.PUBLISHED,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take,
+    select: {
+      id: true,
+    },
+  });
+};
 
-    return concert;
-  },
-
-  findArtistByName: async (name: string) => {
-    // Simple exact match for now.
-    // In real world, might need fuzzy search or normalization.
-    return prisma.artist.findFirst({
-      where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
+export const getConcertsByArtistId = async (artistId: string) => {
+  const concerts = await prisma.concert.findMany({
+    where: {
+      artists: {
+        some: {
+          artistId: artistId,
         },
       },
-    });
-  },
+      publishStatus: {
+        equals: PublishStatus.PUBLISHED,
+      },
+      status: {
+        equals: '공연예정',
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    select: {
+      id: true,
+      title: true,
+      posterUrl: true,
+      startDate: true,
+      endDate: true,
+      place: true,
+      status: true,
+    },
+  });
 
-  updateConcertStatus: async (id: string, status: string) => {
-    return prisma.concert.update({
-      where: { id },
-      data: { status },
-    });
-  },
+  const formatDate = (date: Date) => {
+    return date.toISOString().split('T')[0].replace(/-/g, '.');
+  };
+
+  return concerts.map((c) => ({
+    id: c.id,
+    title: c.title,
+    posterUrl: c.posterUrl || '',
+    startDate: formatDate(c.startDate),
+    endDate: formatDate(c.endDate),
+    place: c.place,
+    status: c.status,
+  }));
 };

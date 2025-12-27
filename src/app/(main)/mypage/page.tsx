@@ -1,73 +1,37 @@
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import { getServerSession } from 'next-auth';
+import { Suspense } from 'react';
 
-import SpotifyConnect from '@/features/artists/components/SpotifyConnect';
-import LinkedAccounts from '@/features/auth/components/LinkedAccounts';
-import { getLinkedAccounts, getUserProfile } from '@/features/auth/server/actions';
+import { SpotifyConnectSkeleton } from '@/features/artists/components/skeletons/SpotifyConnectSkeleton';
+import { SpotifyConnectFetcher } from '@/features/artists/components/SpotifyConnectFetcher';
+import { LinkedAccountsFetcher } from '@/features/auth/components/LinkedAccountsFetcher';
+import { LinkedAccountsSkeleton } from '@/features/auth/components/skeletons/LinkedAccountsSkeleton';
+import { UserProfileSkeleton } from '@/features/auth/components/skeletons/UserProfileSkeleton';
+import { UserProfileFetcher } from '@/features/auth/components/UserProfileFetcher';
 import NotificationSettings from '@/features/notifications/components/NotificationSettings';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { authOptions } from '@/shared/lib/auth';
 
 export const metadata = {
   title: '마이페이지 | 공연 알림 서비스',
   description: '내 정보와 알림 설정을 관리합니다.',
 };
 
-export default async function MyPage() {
-  const session = await getServerSession(authOptions);
-  /* 
-    Refactored to handle ActionResponse.
-    Note: Both return ActionResponse<{...}>
-  */
-  const [linkedAccountsResponse, userProfileResponse] = await Promise.all([
-    getLinkedAccounts(),
-    getUserProfile(),
-  ]);
-
-  const linkedProviders = linkedAccountsResponse.success ? linkedAccountsResponse.data : [];
-  // Cast user data to expected type since action returns unknown
-  const user = userProfileResponse.success
-    ? (userProfileResponse.data as { name?: string | null; email?: string | null })
-    : null;
-
-  if (!session?.user || !user) {
-    return <div>로그인이 필요합니다.</div>;
-  }
-
+export default function MyPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <h1 className="text-3xl font-bold">마이페이지</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>내 정보</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div>
-                  <p className="font-medium text-lg">{user.name}</p>
-                  <p className="text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Link href="/mypage/artists" className="block">
-            <Card className="hover:bg-accent transition-colors">
-              <CardContent className="p-6 flex items-center justify-between">
-                <span className="font-medium">팔로우한 아티스트 관리</span>
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
+        <Suspense fallback={<UserProfileSkeleton />}>
+          <UserProfileFetcher />
+        </Suspense>
 
         <div className="space-y-6">
-          <LinkedAccounts linkedProviders={linkedProviders} />
-          <SpotifyConnect isConnected={!!session.user.accessToken} />
+          <Suspense fallback={<LinkedAccountsSkeleton />}>
+            <LinkedAccountsFetcher />
+          </Suspense>
+
+          <Suspense fallback={<SpotifyConnectSkeleton />}>
+            <SpotifyConnectFetcher />
+          </Suspense>
+
           <NotificationSettings />
         </div>
       </div>

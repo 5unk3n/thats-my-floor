@@ -1,38 +1,15 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
+import { Suspense } from 'react';
 
-import SpotifySyncList from '@/features/artists/components/SpotifySyncList';
-import { fetchMySpotifyArtistsAction } from '@/features/artists/server/actions';
-import { Button } from '@/shared/components/ui/button';
+import { SpotifySyncSkeleton } from '@/features/artists/components/skeletons/SpotifySyncSkeleton';
+import { SpotifySyncFetcher } from '@/features/artists/components/SpotifySyncFetcher';
 
 export const metadata: Metadata = {
   title: '스포티파이 아티스트 가져오기 | 공연 알림 서비스',
   description: '스포티파이에서 팔로우한 아티스트를 동기화하여 알림을 받아보세요.',
 };
 
-export default async function SpotifySyncPage() {
-  const response = await fetchMySpotifyArtistsAction();
-
-  if (!response.success || !response.data) {
-    // Check if error is due to missing auth or scope (simple check)
-    // In a real app we might redirect to login if unauthorized
-    return (
-      <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center text-center space-y-4">
-        <h1 className="text-2xl font-bold">스포티파이 연동이 필요합니다</h1>
-        <p className="text-muted-foreground max-w-md">
-          {response.error?.message ||
-            '스포티파이 계정을 연동하고 팔로우 정보를 가져오려면 권한이 필요합니다.'}
-        </p>
-        <Button asChild>
-          <Link href="/mypage">마이페이지로 돌아가기</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { artists, nextCursor } = response.data as any;
-
+export default function SpotifySyncPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
@@ -44,7 +21,9 @@ export default async function SpotifySyncPage() {
         </div>
       </div>
 
-      <SpotifySyncList initialArtists={artists} initialNextCursor={nextCursor} />
+      <Suspense fallback={<SpotifySyncSkeleton />}>
+        <SpotifySyncFetcher />
+      </Suspense>
     </div>
   );
 }
