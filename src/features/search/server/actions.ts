@@ -2,11 +2,11 @@
 
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { searchCache } from '@/shared/lib/cache';
-import { prisma } from '@/shared/lib/prisma';
 import { SpotifyService } from '@/shared/lib/spotify/client';
 import { ActionResponse } from '@/shared/types/action-response';
 
 import { SearchResult } from '../types';
+import * as searchRepository from './db';
 
 export async function search(
   query: string,
@@ -31,29 +31,7 @@ export async function search(
     const [concerts, spotifyArtists] = await Promise.all([
       // Search Concerts (DB) - Run only if type is 'all' or 'concert'
       type === 'all' || type === 'concert'
-        ? prisma.concert.findMany({
-            where: {
-              publishStatus: 'PUBLISHED',
-              OR: [
-                { title: { contains: normalizedQuery, mode: 'insensitive' } },
-                { place: { contains: normalizedQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: 5,
-            select: {
-              id: true,
-              kopisId: true,
-              title: true,
-              posterUrl: true,
-              startDate: true,
-              endDate: true,
-              place: true,
-              status: true,
-            },
-            orderBy: {
-              startDate: 'desc',
-            },
-          })
+        ? searchRepository.searchConcerts(normalizedQuery, 5)
         : Promise.resolve([]),
       // Search Artists (Spotify API) - Run only if type is 'all' or 'artist'
       type === 'all' || type === 'artist'
