@@ -12,39 +12,11 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
     cacheTag(`concerts-${params.type}`);
   }
 
-  // Business Logic: Default Dates
-  const today = new Date();
-  const nextMonth = new Date();
-  nextMonth.setMonth(today.getMonth() + 1);
-
-  const startDate = params.startDate
-    ? new Date(
-        params.startDate.slice(0, 4) +
-          '-' +
-          params.startDate.slice(4, 6) +
-          '-' +
-          params.startDate.slice(6, 8)
-      )
-    : today;
-
-  const endDate = params.endDate
-    ? new Date(
-        params.endDate.slice(0, 4) +
-          '-' +
-          params.endDate.slice(4, 6) +
-          '-' +
-          params.endDate.slice(6, 8)
-      )
-    : nextMonth;
-
   // Business Logic: Filter Construction
   const filter = {
     publishStatus: PublishStatus.PUBLISHED,
-    startDate,
-    endDate,
     isGlobal: params.type === 'GLOBAL' ? true : params.type === 'DOMESTIC' ? false : undefined,
     isFestival: params.type === 'FESTIVAL' ? true : params.type === 'DOMESTIC' ? false : undefined,
-    keyword: params.keyword,
   };
 
   const concerts = await concertRepository.findConcerts({

@@ -27,9 +27,6 @@ export interface ConcertFilterParams {
   page?: number;
   size?: number;
   type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
-  startDate?: string;
-  endDate?: string;
-  keyword?: string;
 }
 
 export interface ConcertFilterState {

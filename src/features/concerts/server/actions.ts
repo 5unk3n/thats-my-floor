@@ -193,18 +193,12 @@ export async function getConcerts(params: {
   size?: number;
   region?: string;
   type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
-  startDate?: string;
-  endDate?: string;
-  keyword?: string;
 }): Promise<ActionResponse<Concert[]>> {
   try {
     const concerts = await concertService.getConcerts({
       page: params.page,
       size: params.size,
       type: params.type,
-      startDate: params.startDate,
-      endDate: params.endDate,
-      keyword: params.keyword,
     });
 
     return {
