@@ -132,11 +132,10 @@ export const updateConcertStatus = async (id: string, status: string) => {
 export const getRecentConcertsForStaticParams = async (take: number = 100) => {
   return prisma.concert.findMany({
     where: {
-      status: 'OPEN',
       publishStatus: PublishStatus.PUBLISHED,
     },
     orderBy: {
-      startDate: 'desc',
+      createdAt: 'desc',
     },
     take,
     select: {
@@ -153,9 +152,15 @@ export const getConcertsByArtistId = async (artistId: string) => {
           artistId: artistId,
         },
       },
+      publishStatus: {
+        equals: PublishStatus.PUBLISHED,
+      },
+      status: {
+        equals: '공연예정',
+      },
     },
     orderBy: {
-      startDate: 'desc',
+      createdAt: 'desc',
     },
     select: {
       id: true,
@@ -179,6 +184,6 @@ export const getConcertsByArtistId = async (artistId: string) => {
     startDate: formatDate(c.startDate),
     endDate: formatDate(c.endDate),
     place: c.place,
-    status: c.status || 'OPEN',
+    status: c.status,
   }));
 };
