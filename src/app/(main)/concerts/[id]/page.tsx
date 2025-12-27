@@ -9,7 +9,7 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const latestConcerts = await concertRepository.getRecentConcertsForStaticParams(100);
+  const latestConcerts = await concertRepository.findRecentConcertsForStaticParams(100);
 
   if (latestConcerts.length === 0) {
     return [{ id: '__placeholder__' }];

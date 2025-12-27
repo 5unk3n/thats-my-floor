@@ -129,7 +129,7 @@ export const updateConcertStatus = async (id: string, status: string) => {
   });
 };
 
-export const getRecentConcertsForStaticParams = async (take: number = 100) => {
+export const findRecentConcertsForStaticParams = async (take: number = 100) => {
   return prisma.concert.findMany({
     where: {
       publishStatus: PublishStatus.PUBLISHED,
@@ -144,7 +144,7 @@ export const getRecentConcertsForStaticParams = async (take: number = 100) => {
   });
 };
 
-export const getConcertsByArtistId = async (artistId: string) => {
+export const findConcertsByArtistId = async (artistId: string) => {
   const concerts = await prisma.concert.findMany({
     where: {
       artists: {
