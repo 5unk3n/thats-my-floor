@@ -1,4 +1,4 @@
-import { cacheTag } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 
 import { prisma } from '@/shared/lib/prisma';
 
@@ -8,6 +8,7 @@ export const getArtistProfile = async (
   id: string
 ): Promise<Omit<ArtistDetail, 'concerts'> | null> => {
   'use cache';
+  cacheLife('max');
   cacheTag(`artist-profile-${id}`);
 
   try {
@@ -33,6 +34,7 @@ export const getArtistProfile = async (
 
 export const getArtistConcerts = async (id: string) => {
   'use cache';
+  cacheLife('max');
   cacheTag(`artist-concerts-${id}`);
 
   try {

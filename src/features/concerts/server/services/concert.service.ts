@@ -1,11 +1,12 @@
 import { Prisma, PublishStatus } from '@prisma/client';
-import { cacheTag } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 
 import { BookingLink, Concert, ConcertDetail, ConcertFilterParams } from '../../types';
 import * as concertRepository from '../db';
 
 export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[]> => {
   'use cache';
+  cacheLife('hours');
   cacheTag('concerts');
   if (params.type) {
     cacheTag(`concerts-${params.type}`);
@@ -69,6 +70,7 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
 
 export const getConcertDetail = async (id: string): Promise<ConcertDetail | null> => {
   'use cache';
+  cacheLife('max');
   cacheTag(`concert-detail-${id}`);
 
   const concert = await concertRepository.findConcertById(id);
