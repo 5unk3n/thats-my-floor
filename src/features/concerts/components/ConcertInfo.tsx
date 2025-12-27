@@ -2,7 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ConcertDetail } from '@/features/concerts/server/db';
+import { ConcertDetail } from '@/features/concerts/types';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';

@@ -1,8 +1,8 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheTag } from 'next/cache';
 
+import { BookingLink, Concert, ConcertDetail, ConcertFilterParams } from '../../types';
 import * as concertRepository from '../db';
-import { BookingLink, Concert, ConcertDetail, ConcertFilterParams } from '../db';
 
 export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[]> => {
   'use cache';

@@ -1,11 +1,35 @@
 export interface Concert {
   id: string;
   title: string;
+  posterUrl: string;
   startDate: string;
   endDate: string;
   place: string;
-  posterUrl: string;
   status: string;
+}
+
+export interface BookingLink {
+  name: string;
+  url: string;
+}
+
+export interface ConcertDetail extends Concert {
+  runtime: string;
+  price: string;
+  description: string;
+  images: string[];
+  schedule: string;
+  relates: BookingLink[];
+  artists: { id: string; name: string }[];
+}
+
+export interface ConcertFilterParams {
+  page?: number;
+  size?: number;
+  type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
+  startDate?: string;
+  endDate?: string;
+  keyword?: string;
 }
 
 export interface ConcertFilterState {

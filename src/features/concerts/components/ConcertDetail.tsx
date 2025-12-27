@@ -1,4 +1,4 @@
-import { ConcertDetail as ConcertDetailType } from '@/features/concerts/server/db';
+import { ConcertDetail as ConcertDetailType } from '@/features/concerts/types';
 
 import { ConcertImages } from './ConcertImages';
 import { ConcertInfo } from './ConcertInfo';
