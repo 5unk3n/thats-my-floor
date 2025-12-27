@@ -81,6 +81,36 @@ export async function getNotifications(
   }
 }
 
+export async function getNotificationSettingsAction(): Promise<
+  ActionResponse<NotificationSettings>
+> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: { code: ERROR_CODES.UNAUTHORIZED, message: 'Unauthorized' },
+    };
+  }
+
+  try {
+    let settings = await notificationRepository.findNotificationSettings(session.user.id);
+
+    if (!settings) {
+      settings = await notificationRepository.createNotificationSettings(session.user.id);
+    }
+
+    return { success: true, data: settings };
+  } catch (error) {
+    console.error('getNotificationSettings Error:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Failed to fetch settings' },
+    };
+  }
+}
+
+// --- Mutations ONLY ---
+
 export async function markAsRead(notificationId: number): Promise<ActionResponse> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -123,34 +153,6 @@ export async function markAllAsRead(): Promise<ActionResponse> {
     return {
       success: false,
       error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Failed to mark all as read' },
-    };
-  }
-}
-
-export async function getNotificationSettingsAction(): Promise<
-  ActionResponse<NotificationSettings>
-> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return {
-      success: false,
-      error: { code: ERROR_CODES.UNAUTHORIZED, message: 'Unauthorized' },
-    };
-  }
-
-  try {
-    let settings = await notificationRepository.findNotificationSettings(session.user.id);
-
-    if (!settings) {
-      settings = await notificationRepository.createNotificationSettings(session.user.id);
-    }
-
-    return { success: true, data: settings };
-  } catch (error) {
-    console.error('getNotificationSettings Error:', error);
-    return {
-      success: false,
-      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Failed to fetch settings' },
     };
   }
 }
