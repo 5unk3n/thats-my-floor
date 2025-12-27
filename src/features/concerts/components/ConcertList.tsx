@@ -1,4 +1,4 @@
-import { getConcerts } from '../server/actions';
+import { getConcerts } from '../server/services/concert.service';
 import { ConcertGrid } from './ConcertGrid';
 import { ConcertPagination } from './ConcertPagination';
 
@@ -11,19 +11,16 @@ interface ConcertListProps {
 }
 
 export async function ConcertList({ searchParams }: ConcertListProps) {
-  const { page: pageParam, region, type } = await searchParams;
+  const { page: pageParam, type } = await searchParams;
   const page = Number(pageParam) || 1;
 
   const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
   const concertType = validTypes.find((t) => t === type) || undefined;
 
-  const response = await getConcerts({
+  const concerts = await getConcerts({
     page,
-    region,
     type: concertType,
   });
-
-  const concerts = response.success ? response.data! : [];
 
   // Check if there are more results for pagination
   // This is a simplified check. Ideally, the API should return total count.
