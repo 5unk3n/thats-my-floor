@@ -4,8 +4,9 @@ import { getServerSession } from 'next-auth';
 
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
-import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
+
+import * as authRepository from './db';
 
 export async function getLinkedAccounts(): Promise<ActionResponse<string[]>> {
   const session = await getServerSession(authOptions);
@@ -18,10 +19,7 @@ export async function getLinkedAccounts(): Promise<ActionResponse<string[]>> {
   }
 
   try {
-    const accounts = await prisma.account.findMany({
-      where: { userId: session.user.id },
-      select: { provider: true },
-    });
+    const accounts = await authRepository.findLinkedAccounts(session.user.id);
     return { success: true, data: accounts.map((account) => account.provider) };
   } catch (error) {
     console.error('getLinkedAccounts Error:', error);
@@ -46,10 +44,7 @@ export async function getUserProfile(): Promise<ActionResponse<unknown>> {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, name: true, email: true, image: true },
-    });
+    const user = await authRepository.findUserProfile(session.user.id);
 
     if (!user) {
       return {
