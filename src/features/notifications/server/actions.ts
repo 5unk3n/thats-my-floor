@@ -6,8 +6,9 @@ import { getServerSession } from 'next-auth';
 
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
-import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
+
+import * as notificationRepository from './db';
 
 type NotificationWithConcert = Prisma.NotificationGetPayload<{
   include: {
@@ -46,34 +47,11 @@ export async function getNotifications(
     const skip = (page - 1) * limit;
 
     const [notifications, total] = await Promise.all([
-      prisma.notification.findMany({
-        where: { userId: session.user.id },
-        orderBy: { sentAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          concert: {
-            select: {
-              id: true,
-              title: true,
-              posterUrl: true,
-
-              startDate: true,
-            },
-          },
-        },
-      }),
-      prisma.notification.count({
-        where: { userId: session.user.id },
-      }),
+      notificationRepository.findNotifications(session.user.id, skip, limit),
+      notificationRepository.countNotifications(session.user.id),
     ]);
 
-    const unreadCount = await prisma.notification.count({
-      where: {
-        userId: session.user.id,
-        readAt: null,
-      },
-    });
+    const unreadCount = await notificationRepository.countUnreadNotifications(session.user.id);
 
     const data = {
       notifications: notifications.map((n) => ({
@@ -113,15 +91,7 @@ export async function markAsRead(notificationId: number): Promise<ActionResponse
   }
 
   try {
-    await prisma.notification.update({
-      where: {
-        id: notificationId,
-        userId: session.user.id, // Ensure ownership
-      },
-      data: {
-        readAt: new Date(),
-      },
-    });
+    await notificationRepository.updateNotificationReadStatus(notificationId, session.user.id);
 
     revalidatePath('/notifications');
     return { success: true, data: undefined };
@@ -144,15 +114,7 @@ export async function markAllAsRead(): Promise<ActionResponse> {
   }
 
   try {
-    await prisma.notification.updateMany({
-      where: {
-        userId: session.user.id,
-        readAt: null,
-      },
-      data: {
-        readAt: new Date(),
-      },
-    });
+    await notificationRepository.updateAllNotificationsReadStatus(session.user.id);
 
     revalidatePath('/notifications');
     return { success: true, data: undefined };
@@ -177,15 +139,10 @@ export async function getNotificationSettingsAction(): Promise<
   }
 
   try {
-    let settings = await prisma.notificationSettings.findUnique({
-      where: { userId: session.user.id },
-    });
+    let settings = await notificationRepository.findNotificationSettings(session.user.id);
 
     if (!settings) {
-      // Should be created on signup, but fallback just in case
-      settings = await prisma.notificationSettings.create({
-        data: { userId: session.user.id },
-      });
+      settings = await notificationRepository.createNotificationSettings(session.user.id);
     }
 
     return { success: true, data: settings };
@@ -214,10 +171,7 @@ export async function updateNotificationSettingsAction(
   }
 
   try {
-    await prisma.notificationSettings.update({
-      where: { userId: session.user.id },
-      data,
-    });
+    await notificationRepository.updateNotificationSettingsOnly(session.user.id, data);
 
     revalidatePath('/mypage');
     return { success: true, data: undefined };
