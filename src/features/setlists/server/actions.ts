@@ -1,25 +1,16 @@
 'use server';
 
 import { ERROR_CODES } from '@/shared/constants/error-codes';
-import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
 
 import { CreateSetlistInput, Setlist } from '../types';
+import * as setlistRepository from './db';
 
 export async function getSetlistByConcertId(
   concertId: string
 ): Promise<ActionResponse<Setlist | null>> {
   try {
-    const setlist = await prisma.setlist.findFirst({
-      where: { concertId },
-      include: {
-        tracks: {
-          orderBy: {
-            orderNumber: 'asc',
-          },
-        },
-      },
-    });
+    const setlist = await setlistRepository.findSetlistByConcertId(concertId);
 
     return { success: true, data: setlist };
   } catch (error) {
@@ -33,25 +24,7 @@ export async function getSetlistByConcertId(
 
 export async function createSetlist(data: CreateSetlistInput): Promise<ActionResponse<Setlist>> {
   try {
-    const setlist = await prisma.setlist.create({
-      data: {
-        concertId: data.concertId,
-        artistId: data.artistId,
-        date: data.date,
-        venue: data.venue,
-        tracks: {
-          create: data.tracks.map((track) => ({
-            title: track.title,
-            orderNumber: track.orderNumber,
-            spotifyTrackId: track.spotifyTrackId,
-            duration: track.duration,
-          })),
-        },
-      },
-      include: {
-        tracks: true,
-      },
-    });
+    const setlist = await setlistRepository.createSetlist(data);
 
     return { success: true, data: setlist };
   } catch (error) {
