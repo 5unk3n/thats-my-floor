@@ -7,7 +7,7 @@ import * as React from 'react';
 import { Input } from '@/shared/components/ui/input';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 
-import { search } from '../server/actions';
+import { searchAction } from '../server/actions';
 import { SearchResult } from '../types';
 import { SearchResults } from './SearchResults';
 
@@ -35,7 +35,7 @@ export function SearchInput({ type = 'all' }: SearchInputProps) {
 
       setIsLoading(true);
       try {
-        const response = await search(debouncedQuery, type);
+        const response = await searchAction(debouncedQuery, type);
         if (response.success && response.data) {
           setResults(response.data);
           setIsOpen(true);

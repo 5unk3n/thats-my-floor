@@ -8,7 +8,7 @@ interface ArtistConcertListProps {
 
 export async function ArtistConcertList({ artistId }: ArtistConcertListProps) {
   const id = await artistId;
-  const concerts = await concertRepository.getConcertsByArtistId(id);
+  const concerts = await concertRepository.findConcertsByArtistId(id);
 
   if (concerts.length === 0) {
     return (

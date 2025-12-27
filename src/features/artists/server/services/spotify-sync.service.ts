@@ -1,6 +1,7 @@
-import { prisma } from '@/shared/lib/prisma';
 import { SpotifyService } from '@/shared/lib/spotify/client';
 import { SpotifyArtist } from '@/shared/lib/spotify/types';
+
+import * as artistRepository from '../db';
 
 export type SyncArtistStatus = 'new' | 'exists' | 'following';
 
@@ -32,25 +33,7 @@ export async function fetchMySpotifyArtists(
 
     // 2. Check DB status
     const spotifyIds = spotifyArtists.map((a) => a.id);
-    const existingArtists = await prisma.artist.findMany({
-      where: {
-        spotifyArtistId: { in: spotifyIds },
-      },
-      include: {
-        followers: {
-          where: { userId: userId },
-        },
-        concerts: {
-          include: {
-            concert: {
-              select: {
-                endDate: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const existingArtists = await artistRepository.findArtistsBySpotifyIds(spotifyIds, userId);
 
     const now = new Date();
 
@@ -89,36 +72,25 @@ export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[
   try {
     // 1. Bulk Insert Artists (Performance Optimized)
     // Updates are less critical, so we use createMany to avoid timeouts with large batches.
-    await prisma.artist.createMany({
-      data: artists.map((artist) => ({
+    await artistRepository.createArtistsMany(
+      artists.map((artist) => ({
         name: artist.name,
         image: artist.images[0]?.url,
         genre: artist.genres[0],
         spotifyArtistId: artist.id,
         followerCount: 0,
-      })),
-      skipDuplicates: true,
-    });
+      }))
+    );
 
     // Fetch currently stored artists to get their internal IDs
-    const dbArtists = await prisma.artist.findMany({
-      where: {
-        spotifyArtistId: { in: artists.map((a) => a.id) },
-      },
-    });
+    const dbArtists = await artistRepository.findArtistsBySpotifyIdList(artists.map((a) => a.id));
 
     // 2. Bulk Insert UserArtist
     // First, find existing relations to avoid unique constraint errors (though createMany has skipDuplicates)
     // We need to count how many were actually added, so finding existing ones first is helpful.
     const artistIds = dbArtists.map((a) => a.id);
 
-    const existingFollows = await prisma.userArtist.findMany({
-      where: {
-        userId,
-        artistId: { in: artistIds },
-      },
-      select: { artistId: true },
-    });
+    const existingFollows = await artistRepository.findUserArtists(userId, artistIds);
 
     const existingArtistIds = new Set(existingFollows.map((f) => f.artistId));
 
@@ -131,10 +103,7 @@ export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[
 
     let addedCount = 0;
     if (newFollows.length > 0) {
-      const result = await prisma.userArtist.createMany({
-        data: newFollows,
-        skipDuplicates: true,
-      });
+      const result = await artistRepository.createUserArtistsMany(newFollows);
       addedCount = result.count;
     }
 

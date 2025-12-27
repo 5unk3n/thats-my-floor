@@ -1,17 +1,22 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
 
-import { getUserProfile } from '@/features/auth/server/actions';
+import * as authRepository from '@/features/auth/server/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { authOptions } from '@/shared/lib/auth';
 
 export async function UserProfileFetcher() {
-  const response = await getUserProfile();
-  const user = response.success
-    ? (response.data as { name?: string | null; email?: string | null })
-    : null;
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return <div>로그인이 필요합니다.</div>;
+  }
+
+  const user = await authRepository.findUserProfile(session.user.id);
 
   if (!user) {
-    return <div>로그인이 필요합니다.</div>;
+    return <div>사용자 정보를 찾을 수 없습니다.</div>;
   }
 
   return (

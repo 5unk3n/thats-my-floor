@@ -255,6 +255,9 @@ Vertical Slice 아키텍처 내에서 서버 모듈들의 역할과 책임을 �
   - **Functional Style**: `export const findUser = ...` 형태로 개별 함수 내보내기 (Class/Object 지양).
   - **No Business Logic**: 복잡한 로직이나 데이터 가공 금지. ORM이 반환하는 Raw Data 반환.
   - **No Caching**: `use cache` 사용 금지. (Service 계층이 캐싱 정책을 결정해야 함).
+  - **Function Naming**:
+    - 조회: `find...`, `count...`, `exists...` (예: `findUserById`, `countAllConcerts`) - `get` 대신 `find` 사용 권장 (DB 검색 의미).
+    - 변경: `create...`, `update...`, `delete...` (CRUD 명확화).
 
 #### B. Service Layer (`features/*/server/services/*.service.ts`)
 - **역할**: 비즈니스 로직, **캐싱(`use cache`)**, 오케스트레이션.
@@ -265,6 +268,10 @@ Vertical Slice 아키텍처 내에서 서버 모듈들의 역할과 책임을 �
   - **Caching**: 조회(Read) 로직에 `'use cache'` 및 `cacheTag` 적용 권장.
   - **Orchestration**: 여러 DB 함수를 조합하거나 트랜잭션 단위 관리.
   - **Logic**: 데이터 가공, 기본값 설정, 외부 API 통신 등 수행.
+  - **Function Naming**:
+    - 조회 (캐싱/로직 포함): `get...` (예: `getConcertDetail`) - DB의 `find`와 구분.
+    - 외부 API: `fetch...` (예: `fetchSpotifyArtists`).
+    - 복합 로직: `sync...`, `process...`, `send...` (동사+목적어).
 
 #### C. Server Actions (`features/*/server/actions.ts`)
 - **역할**: 클라이언트 진입점 (Controller 역할), **캐시 무효화**.
@@ -273,6 +280,10 @@ Vertical Slice 아키텍처 내에서 서버 모듈들의 역할과 책임을 �
   - **Validation**: 사용자 입력값 검증 및 권한 체크.
   - **Delegation**: 비즈니스 로직은 직접 구현하지 않고 **Service Layer에 위임**.
   - **Revalidation**: 데이터 변경(Write) 완료 후 `revalidateTag` 호출로 캐시 갱신.
+  - **Function Naming**:
+    - 기본: `Verb` + `Noun` (예: `login`, `submitReview`).
+    - 이름 충돌 방지: Service/DB 함수와 이름이 겹칠 경우 `...Action` 접미사 사용 권장 (예: `getConcertsAction`).
+    - **Client에서만 호출됨을 명시**하기 위해 `Action` 접미사를 붙이는 패턴도 유효합니다.
 
 #### D. Caching Strategy Q&A
 - **Q. 단순한 DB 조회도 Service를 만들어야 하나요?**

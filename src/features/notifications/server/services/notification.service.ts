@@ -1,17 +1,9 @@
 import { getFirebaseAdmin } from '@/shared/lib/firebase/admin';
-import { prisma } from '@/shared/lib/prisma';
+
+import * as notificationRepository from '../db';
 
 export async function notifyConcertRegistration(concertId: string) {
-  const concert = await prisma.concert.findUnique({
-    where: { id: concertId },
-    include: {
-      artists: {
-        include: {
-          artist: true,
-        },
-      },
-    },
-  });
+  const concert = await notificationRepository.findConcertForNotification(concertId);
 
   if (!concert || concert.artists.length === 0) return;
 
@@ -20,23 +12,7 @@ export async function notifyConcertRegistration(concertId: string) {
   const artistNames = concert.artists.map((ca) => ca.artist.name).join(', ');
 
   // Find users who follow ANY of these artists and have concert registration alert enabled
-  const followers = await prisma.userArtist.findMany({
-    where: {
-      artistId: { in: artistIds },
-      user: {
-        notificationSettings: {
-          concertRegistrationAlert: true,
-        },
-      },
-    },
-    include: {
-      user: {
-        include: {
-          devices: true,
-        },
-      },
-    },
-  });
+  const followers = await notificationRepository.findFollowersForNotification(artistIds);
 
   // Deduplicate users (a user might follow multiple artists in the lineup)
   const uniqueFollowersMap = new Map();
@@ -76,15 +52,13 @@ export async function notifyConcertRegistration(concertId: string) {
       const response = await getFirebaseAdmin().messaging().sendEachForMulticast(message);
 
       if (response.successCount > 0) {
-        await prisma.notification.create({
-          data: {
-            userId: user.id,
-            type: 'CONCERT_REGISTRATION',
-            title,
-            body,
-            concertId: concert.id,
-            sentAt: new Date(),
-          },
+        await notificationRepository.createNotification({
+          userId: user.id,
+          type: 'CONCERT_REGISTRATION',
+          title,
+          body,
+          concertId: concert.id,
+          sentAt: new Date(),
         });
       }
     } catch (error) {
@@ -94,15 +68,11 @@ export async function notifyConcertRegistration(concertId: string) {
 }
 
 export async function getNotificationSettings(userId: string) {
-  const settings = await prisma.notificationSettings.findUnique({
-    where: { userId },
-  });
+  const settings = await notificationRepository.findNotificationSettings(userId);
 
   if (!settings) {
     // Create default settings if not exists
-    return await prisma.notificationSettings.create({
-      data: { userId },
-    });
+    return await notificationRepository.createNotificationSettings(userId);
   }
 
   return settings;
@@ -116,12 +86,5 @@ export async function updateNotificationSettings(
     emailNotification?: boolean;
   }
 ) {
-  return await prisma.notificationSettings.upsert({
-    where: { userId },
-    update: settings,
-    create: {
-      userId,
-      ...settings,
-    },
-  });
+  return await notificationRepository.upsertNotificationSettings(userId, settings);
 }

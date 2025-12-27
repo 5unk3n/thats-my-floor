@@ -1,94 +1,32 @@
-import { cacheLife, cacheTag } from 'next/cache';
-
 import { prisma } from '@/shared/lib/prisma';
 
-import { ArtistDetail } from '../types';
+// --- Pure Data Access (Repository) ---
 
-export const getArtistProfile = async (
-  id: string
-): Promise<Omit<ArtistDetail, 'concerts'> | null> => {
-  'use cache';
-  cacheLife('max');
-  cacheTag(`artist-profile-${id}`);
-
-  try {
-    const artist = await prisma.artist.findUnique({
-      where: { id },
-    });
-
-    if (!artist) return null;
-
-    return {
-      id: artist.id,
-      name: artist.name,
-      image: artist.image || '',
-      genre: artist.genre || '',
-      description: artist.description || '',
-      spotifyArtistId: artist.spotifyArtistId,
-    };
-  } catch (error) {
-    console.error('Failed to fetch artist profile:', error);
-    return null;
-  }
+export const findArtistById = async (id: string) => {
+  return prisma.artist.findUnique({
+    where: { id },
+  });
 };
 
-export const getArtistConcerts = async (id: string) => {
-  'use cache';
-  cacheLife('max');
-  cacheTag(`artist-concerts-${id}`);
-
-  try {
-    const artist = await prisma.artist.findUnique({
-      where: { id },
-      include: {
-        concerts: {
-          include: {
-            concert: true,
-          },
-          orderBy: {
-            concert: {
-              startDate: 'desc',
-            },
+export const findArtistConcerts = async (id: string) => {
+  return prisma.artist.findUnique({
+    where: { id },
+    include: {
+      concerts: {
+        include: {
+          concert: true,
+        },
+        orderBy: {
+          concert: {
+            startDate: 'desc',
           },
         },
       },
-    });
-
-    if (!artist) return [];
-
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0].replace(/-/g, '.');
-    };
-
-    return artist.concerts.map(({ concert }) => ({
-      id: concert.id,
-      title: concert.title,
-      posterUrl: concert.posterUrl || '',
-      startDate: formatDate(concert.startDate),
-      endDate: formatDate(concert.endDate),
-      place: concert.place,
-      status: concert.status || 'OPEN',
-    }));
-  } catch (error) {
-    console.error('Failed to fetch artist concerts:', error);
-    return [];
-  }
+    },
+  });
 };
 
-// Deprecated or kept for compatibility if needed, but better to remove if unused.
-// Re-implementing using the above functions to avoid duplicate code logic if we were keeping it,
-// but for now let's just expose the split functions.
-export const getArtistDetail = async (id: string): Promise<ArtistDetail | null> => {
-  // 'use cache'; // Composition of cached functions might be tricky.
-  // Ideally, consumers should call getArtistProfile and getArtistConcerts separately.
-  // But to minimize refactor, we can implement it:
-  const profile = await getArtistProfile(id);
-  if (!profile) return null;
-  const concerts = await getArtistConcerts(id);
-  return { ...profile, concerts };
-};
-
-export const toggleFollowInDB = async (userId: string, artistId: string) => {
+export const toggleArtistFollow = async (userId: string, artistId: string) => {
   const existing = await prisma.userArtist.findUnique({
     where: {
       userId_artistId: {
@@ -119,7 +57,7 @@ export const toggleFollowInDB = async (userId: string, artistId: string) => {
   }
 };
 
-export const getFollowStatusFromDB = async (userId: string, artistId: string) => {
+export const existsArtistFollow = async (userId: string, artistId: string) => {
   const count = await prisma.userArtist.count({
     where: {
       userId,
@@ -129,11 +67,81 @@ export const getFollowStatusFromDB = async (userId: string, artistId: string) =>
   return count > 0;
 };
 
-export const getFollowedArtistsFromDB = async (userId: string) => {
+export const findFollowedArtists = async (userId: string) => {
   const userArtists = await prisma.userArtist.findMany({
     where: { userId },
     include: { artist: true },
     orderBy: { createdAt: 'desc' },
   });
   return userArtists.map((ua) => ua.artist);
+};
+
+// --- Spotify Sync Related Queries ---
+
+export const findArtistsBySpotifyIds = async (spotifyIds: string[], userId: string) => {
+  return prisma.artist.findMany({
+    where: {
+      spotifyArtistId: { in: spotifyIds },
+    },
+    include: {
+      followers: {
+        where: { userId: userId },
+      },
+      concerts: {
+        include: {
+          concert: {
+            select: {
+              endDate: true,
+              startDate: true, // Added for completeness if needed logic
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const createArtistsMany = async (
+  artists: {
+    name: string;
+    image?: string;
+    genre?: string;
+    spotifyArtistId: string;
+    followerCount?: number;
+  }[]
+) => {
+  return prisma.artist.createMany({
+    data: artists,
+    skipDuplicates: true,
+  });
+};
+
+export const findArtistsBySpotifyIdList = async (spotifyIds: string[]) => {
+  return prisma.artist.findMany({
+    where: {
+      spotifyArtistId: { in: spotifyIds },
+    },
+  });
+};
+
+export const findUserArtists = async (userId: string, artistIds: string[]) => {
+  return prisma.userArtist.findMany({
+    where: {
+      userId,
+      artistId: { in: artistIds },
+    },
+    select: { artistId: true },
+  });
+};
+
+export const createUserArtistsMany = async (
+  follows: {
+    userId: string;
+    artistId: string;
+  }[]
+) => {
+  return prisma.userArtist.createMany({
+    data: follows,
+    skipDuplicates: true,
+  });
 };

@@ -1,18 +1,20 @@
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
 
 import ArtistCard from '@/features/artists/components/ArtistCard';
-import { getFollowedArtists } from '@/features/artists/server/actions';
+import { findFollowedArtists } from '@/features/artists/server/db';
 import { Button } from '@/shared/components/ui/button';
+import { authOptions } from '@/shared/lib/auth';
 
 interface FollowedArtistsFetcherProps {
   searchTrigger: React.ReactNode;
 }
 
 export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsFetcherProps) {
-  const response = await getFollowedArtists();
-  const followedArtists =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    response.success && Array.isArray(response.data) ? (response.data as any[]) : [];
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
+
+  const followedArtists = user ? await findFollowedArtists(user.id) : [];
 
   if (followedArtists.length === 0) {
     return (
