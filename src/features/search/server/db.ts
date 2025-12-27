@@ -1,5 +1,6 @@
-import { prisma } from '@/shared/lib/prisma';
 import { PublishStatus } from '@prisma/client';
+
+import { prisma } from '@/shared/lib/prisma';
 
 export const searchConcerts = async (query: string, limit: number = 5) => {
   return prisma.concert.findMany({
