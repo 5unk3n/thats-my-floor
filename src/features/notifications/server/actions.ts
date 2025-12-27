@@ -1,5 +1,4 @@
 'use server';
-
 import { NotificationSettings, Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
@@ -9,6 +8,7 @@ import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
 
 import * as notificationRepository from './db';
+import * as notificationService from './services/notification.service';
 
 type NotificationWithConcert = Prisma.NotificationGetPayload<{
   include: {
@@ -93,12 +93,7 @@ export async function getNotificationSettingsAction(): Promise<
   }
 
   try {
-    let settings = await notificationRepository.findNotificationSettings(session.user.id);
-
-    if (!settings) {
-      settings = await notificationRepository.createNotificationSettings(session.user.id);
-    }
-
+    const settings = await notificationService.getNotificationSettings(session.user.id);
     return { success: true, data: settings };
   } catch (error) {
     console.error('getNotificationSettings Error:', error);
