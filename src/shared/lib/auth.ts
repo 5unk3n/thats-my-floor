@@ -2,8 +2,6 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { NextAuthOptions } from 'next-auth';
 import { Adapter } from 'next-auth/adapters';
 import { JWT } from 'next-auth/jwt';
-import GoogleProvider from 'next-auth/providers/google';
-import KakaoProvider from 'next-auth/providers/kakao';
 import SpotifyProvider from 'next-auth/providers/spotify';
 
 import { prisma } from '@/shared/lib/prisma';
@@ -121,10 +119,9 @@ async function refreshAccessToken(token: JWT) {
 }
 
 export const authOptions: NextAuthOptions = {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Prisma Adapter type compatibility issue with NextAuth
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
+    /*
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -135,20 +132,24 @@ export const authOptions: NextAuthOptions = {
           response_type: 'code',
         },
       },
+      allowDangerousEmailAccountLinking: true,
     }),
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
+*/
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID!,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
       authorization: {
         params: {
           scope:
-            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing',
+            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-follow-read',
         },
       },
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   pages: {
@@ -157,17 +158,36 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  events: {
+    async createUser({ user }) {
+      await prisma.notificationSettings.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    },
+  },
   callbacks: {
+    async signIn() {
+      return true;
+    },
     async jwt({ token, account, user }) {
       // Initial sign in
       if (account && user) {
-        return {
-          accessToken: account.access_token,
-          accessTokenExpires: Date.now() + (account.expires_in as number) * 1000,
-          refreshToken: account.refresh_token,
-          provider: account.provider,
-          user,
-        };
+        // Fetch user role from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        });
+
+        token.accessToken = account.access_token;
+        token.accessTokenExpires = Date.now() + (account.expires_in as number) * 1000;
+        token.refreshToken = account.refresh_token ?? token.refreshToken;
+        token.provider = account.provider;
+        token.id = user.id;
+        token.role = dbUser?.role;
+
+        return token;
       }
 
       // Return previous token if the access token has not expired yet
@@ -180,12 +200,12 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       session.user.accessToken = token.accessToken as string;
-      session.user.refreshToken = token.refreshToken as string;
       session.user.accessTokenExpires = token.accessTokenExpires as number;
+      session.user.role = token.role;
       session.error = token.error as string;
 
-      if (token.user) {
-        session.user.id = token.user.id as string;
+      if (token.id) {
+        session.user.id = token.id;
       }
 
       return session;

@@ -9,7 +9,8 @@ export interface KopisConcertListResponse {
       poster: string; // 포스터 이미지 경로
       genrenm: string; // 공연 장르명
       openrun: string; // 오픈런 여부
-      state: string; // 공연 상태
+      prfstate: string; // 공연 상태
+      festival?: string; // 페스티벌 여부 (Y/N)
     }[];
   };
 }
@@ -18,6 +19,7 @@ export interface KopisConcertDetailResponse {
   dbs: {
     db: {
       mt20id: string; // 공연 ID
+      mt10id?: string; // 공연시설 ID
       prfnm: string; // 공연명
       prfpdfrom: string; // 공연 시작일
       prfpdto: string; // 공연 종료일
@@ -31,8 +33,11 @@ export interface KopisConcertDetailResponse {
       poster: string; // 포스터 이미지 경로
       sty: string; // 줄거리
       genrenm: string; // 공연 장르명
-      state: string; // 공연 상태
+      prfstate: string; // 공연 상태
       openrun: string; // 오픈런 여부
+      area?: string; // 지역 (예: 서울, 경기, 인천 등)
+      festival?: string; // 페스티벌 여부 (Y/N)
+      visit?: string; // 내한공연 여부 (Y/N)
       styurls: {
         styurl: string | string[]; // 소개 이미지 목록 (단일 또는 배열)
       };

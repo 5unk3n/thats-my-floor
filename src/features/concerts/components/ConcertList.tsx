@@ -1,24 +1,40 @@
-import { Concert } from '../model/types';
-import { ConcertCard } from './ConcertCard';
+import { getConcerts } from '../server/services/concert.service';
+import { ConcertGrid } from './ConcertGrid';
+import { ConcertPagination } from './ConcertPagination';
 
 interface ConcertListProps {
-  concerts: Concert[];
+  searchParams: Promise<{
+    page?: string;
+    region?: string;
+    type?: string;
+  }>;
 }
 
-export function ConcertList({ concerts }: ConcertListProps) {
-  if (concerts.length === 0) {
-    return (
-      <div className="flex h-64 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground">
-        검색 결과가 없습니다.
-      </div>
-    );
-  }
+export async function ConcertList({ searchParams }: ConcertListProps) {
+  const { page: pageParam, type, region } = await searchParams;
+  const page = Number(pageParam) || 1;
+
+  const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
+  const concertType = validTypes.find((t) => t === type) || undefined;
+
+  const validRegions = ['METRO', 'OTHERS'] as const;
+  const regionType = validRegions.find((r) => r === region) || undefined;
+
+  const concerts = await getConcerts({
+    page,
+    type: concertType,
+    region: regionType,
+  });
+
+  // Check if there are more results for pagination
+  // This is a simplified check. Ideally, the API should return total count.
+  // For now, if we get a full page (20 items), we assume there might be more.
+  const hasMore = concerts.length === 20;
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {concerts.map((concert) => (
-        <ConcertCard key={concert.id} concert={concert} />
-      ))}
-    </div>
+    <>
+      <ConcertGrid concerts={concerts} />
+      <ConcertPagination hasMore={hasMore} />
+    </>
   );
 }

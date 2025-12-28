@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { collectConcerts } from '@/features/concerts/server/collector';
-import { notificationService } from '@/features/notifications/server/services';
+import * as CollectorService from '@/features/concerts/server/services/collector.service';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -12,14 +11,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const newConcerts = await collectConcerts();
-
-    for (const concert of newConcerts) {
-      if (concert.artistId) {
-        await notificationService.notifyConcertRegistration(concert.id);
-      }
-    }
-
+    const newConcerts = await CollectorService.collectConcerts();
     return NextResponse.json({ success: true, count: newConcerts.length });
   } catch (error) {
     console.error('Cron job failed:', error);

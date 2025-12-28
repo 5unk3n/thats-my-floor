@@ -5,10 +5,11 @@
 ## 1. 배포 아키텍처
 
 - **Hosting**: Azure VM (Standard_B2ats_v2 / Ubuntu 24.04 LTS)
-- **Containerization**: Docker
+- **Containerization**: Docker + Docker Compose
+- **Deployment Strategy**: Blue/Green 무중단 배포
 - **Registry**: GitHub Container Registry (GHCR)
-- **CI/CD**: GitHub Actions
-- **Reverse Proxy**: Nginx (SSL/TLS 적용 - Let's Encrypt)
+- **CI/CD**: GitHub Actions (Self-hosted Runner)
+- **Reverse Proxy**: Nginx (Blue/Green 트래픽 스위칭)
 - **Database**: Supabase (Managed PostgreSQL) - _기존 사용 유지_
 
 ## 2. 상세 진행 단계
@@ -35,7 +36,11 @@ GitHub Actions를 사용하여 빌드 및 배포 과정을 자동화합니다.
 - **CD (Continuous Deployment)**:
   - Docker 이미지 빌드
   - GHCR에 이미지 푸시 (Tag: `latest` & `sha`)
-  - Azure VM 접속 및 배포 스크립트 실행 (SSH)
+  - Azure VM에서 Blue/Green 무중단 배포 실행 (`deploy.sh`)
+    - 비활성 환경(Blue/Green)에 새 버전 배포
+    - Health Check 통과 확인
+    - Nginx 트래픽 전환 (심볼릭 링크 방식)
+    - 구 버전 컨테이너 정리
 
 ### Step 3: Azure VM 서버 설정
 

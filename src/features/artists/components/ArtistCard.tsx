@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 
-import FollowButton from './FollowButton';
+import { FollowButton } from './FollowButton';
 
 interface ArtistCardProps {
   artist: Artist;

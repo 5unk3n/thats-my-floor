@@ -1,65 +1,151 @@
+import { Prisma } from '@prisma/client';
+
 import { prisma } from '@/shared/lib/prisma';
 
-export const createNotificationInDB = async (data: {
-  userId: string;
-  type: string;
-  title: string;
-  body: string;
-  concertId?: string;
-}) => {
-  return await prisma.notification.create({
-    data,
-  });
-};
+// --- Notification Queries ---
 
-export const getNotificationsFromDB = async (userId: string) => {
-  return await prisma.notification.findMany({
-    where: {
-      userId,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
+export const findNotifications = async (userId: string, skip: number, take: number) => {
+  return prisma.notification.findMany({
+    where: { userId },
+    orderBy: { sentAt: 'desc' },
+    skip,
+    take,
     include: {
       concert: {
         select: {
           id: true,
           title: true,
-          poster: true,
+          posterUrl: true,
+          startDate: true,
         },
       },
     },
   });
 };
 
-export const markNotificationAsReadInDB = async (notificationId: number, userId: string) => {
-  // Ensure the notification belongs to the user
-  const notification = await prisma.notification.findUnique({
-    where: { id: notificationId },
+export const countNotifications = async (userId: string) => {
+  return prisma.notification.count({
+    where: { userId },
   });
+};
 
-  if (!notification || notification.userId !== userId) {
-    throw new Error('Notification not found or unauthorized');
-  }
-
-  return await prisma.notification.update({
+export const countUnreadNotifications = async (userId: string) => {
+  return prisma.notification.count({
     where: {
-      id: notificationId,
-    },
-    data: {
-      readAt: new Date(),
+      userId,
+      readAt: null,
     },
   });
 };
 
-export const markAllNotificationsAsReadInDB = async (userId: string) => {
-  return await prisma.notification.updateMany({
+export const updateNotificationReadStatus = async (
+  notificationId: number,
+  userId: string,
+  readAt: Date = new Date()
+) => {
+  return prisma.notification.update({
+    where: {
+      id: notificationId,
+      userId, // Ensure ownership
+    },
+    data: {
+      readAt,
+    },
+  });
+};
+
+export const updateAllNotificationsReadStatus = async (
+  userId: string,
+  readAt: Date = new Date()
+) => {
+  return prisma.notification.updateMany({
     where: {
       userId,
       readAt: null,
     },
     data: {
-      readAt: new Date(),
+      readAt,
+    },
+  });
+};
+
+export const createNotification = async (data: Prisma.NotificationUncheckedCreateInput) => {
+  return prisma.notification.create({
+    data,
+  });
+};
+
+// --- Notification Settings Queries ---
+
+export const findNotificationSettings = async (userId: string) => {
+  return prisma.notificationSettings.findUnique({
+    where: { userId },
+  });
+};
+
+export const createNotificationSettings = async (userId: string) => {
+  return prisma.notificationSettings.create({
+    data: { userId },
+  });
+};
+
+export const upsertNotificationSettings = async (
+  userId: string,
+  data: Prisma.NotificationSettingsUpdateInput
+) => {
+  return prisma.notificationSettings.upsert({
+    where: { userId },
+    update: data,
+    create: {
+      userId,
+      ticketOpenAlert: (data.ticketOpenAlert as boolean) ?? true,
+      concertRegistrationAlert: (data.concertRegistrationAlert as boolean) ?? true,
+      emailNotification: (data.emailNotification as boolean) ?? true,
+    },
+  });
+};
+
+export const updateNotificationSettingsOnly = async (
+  userId: string,
+  data: Prisma.NotificationSettingsUpdateInput
+) => {
+  return prisma.notificationSettings.update({
+    where: { userId },
+    data,
+  });
+};
+
+// --- Helper Queries for Notification Logic ---
+
+export const findConcertForNotification = async (concertId: string) => {
+  return prisma.concert.findUnique({
+    where: { id: concertId },
+    include: {
+      artists: {
+        include: {
+          artist: true,
+        },
+      },
+    },
+  });
+};
+
+export const findFollowersForNotification = async (artistIds: string[]) => {
+  return prisma.userArtist.findMany({
+    where: {
+      artistId: { in: artistIds },
+      user: {
+        notificationSettings: {
+          concertRegistrationAlert: true,
+        },
+      },
+    },
+    include: {
+      user: {
+        include: {
+          devices: true,
+        },
+      },
     },
   });
 };

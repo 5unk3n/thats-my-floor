@@ -20,12 +20,16 @@
                                │                 ┌──────▼───────┐
                                │                 │   Artists    │
                                │                 └──────┬───────┘
-                               │                        │
-                               │                 ┌──────▼───────┐
-                               ▼                 │  Concerts    │
-                        ┌──────────────┐         └──────┬───────┘
-                        │UserDevices   │                │
-                        └──────────────┘         ┌──────▼───────┐
+                               │                        ▲
+                               │                 ┌──────┴───────┐
+                               │                 │ConcertArtists│
+                               │                 └──────┬───────┘
+                               │                        ▼
+                               ▼                 ┌──────────────┐
+                        ┌──────────────┐         │  Concerts    │
+                        │UserDevices   │         └──────┬───────┘
+                        └──────────────┘                │
+                                                 ┌──────▼───────┐
                                                  │  Setlists    │
                                                  └──────────────┘
 ```
@@ -45,9 +49,11 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE,
   email_verified TIMESTAMP,
   image TEXT,
+  role VARCHAR(20) DEFAULT 'USER', -- 'USER', 'ADMIN'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 ```
 
 ### 1-1. accounts (계정 - OAuth)
@@ -73,35 +79,6 @@ CREATE TABLE accounts (
   UNIQUE(provider, provider_account_id)
 );
 ```
-
-### 1-2. sessions (세션)
-
-데이터베이스 세션 관리를 위한 테이블입니다.
-
-```sql
-CREATE TABLE sessions (
-  id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_token VARCHAR(255) UNIQUE NOT NULL,
-  user_id VARCHAR(36) REFERENCES users(id) ON DELETE CASCADE,
-  expires TIMESTAMP NOT NULL
-);
-```
-
-### 1-3. verification_tokens (인증 토큰)
-
-이메일 로그인 등을 위한 검증 토큰입니다.
-
-```sql
-CREATE TABLE verification_tokens (
-  identifier VARCHAR(255) NOT NULL,
-  token VARCHAR(255) UNIQUE NOT NULL,
-  expires TIMESTAMP NOT NULL,
-
-  UNIQUE(identifier, token)
-);
-```
-
----
 
 ### 2. artists (아티스트)
 
@@ -138,73 +115,72 @@ CREATE INDEX idx_artists_spotify ON artists(spotify_artist_id);
 
 ### 3. concerts (공연)
 
-공연 정보를 저장합니다.
+공연 정보를 저장합니다. KOPIS API 데이터를 기반으로 하지만, **영문 필드명**으로 매핑하여 저장합니다.
 
 ```sql
 CREATE TABLE concerts (
   id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  kopis_id VARCHAR(100) UNIQUE, -- kOPIS API의 공연 ID (mt20id)
-  title VARCHAR(255) NOT NULL,
-  artist_id VARCHAR(36) REFERENCES artists(id) ON DELETE SET NULL,
-  poster TEXT,
-  date TIMESTAMP NOT NULL,
-  venue_name VARCHAR(255) NOT NULL,
-  venue_address TEXT,
-  venue_map_link TEXT,
-  region VARCHAR(50),
-  genre VARCHAR(100),
-  description TEXT,
-  ticket_status VARCHAR(20), -- 'open', 'booking', 'closed'
-  ticket_open_date TIMESTAMP,
-  ticket_price_min INTEGER,
-  ticket_price_max INTEGER,
+  kopis_id VARCHAR(100) UNIQUE, -- 외부 식별자 (KOPIS ID)
+
+  -- Core Info
+  title VARCHAR(255) NOT NULL, -- 공연명
+  start_date TIMESTAMP NOT NULL, -- 공연 시작일
+  end_date TIMESTAMP NOT NULL,   -- 공연 종료일
+  place VARCHAR(255) NOT NULL, -- 공연 시설명
+  poster_url TEXT,             -- 포스터 이미지 경로
+  status VARCHAR(50),          -- 공연 상태 (공연예정, 공연중 등)
+  region VARCHAR(50),          -- 지역 (서울, 경기, 인천 등)
+
+  -- Details
+  description TEXT,           -- 줄거리
+  images TEXT[],              -- 소개 이미지 목록 (Array)
+  price TEXT,                 -- 티켓 가격
+  schedule TEXT,              -- 공연 시간
+  runtime VARCHAR(50),        -- 공연 런타임
+  relates JSONB,              -- 예매처 목록 (JSON)
+
+  -- Flags
+  is_global BOOLEAN DEFAULT FALSE,    -- 내한공연 여부
+  is_festival BOOLEAN DEFAULT FALSE,  -- 페스티벌 여부
+
+  -- Internal Logic
+  publish_status VARCHAR(20) DEFAULT 'DRAFT', -- 발행 상태 (Enum)
+  analysis_result JSONB,          -- AI 분석 결과 (JSON)
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_concerts_artist ON concerts(artist_id);
-CREATE INDEX idx_concerts_date ON concerts(date);
-CREATE INDEX idx_concerts_region ON concerts(region);
-CREATE INDEX idx_concerts_genre ON concerts(genre);
-CREATE INDEX idx_concerts_ticket_status ON concerts(ticket_status);
-CREATE INDEX idx_concerts_kopis ON concerts(kopis_id);
 ```
 
 **컬럼 설명:**
 
-- `kopis_id`: kOPIS API의 공연 고유 ID
-- `title`: 공연명
-- `artist_id`: 아티스트 ID (외래키)
-- `poster`: 포스터 이미지 URL
-- `date`: 공연 날짜 및 시간
-- `venue_name`: 공연장명
-- `venue_address`: 공연장 주소
-- `region`: 지역 (서울, 부산 등)
-- `genre`: 장르
-- `ticket_status`: 티켓 상태
-- `ticket_open_date`: 티켓 오픈 일시
+- `kopis_id`: KOPIS 공연 고유 ID (구 `mt20id`)
+- `title`: 공연명 (구 `prfnm`)
+- `start_date`/`end_date`: 공연 기간
+- `place`: 공연 시설명 (구 `fcltynm`)
+- `region`: 지역 (구 `area`)
+- `publish_status`: 발행 상태 (`DRAFT`, `ANALYZING`, `REVIEWING`, `PUBLISHED`, `REJECTED`)
+- `analysis_result`: AI 분석 후보군 데이터
 
 ---
 
-### 4. booking_links (예매처 링크)
+### 3-1. concert_artists (공연-아티스트 관계)
 
-공연별 예매처 정보를 저장합니다.
+공연과 아티스트의 N:M 관계를 정의합니다.
 
 ```sql
-CREATE TABLE booking_links (
-  id SERIAL PRIMARY KEY,
+CREATE TABLE concert_artists (
   concert_id VARCHAR(36) REFERENCES concerts(id) ON DELETE CASCADE,
-  platform VARCHAR(50) NOT NULL, -- '인터파크', '멜론티켓', '예스24' 등
-  url TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  artist_id VARCHAR(36) REFERENCES artists(id) ON DELETE CASCADE,
+  role VARCHAR(50) DEFAULT 'MAIN', -- 'MAIN', 'GUEST'
 
-CREATE INDEX idx_booking_links_concert ON booking_links(concert_id);
+  PRIMARY KEY (concert_id, artist_id)
+);
 ```
 
 ---
 
-### 5. user_artists (사용자-아티스트 팔로우)
+### 4. user_artists (사용자-아티스트 팔로우)
 
 사용자가 팔로우한 아티스트를 저장합니다.
 
@@ -224,7 +200,7 @@ CREATE INDEX idx_user_artists_artist ON user_artists(artist_id);
 
 ---
 
-### 6. setlists (셋리스트)
+### 5. setlists (셋리스트)
 
 공연별 셋리스트 정보를 저장합니다.
 
@@ -245,7 +221,7 @@ CREATE INDEX idx_setlists_artist ON setlists(artist_id);
 
 ---
 
-### 7. setlist_tracks (셋리스트 트랙)
+### 6. setlist_tracks (셋리스트 트랙)
 
 셋리스트의 개별 곡 정보를 저장합니다.
 
@@ -266,7 +242,7 @@ CREATE INDEX idx_setlist_tracks_order ON setlist_tracks(setlist_id, order_number
 
 ---
 
-### 8. notification_settings (알림 설정)
+### 7. notification_settings (알림 설정)
 
 사용자별 알림 설정을 저장합니다.
 
@@ -286,7 +262,7 @@ CREATE INDEX idx_notification_settings_user ON notification_settings(user_id);
 
 ---
 
-### 9. user_devices (사용자 디바이스)
+### 8. user_devices (사용자 디바이스)
 
 푸시 알림을 위한 FCM 토큰을 저장합니다.
 
@@ -306,7 +282,7 @@ CREATE INDEX idx_user_devices_token ON user_devices(fcm_token);
 
 ---
 
-### 10. notifications (알림 이력)
+### 9. notifications (알림 이력)
 
 발송된 알림 이력을 저장합니다.
 
@@ -338,7 +314,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
@@ -350,14 +326,13 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
 
   // Custom Relations
-  followedArtists         UserArtist[]
-  notificationSettings    NotificationSettings?
-  devices                 UserDevice[]
-  notifications           Notification[]
+  followedArtists      UserArtist[]
+  notificationSettings NotificationSettings?
+  devices              UserDevice[]
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -385,28 +360,6 @@ model Account {
   @@map("accounts")
 }
 
-model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
 model Artist {
   id              String   @id @default(uuid())
   name            String
@@ -418,54 +371,69 @@ model Artist {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  concerts  Concert[]
+  concerts  ConcertArtist[]
   followers UserArtist[]
   setlists  Setlist[]
 
   @@map("artists")
 }
 
+model ConcertArtist {
+  concertId String @map("concert_id")
+  artistId  String @map("artist_id")
+  role      String @default("MAIN") // MAIN, GUEST, etc.
+
+  concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist  Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([concertId, artistId])
+  @@map("concert_artists")
+}
+
+
 model Concert {
   id             String    @id @default(uuid())
-  kopisId        String?   @unique @map("kopis_id")
-  title          String
-  artistId       String?   @map("artist_id")
-  poster         String?
-  date           DateTime
-  venueName      String    @map("venue_name")
-  venueAddress   String?   @map("venue_address")
-  venueMapLink   String?   @map("venue_map_link")
-  region         String?
-  genre          String?
-  description    String?
-  ticketStatus   String?   @map("ticket_status")
-  ticketOpenDate DateTime? @map("ticket_open_date")
-  ticketPriceMin Int?      @map("ticket_price_min")
-  ticketPriceMax Int?      @map("ticket_price_max")
+  kopisId        String    @unique @map("kopis_id") // 공연 ID (구 mt20id)
+  title          String    // 공연명 (구 prfnm)
+  posterUrl      String?   @map("poster_url") // 포스터 이미지 경로 (구 poster)
+  startDate      DateTime  @map("start_date") // 공연 시작일 (구 prfpdfrom)
+  endDate        DateTime  @map("end_date")   // 공연 종료일 (구 prfpdto)
+  place          String    // 공연 시설명 (구 fcltynm)
+  region         String?   @map("region")      // 지역 (서울, 경기, 인천 등 - 구 area)
+  status         String?   // 공연 상태 (구 prfstate)
+
+  // Details
+  runtime        String?   // 공연 런타임 (구 prfruntime)
+  price          String?   // 티켓 가격 (구 pcseguidance)
+  schedule       String?   // 공연 시간 (구 dtguidance)
+  description    String?   // 줄거리 (구 sty)
+  images         String[]  // 소개 이미지 목록 (구 styurls)
+  relates        Json?     // 예매처 목록 (JSON)
+
+  // Flags
+  isGlobal       Boolean   @default(false) @map("is_global") // 내한공연 여부 (구 visit)
+  isFestival     Boolean   @default(false) @map("is_festival") // 페스티벌 여부
+
+  // Internal Logic Fields
+  publishStatus  PublishStatus @default(DRAFT) @map("publish_status")
+  analysisResult Json?         @map("analysis_result")
+
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  artist        Artist?        @relation(fields: [artistId], references: [id])
-  bookingLinks  BookingLink[]
-  setlists      Setlist[]
-  notifications Notification[]
+  artists        ConcertArtist[]
+  setlists       Setlist[]
+  notifications  Notification[]
 
-  @@index([date])
-  @@index([artistId])
-  @@index([region])
   @@map("concerts")
 }
 
-model BookingLink {
-  id        Int      @id @default(autoincrement())
-  concertId String   @map("concert_id")
-  platform  String
-  url       String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  concert   Concert  @relation(fields: [concertId], references: [id], onDelete: Cascade)
-
-  @@map("booking_links")
+enum PublishStatus {
+  DRAFT
+  ANALYZING
+  REVIEWING
+  PUBLISHED
+  REJECTED
 }
 
 model UserArtist {
@@ -474,25 +442,25 @@ model UserArtist {
   artistId  String   @map("artist_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@unique([userId, artistId])
   @@map("user_artists")
 }
 
 model Setlist {
-  id        String   @id @default(uuid())
-  concertId String?  @map("concert_id")
-  artistId  String?  @map("artist_id")
+  id        String    @id @default(uuid())
+  concertId String?   @map("concert_id")
+  artistId  String?   @map("artist_id")
   date      DateTime?
   venue     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  concert   Concert? @relation(fields: [concertId], references: [id], onDelete: Cascade)
-  artist    Artist?  @relation(fields: [artistId], references: [id])
-  tracks    SetlistTrack[]
+  concert Concert?       @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  artist  Artist?        @relation(fields: [artistId], references: [id])
+  tracks  SetlistTrack[]
 
   @@map("setlists")
 }
@@ -506,7 +474,7 @@ model SetlistTrack {
   duration       Int?
   createdAt      DateTime @default(now()) @map("created_at")
 
-  setlist        Setlist  @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+  setlist Setlist @relation(fields: [setlistId], references: [id], onDelete: Cascade)
 
   @@map("setlist_tracks")
 }
@@ -520,7 +488,7 @@ model NotificationSettings {
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
 
-  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_settings")
 }
@@ -533,24 +501,24 @@ model UserDevice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_devices")
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    String   @map("user_id")
+  id        Int       @id @default(autoincrement())
+  userId    String    @map("user_id")
   type      String
   title     String
   body      String
-  concertId String?  @map("concert_id")
+  concertId String?   @map("concert_id")
   readAt    DateTime? @map("read_at")
-  sentAt    DateTime @default(now()) @map("sent_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  sentAt    DateTime  @default(now()) @map("sent_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  concert   Concert? @relation(fields: [concertId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concert Concert? @relation(fields: [concertId], references: [id])
 
   @@map("notifications")
 }
@@ -562,14 +530,13 @@ model Notification {
 
 ### 1. 팔로우한 아티스트의 예정 공연 조회
 
-```sql
+````sql
 SELECT c.*
 FROM concerts c
 JOIN user_artists ua ON c.artist_id = ua.artist_id
 WHERE ua.user_id = $1
-  AND c.date > NOW()
-ORDER BY c.date ASC;
-```
+  AND c.prfpdfrom > NOW()
+ORDER BY c.prfpdfrom ASC;
 
 ### 2. 오늘 티켓 오픈되는 공연 조회
 
@@ -592,13 +559,15 @@ WHERE ua.artist_id = $1
   AND (ns.ticket_open_alert = TRUE OR ns.concert_registration_alert = TRUE);
 ```
 
+```
+
 ---
 
 ## 인덱스 전략
 
-- **자주 조회되는 컬럼**: `email`, `kopis_id`, `artist_id`, `date`
+- **자주 조회되는 컬럼**: `email`, `mt20id`, `artist_id`, `prfpdfrom`
 - **조인 키**: 모든 외래키에 인덱스 생성
-- **필터링 컬럼**: `region`, `genre`, `ticket_status`
+- **필터링 컬럼**: `area`, `genrenm`, `prfstate`
 - **복합 인덱스**: `(setlist_id, order_number)` - 셋리스트 트랙 정렬
 
 ---
@@ -606,6 +575,9 @@ WHERE ua.artist_id = $1
 ## 데이터 마이그레이션 전략
 
 1. **초기 데이터**: kOPIS API에서 공연 데이터 수집 (최근 6개월)
-2. **주기적 동기화**: 매일 자정 신규 공연 데이터 수집
-3. **아티스트 정규화**: 공연 등록 시 아티스트 이름으로 매칭, 없으면 신규 생성
-4. **Spotify 연동**: 아티스트명으로 Spotify API 검색, `spotify_artist_id` 저장
+2. **주기적 동기화**: 매일 새벽 신규 공연 데이터 수집 (`/api/cron/collect-concerts`)
+3. **상태 동기화**: 매일 새벽 기존 공연의 상태(예정/중/완료) 최신화 (`/api/cron/sync-concert-status`)
+4. **아티스트 정규화**: 공연 등록 시 아티스트 이름으로 매칭, 없으면 신규 생성
+5. **Spotify 연동**: 아티스트명으로 Spotify API 검색, `spotify_artist_id` 저장
+```
+````

@@ -27,19 +27,19 @@ const eslintConfig = defineConfig([
         },
         {
           mode: 'full',
-          type: 'feature',
-          pattern: 'src/features/*/**/*',
-          capture: ['featureName'],
-        },
-        {
-          mode: 'full',
           type: 'shared',
           pattern: 'src/shared/**/*',
         },
         {
           mode: 'full',
-          type: 'config',
-          pattern: 'src/*.{ts,tsx}', // Root files like middleware.ts, auth.ts (if any)
+          type: 'support',
+          pattern: 'src/features/notifications/**/*',
+        },
+        {
+          mode: 'full',
+          type: 'feature',
+          pattern: 'src/features/*/**/*',
+          capture: ['featureName'],
         },
       ],
     },
@@ -63,19 +63,19 @@ const eslintConfig = defineConfig([
           rules: [
             {
               from: 'app',
-              allow: ['feature', 'shared'],
-            },
-            {
-              from: 'app',
-              allow: ['feature', 'shared', 'app'],
-            },
-            {
-              from: 'feature',
-              allow: ['shared', ['feature', { featureName: '${from.featureName}' }]],
+              allow: ['feature', 'shared', 'app', 'support'],
             },
             {
               from: 'shared',
               allow: ['shared'],
+            },
+            {
+              from: 'feature',
+              allow: ['shared', 'support', ['feature', { featureName: '${from.featureName}' }]],
+            },
+            {
+              from: 'support',
+              allow: ['shared', 'support'],
             },
           ],
         },
@@ -90,6 +90,9 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
     'generated/**',
+    'public/sw.js',
+    'public/sw.js.map',
+    'public/workbox-*.js',
   ]),
 ]);
 

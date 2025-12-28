@@ -1,43 +1,36 @@
-import { getConcerts } from '@/features/concerts/server/actions';
-
-export const dynamic = 'force-dynamic';
+import { type Metadata } from 'next';
+import { Suspense } from 'react';
 
 import { ConcertFilter } from '@/features/concerts/components/ConcertFilter';
 import { ConcertList } from '@/features/concerts/components/ConcertList';
-import { ConcertPagination } from '@/features/concerts/components/ConcertPagination';
+import { ConcertFilterSkeleton } from '@/features/concerts/components/skeletons/ConcertFilterSkeleton';
+import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
+
+export const metadata: Metadata = {
+  title: '공연 목록',
+  description: '예정된 모든 공연을 확인하세요.',
+};
 
 interface ConcertsPageProps {
   searchParams: Promise<{
     page?: string;
     region?: string;
-    genre?: string;
+    type?: string;
   }>;
 }
 
-export default async function ConcertsPage({ searchParams }: ConcertsPageProps) {
-  const { page: pageParam, region, genre } = await searchParams;
-  const page = Number(pageParam) || 1;
-
-  const concerts = await getConcerts({
-    page,
-    region,
-    genre,
-  });
-
-  // Check if there are more results for pagination
-  // This is a simplified check. Ideally, the API should return total count.
-  // For now, if we get a full page (20 items), we assume there might be more.
-  const hasMore = concerts.length === 20;
-
+export default function ConcertsPage({ searchParams }: ConcertsPageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">공연 목록</h1>
 
-      <ConcertFilter />
+      <Suspense fallback={<ConcertFilterSkeleton />}>
+        <ConcertFilter />
+      </Suspense>
 
-      <ConcertList concerts={concerts} />
-
-      <ConcertPagination hasMore={hasMore} />
+      <Suspense fallback={<ConcertListSkeleton />}>
+        <ConcertList searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }

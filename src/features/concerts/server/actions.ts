@@ -1,59 +1,154 @@
 'use server';
 
-import { kopisClient } from '@/shared/lib/kopis/client';
+import { PublishStatus } from '@prisma/client';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
-import { Concert } from '../model/types';
+import * as notificationService from '@/features/notifications/server/services/notification.service';
+import { ERROR_CODES } from '@/shared/constants/error-codes';
+import { prisma } from '@/shared/lib/prisma';
+import { ActionResponse } from '@/shared/types/action-response';
 
-export async function getConcerts(params: {
+import { Concert } from '../types';
+import * as AnalysisService from './services/analysis.service';
+import { Candidate } from './services/analysis.service';
+import * as concertService from './services/concert.service';
+
+// --- Admin Pipeline Actions ---
+
+export async function requestAnalysisAction(concertId: string): Promise<ActionResponse> {
+  try {
+    // 1. Set status to ANALYZING immediately
+    await AnalysisService.requestAnalysis(concertId);
+
+    // 2. Trigger Pipeline asynchronously (Fire-and-forget)
+    AnalysisService.runAnalysisPipeline(concertId).catch((err) =>
+      console.error('Async Pipeline Error:', err)
+    );
+
+    revalidatePath('/admin/reviews');
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error('Request Analysis Failed:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Analysis Request Failed' },
+    };
+  }
+}
+
+export async function runPipelineAction(): Promise<ActionResponse<{ count: number }>> {
+  try {
+    const results = await AnalysisService.runAnalysisPipeline();
+    revalidatePath('/admin/reviews');
+    return { success: true, data: { count: results.length } };
+  } catch (error) {
+    console.error('Pipeline Run Failed:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Pipeline Failed' },
+    };
+  }
+}
+
+export async function publishConcertAction(
+  concertId: string,
+  candidates: Candidate[]
+): Promise<ActionResponse> {
+  try {
+    const concert = await AnalysisService.publishConcert(concertId, candidates);
+
+    // Send notification to followers after successful publish
+    await notificationService.notifyConcertRegistration(concert.id);
+
+    // Invalidate Cache
+    // Invalidate Cache
+    revalidatePath('/admin/reviews');
+    // revalidatePath('/'); // Refresh main page explicitly - unnecessary with tags
+    // revalidatePath(`/concerts/${concertId}`); // Refresh detail page - unnecessary with tags
+
+    revalidateTag('concerts', {});
+    revalidateTag(`concert-detail-${concertId}`, {});
+
+    // Invalidate artist pages (ISR/Cache)
+    if (concert.artists) {
+      concert.artists.forEach((ca) => {
+        revalidateTag(`artist-concerts-${ca.artistId}`, {}); // tag-based invalidation
+      });
+    }
+
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error('Publish Failed:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Publish Failed' },
+    };
+  }
+}
+
+export async function rejectConcertAction(concertId: string): Promise<ActionResponse> {
+  try {
+    await AnalysisService.rejectConcert(concertId);
+    revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error('Reject Failed:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Reject Failed' },
+    };
+  }
+}
+
+export async function restoreToReviewAction(concertId: string): Promise<ActionResponse> {
+  try {
+    await prisma.concert.update({
+      where: { id: concertId },
+      data: { publishStatus: PublishStatus.REVIEWING },
+    });
+    revalidatePath('/admin/reviews');
+    revalidatePath(`/concerts/${concertId}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error('Restore Failed:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.INTERNAL_SERVER_ERROR, message: 'Restore Failed' },
+    };
+  }
+}
+
+// --- Manual Spotify Search ---
+
+import * as spotifySearchService from './services/spotify-search.service';
+
+export async function searchSpotifyArtistsAction(query: string): Promise<Candidate[]> {
+  return spotifySearchService.searchSpotifyArtists(query);
+}
+
+export async function getConcertsAction(params: {
   page: number;
   size?: number;
   region?: string;
-  genre?: string;
-  startDate?: string;
-  endDate?: string;
-}): Promise<Concert[]> {
-  const { page, size = 20, region, genre, startDate, endDate } = params;
-
-  // Default date range: Today to 1 month later if not specified
-  const today = new Date();
-  const nextMonth = new Date();
-  nextMonth.setMonth(today.getMonth() + 1);
-
-  const formatDate = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
-
-  const stdate = startDate || formatDate(today);
-  const eddate = endDate || formatDate(nextMonth);
-
+  type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
+}): Promise<ActionResponse<Concert[]>> {
   try {
-    const response = await kopisClient.getConcertList({
-      cpage: page.toString(),
-      rows: size.toString(),
-      stdate,
-      eddate,
-      signgucode: region,
-      shcate: genre,
+    const concerts = await concertService.getConcerts({
+      page: params.page,
+      size: params.size,
+      type: params.type,
     });
 
-    if (!response?.dbs?.db) {
-      return [];
-    }
-
-    // Handle case where single result is not an array
-    const list = Array.isArray(response.dbs.db) ? response.dbs.db : [response.dbs.db];
-
-    return list.map((item) => ({
-      id: item.mt20id,
-      title: item.prfnm,
-      startDate: item.prfpdfrom,
-      endDate: item.prfpdto,
-      venue: item.fcltynm,
-      posterUrl: item.poster,
-      genre: item.genrenm,
-      state: item.state,
-      openRun: item.openrun === 'Y',
-    }));
+    return {
+      success: true,
+      data: concerts,
+    };
   } catch (error) {
-    console.error('Failed to fetch concerts:', error);
-    return [];
+    console.error('Failed to fetch concerts via Action:', error);
+    return {
+      success: false,
+      error: { code: ERROR_CODES.NOT_FOUND, message: 'Failed to fetch concerts' },
+    };
   }
 }
