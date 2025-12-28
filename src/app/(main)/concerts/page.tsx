@@ -1,9 +1,15 @@
+import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { ConcertFilter } from '@/features/concerts/components/ConcertFilter';
 import { ConcertList } from '@/features/concerts/components/ConcertList';
 import { ConcertFilterSkeleton } from '@/features/concerts/components/skeletons/ConcertFilterSkeleton';
 import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
+
+export const metadata: Metadata = {
+  title: '공연 목록',
+  description: '예정된 모든 공연을 확인하세요.',
+};
 
 interface ConcertsPageProps {
   searchParams: Promise<{

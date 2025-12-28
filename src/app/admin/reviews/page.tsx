@@ -1,5 +1,5 @@
 import { PublishStatus } from '@prisma/client';
-import { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { AdminReviewListFetcher } from '@/features/concerts/components/admin/AdminReviewListFetcher';
@@ -9,7 +9,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
 export const metadata: Metadata = {
-  title: '공연 AI 리뷰 | 관리자',
+  title: '공연 등록 관리',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function AdminReviewsPage() {

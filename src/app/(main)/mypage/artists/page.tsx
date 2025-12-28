@@ -16,8 +16,11 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 
 export const metadata = {
-  title: '팔로우한 아티스트 | 공연 알림 서비스',
-  description: '내가 팔로우한 아티스트 목록입니다.',
+  title: '팔로우한 아티스트',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function FollowedArtistsPage() {

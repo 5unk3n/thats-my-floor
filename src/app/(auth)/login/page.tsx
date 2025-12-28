@@ -1,4 +1,14 @@
+import { type Metadata } from 'next';
+
 import { LoginButton } from '@/features/auth/components/login-button';
+
+export const metadata: Metadata = {
+  title: '로그인',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function LoginPage() {
   return (

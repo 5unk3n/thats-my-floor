@@ -1,3 +1,4 @@
+import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -5,7 +6,12 @@ import { MainConcertFetcher } from '@/features/concerts/components/MainConcertFe
 import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 import { Button } from '@/shared/components/ui/button';
 
-export default async function Home() {
+export const metadata: Metadata = {
+  title: '홈',
+  description: '최신 공연 정보를 확인하세요.',
+};
+
+export default function HomePage() {
   return (
     <main className="container mx-auto space-y-12 py-8">
       <section>

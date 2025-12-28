@@ -1,12 +1,15 @@
-import { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { SpotifySyncSkeleton } from '@/features/artists/components/skeletons/SpotifySyncSkeleton';
 import { SpotifySyncFetcher } from '@/features/artists/components/SpotifySyncFetcher';
 
 export const metadata: Metadata = {
-  title: '스포티파이 아티스트 가져오기 | 공연 알림 서비스',
-  description: '스포티파이에서 팔로우한 아티스트를 동기화하여 알림을 받아보세요.',
+  title: '스포티파이 연동',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function SpotifySyncPage() {

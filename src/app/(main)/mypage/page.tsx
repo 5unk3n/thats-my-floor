@@ -1,3 +1,4 @@
+import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { SpotifyConnectSkeleton } from '@/features/artists/components/skeletons/SpotifyConnectSkeleton';
@@ -8,9 +9,12 @@ import { UserProfileSkeleton } from '@/features/auth/components/skeletons/UserPr
 import { UserProfileFetcher } from '@/features/auth/components/UserProfileFetcher';
 import NotificationSettings from '@/features/notifications/components/NotificationSettings';
 
-export const metadata = {
-  title: '마이페이지 | 공연 알림 서비스',
-  description: '내 정보와 알림 설정을 관리합니다.',
+export const metadata: Metadata = {
+  title: '마이페이지',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function MyPage() {
