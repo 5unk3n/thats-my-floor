@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // 1. 보안 헤더 추가 (Security Headers)
   const headers = new Headers(request.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
@@ -9,10 +10,13 @@ export default function proxy(request: NextRequest) {
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // 2. 인증 리다이렉트 (Lightweight Auth Check)
-  // NextAuth 기본 쿠키 이름 확인 (프로덕션/개발 환경 대응)
-  const hasSession =
-    request.cookies.has('next-auth.session-token') ||
-    request.cookies.has('__Secure-next-auth.session-token');
+  // getToken을 사용하여 토큰의 유효성 검증
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const hasSession = !!token;
 
   const isLoginPage = request.nextUrl.pathname === '/login';
 

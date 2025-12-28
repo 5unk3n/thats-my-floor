@@ -180,14 +180,14 @@ export const authOptions: NextAuthOptions = {
           select: { role: true },
         });
 
-        return {
-          accessToken: account.access_token,
-          accessTokenExpires: Date.now() + (account.expires_in as number) * 1000,
-          refreshToken: account.refresh_token,
-          provider: account.provider,
-          role: dbUser?.role,
-          user,
-        };
+        token.accessToken = account.access_token;
+        token.accessTokenExpires = Date.now() + (account.expires_in as number) * 1000;
+        token.refreshToken = account.refresh_token ?? token.refreshToken;
+        token.provider = account.provider;
+        token.id = user.id;
+        token.role = dbUser?.role;
+
+        return token;
       }
 
       // Return previous token if the access token has not expired yet
@@ -200,13 +200,12 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       session.user.accessToken = token.accessToken as string;
-      session.user.refreshToken = token.refreshToken as string;
       session.user.accessTokenExpires = token.accessTokenExpires as number;
       session.user.role = token.role;
       session.error = token.error as string;
 
-      if (token.user) {
-        session.user.id = token.user.id as string;
+      if (token.id) {
+        session.user.id = token.id;
       }
 
       return session;
