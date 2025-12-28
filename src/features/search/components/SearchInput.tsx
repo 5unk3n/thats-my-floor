@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Loader2, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -8,7 +9,6 @@ import { Input } from '@/shared/components/ui/input';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 
 import { searchAction } from '../server/actions';
-import { SearchResult } from '../types';
 import { SearchResults } from './SearchResults';
 
 interface SearchInputProps {
@@ -18,44 +18,30 @@ interface SearchInputProps {
 export function SearchInput({ type = 'all' }: SearchInputProps) {
   const router = useRouter();
   const [query, setQuery] = React.useState('');
-  const [results, setResults] = React.useState<SearchResult | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  // Custom debounce logic using hook
   const debouncedQuery = useDebounce(query, 300);
 
+  const { data: results, isLoading } = useQuery({
+    queryKey: ['search', type, debouncedQuery],
+    queryFn: async () => {
+      const response = await searchAction(debouncedQuery, type);
+      if (!response.success) {
+        throw new Error(response.error?.message);
+      }
+      return response.data;
+    },
+    enabled: debouncedQuery.trim().length > 0,
+  });
+
   React.useEffect(() => {
-    const fetchResults = async () => {
-      if (debouncedQuery.trim().length === 0) {
-        setResults(null);
-        setIsOpen(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const response = await searchAction(debouncedQuery, type);
-        if (response.success && response.data) {
-          setResults(response.data);
-          setIsOpen(true);
-        } else {
-          console.error('Search failed:', response.error);
-          setResults(null);
-        }
-      } catch (error) {
-        console.error('Search failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchResults();
-  }, [debouncedQuery, type]);
+    if (results) {
+      setIsOpen(true);
+    }
+  }, [results]);
 
   const handleClear = () => {
     setQuery('');
-    setResults(null);
     setIsOpen(false);
   };
 
