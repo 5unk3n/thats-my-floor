@@ -1,7 +1,12 @@
+'use cache';
+
 import { Github, Mail } from 'lucide-react';
+import { cacheLife } from 'next/cache';
 import Link from 'next/link';
 
-export function Footer() {
+export async function Footer() {
+  cacheLife('max');
+
   return (
     <footer className="w-full border-t border-border bg-background py-6">
       <div className="container flex flex-col items-center justify-center gap-4 text-center text-sm text-muted-foreground md:flex-row md:justify-between md:text-left">
