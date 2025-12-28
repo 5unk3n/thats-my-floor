@@ -13,11 +13,17 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
   }
 
   // Business Logic: Filter Construction
-  const filter = {
+  const filter: Prisma.ConcertWhereInput = {
     publishStatus: PublishStatus.PUBLISHED,
     isGlobal: params.type === 'GLOBAL' ? true : params.type === 'DOMESTIC' ? false : undefined,
     isFestival: params.type === 'FESTIVAL' ? true : params.type === 'DOMESTIC' ? false : undefined,
   };
+
+  if (params.region === 'METRO') {
+    filter.region = { in: ['서울', '경기', '인천'] };
+  } else if (params.region === 'OTHERS') {
+    filter.region = { notIn: ['서울', '경기', '인천'] };
+  }
 
   const concerts = await concertRepository.findConcerts({
     where: filter,

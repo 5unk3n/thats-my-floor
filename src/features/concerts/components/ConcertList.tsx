@@ -11,15 +11,19 @@ interface ConcertListProps {
 }
 
 export async function ConcertList({ searchParams }: ConcertListProps) {
-  const { page: pageParam, type } = await searchParams;
+  const { page: pageParam, type, region } = await searchParams;
   const page = Number(pageParam) || 1;
 
   const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
   const concertType = validTypes.find((t) => t === type) || undefined;
 
+  const validRegions = ['METRO', 'OTHERS'] as const;
+  const regionType = validRegions.find((r) => r === region) || undefined;
+
   const concerts = await getConcerts({
     page,
     type: concertType,
+    region: regionType,
   });
 
   // Check if there are more results for pagination
