@@ -34,7 +34,7 @@ export const upsertConcertWithArtist = async (data: {
   startDate: string;
   endDate: string;
   place: string;
-  area?: string;
+  region?: string;
   posterUrl?: string;
   status?: string;
   runtime?: string;
@@ -55,7 +55,7 @@ export const upsertConcertWithArtist = async (data: {
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
       place: data.place,
-      region: data.area,
+      region: data.region,
       status: data.status,
       runtime: data.runtime,
       price: data.price,
@@ -73,7 +73,7 @@ export const upsertConcertWithArtist = async (data: {
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
       place: data.place,
-      region: data.area,
+      region: data.region,
       status: data.status,
       runtime: data.runtime,
       price: data.price,

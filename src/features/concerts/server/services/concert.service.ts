@@ -95,7 +95,7 @@ export const syncConcert = async (data: {
   startDate: string;
   endDate: string;
   place: string;
-  area?: string;
+  region?: string;
   posterUrl?: string;
   status?: string;
   runtime?: string;

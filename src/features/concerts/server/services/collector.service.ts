@@ -109,7 +109,7 @@ export const collectConcerts = async () => {
         startDate: detail.prfpdfrom,
         endDate: detail.prfpdto,
         place: detail.fcltynm,
-        area: detail.area,
+        region: detail.area,
         status: detail.prfstate,
         runtime: detail.prfruntime,
         artistId,
