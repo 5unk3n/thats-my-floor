@@ -44,8 +44,7 @@ export const getArtistConcerts = async (id: string) => {
       return date.toISOString().split('T')[0].replace(/-/g, '.');
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return artist.concerts.map(({ concert }: any) => ({
+    return artist.concerts.map(({ concert }) => ({
       id: concert.id,
       title: concert.title,
       posterUrl: concert.posterUrl || '',

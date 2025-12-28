@@ -9,10 +9,7 @@ import { ActionResponse } from '@/shared/types/action-response';
 
 import { existsArtistFollow, findFollowedArtists, toggleArtistFollow } from './db';
 import * as SpotifySyncService from './services/spotify-sync.service';
-
-// --- Types re-exported for Client use ---
-export type { SpotifySyncArtist, SyncArtistStatus } from './services/spotify-sync.service';
-import { SpotifyArtist } from '@/shared/lib/spotify/types';
+import { SpotifySyncArtist } from './services/spotify-sync.service';
 
 export async function toggleFollow(artistId: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);
@@ -78,8 +75,9 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
 
 // --- Spotify Sync Actions ---
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchMySpotifyArtistsAction(after?: string): Promise<ActionResponse<any>> {
+export async function fetchMySpotifyArtistsAction(
+  after?: string
+): Promise<ActionResponse<{ artists: SpotifySyncArtist[]; nextCursor: string | null }>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.accessToken || !session.user.id) {
     return {
@@ -106,12 +104,12 @@ export async function fetchMySpotifyArtistsAction(after?: string): Promise<Actio
 
   return {
     success: true,
-    data: { artists: result.data, nextCursor: result.nextCursor },
+    data: { artists: result.data || [], nextCursor: result.nextCursor || null },
   };
 }
 
 export async function syncSpotifyArtistsAction(
-  artists: SpotifyArtist[]
+  artists: SpotifySyncArtist[]
 ): Promise<ActionResponse<{ count: number }>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

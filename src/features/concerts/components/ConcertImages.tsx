@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 import { ConcertDetail } from '@/features/concerts/types';
 
 interface ConcertImagesProps {
@@ -15,12 +17,14 @@ export function ConcertImages({ concert }: ConcertImagesProps) {
           <div className="flex flex-col gap-4 items-center">
             {images.map((url, index) => (
               <div key={index} className="relative w-full max-w-3xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={url}
                   alt={`Introduction ${index + 1}`}
                   className="w-full h-auto rounded-lg shadow-sm"
-                  loading="lazy"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: '100%', height: 'auto' }}
                 />
               </div>
             ))}

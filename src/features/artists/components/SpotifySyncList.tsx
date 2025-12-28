@@ -12,11 +12,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
-import {
-  fetchMySpotifyArtistsAction,
-  SpotifySyncArtist,
-  syncSpotifyArtistsAction,
-} from '../server/actions';
+import { fetchMySpotifyArtistsAction, syncSpotifyArtistsAction } from '../server/actions';
+import { SpotifySyncArtist } from '../server/services/spotify-sync.service';
 
 interface SyncArtistListProps {
   initialArtists: SpotifySyncArtist[];
@@ -48,10 +45,11 @@ export default function SpotifySyncList({
       const response = await fetchMySpotifyArtistsAction(nextCursor);
 
       if (response.success && response.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { artists: newArtists, nextCursor: newNextCursor } = response.data as any;
-        setArtists((prev) => [...prev, ...newArtists]);
-        setNextCursor(newNextCursor);
+        if (response.data) {
+          const { artists: newArtists, nextCursor: newNextCursor } = response.data;
+          setArtists((prev) => [...prev, ...newArtists]);
+          setNextCursor(newNextCursor);
+        }
       } else {
         toast.error('추가 데이터를 불러오는데 실패했습니다.');
       }
@@ -62,8 +60,7 @@ export default function SpotifySyncList({
     if (inView && nextCursor && !isLoadingMore) {
       loadMore();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView, nextCursor, isLoadingMore]);
+  }, [inView, nextCursor, isLoadingMore, loadMore]);
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
