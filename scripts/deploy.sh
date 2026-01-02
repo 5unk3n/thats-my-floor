@@ -7,6 +7,13 @@ BLUE_SERVICE="app-blue"
 GREEN_SERVICE="app-green"
 NGINX_CONF_DIR="/etc/nginx/conf.d"
 
+# 0. Check Nginx Configuration Constraints
+# Fail Fast if configuration files are missing
+if [ ! -f "$NGINX_CONF_DIR/blue.inc" ] || [ ! -f "$NGINX_CONF_DIR/green.inc" ]; then
+  echo "❌ Error: Nginx configuration files (blue.inc/green.inc) not found in $NGINX_CONF_DIR"
+  exit 1
+fi
+
 # 1. Check current status
 # If port 3000 is active (Blue), we deploy to Green.
 # If port 3001 is active (Green), we deploy to Blue.
@@ -41,17 +48,7 @@ echo "🚀 Starting Blue/Green Deployment: $CURRENT_COLOR -> $NEW_COLOR"
 echo "📥 Pulling latest images..."
 docker compose pull
 
-# 3. Database Migration
-# Run migration using the new image (as a one-off container)
-echo "📦 Running database migrations..."
-if docker compose run --rm "$NEW_SERVICE" npx prisma migrate deploy; then
-    echo "✅ Database migration successful."
-else
-    echo "❌ Database migration failed."
-    exit 1
-fi
-
-# 4. Start New Container
+# 3. Start New Container
 echo "▶️  Starting new container ($NEW_SERVICE)..."
 docker compose up -d "$NEW_SERVICE"
 
