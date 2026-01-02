@@ -8,7 +8,7 @@
 - **Containerization**: Docker + Docker Compose
 - **Container Registry**: GitHub Container Registry (GHCR)
 - **CI/CD Orchestration**: GitHub Actions
-- **Database**: Supabase (Managed PostgreSQL)
+- **Database**: Azure Database for PostgreSQL - Flexible Server
 - **Network & Security**:
   - **Inbound**: Cloudflare Tunnel (or Nginx Reverse Proxy with SSL on port 443/80)
   - **Traffic Management**: Nginx (Blue/Green Switching)
@@ -25,10 +25,13 @@
 > **트리거**: `main` 브랜치 Push
 
 1.  **Source Code Checkout**: 최신 코드를 가져옵니다.
-2.  **Build & Push Docker Image**:
+2.  **Zero-downtime DB Migration (Expand)**:
+    - `npx prisma migrate deploy`를 실행합니다.
+    - **Build 시점에 수행하는 이유**: `generateStaticParams` 등 빌드 과정에서 최신 스키마가 필요하기 때문입니다.
+    - **안전 장치**: `docs/deployment-strategy.md`의 **Expand 전략**을 엄격히 준수하여, 운영 중인 코드에 영향을 주지 않는 비파괴적 변경만 수행합니다.
+3.  **Build & Push Docker Image**:
     - `Dockerfile`의 Multi-stage build를 수행합니다.
     - **Build Secret Mount**: `.env` 파일 등 민감 정보를 `RUN --mount=type=secret` 방식으로 안전하게 주입하여 이미지 레이어에 남지 않게 합니다.
-    - **SSG Safety Check**: `generateStaticParams` 함수 내에서 `process.env.CI`를 감지하여, DB 연결 없이 빈 배열을 반환함으로써 마이그레이션 전 빌드 실패를 방지합니다.
     - 빌드된 이미지를 `ghcr.io`에 `latest` 및 `sha` 태그로 푸시합니다.
 
 ### Phase 2: Continuous Deployment (CD)
@@ -38,18 +41,14 @@
 
 1.  **Deploy Environment Setup**:
     - GitHub Secrets에서 `ENV_FILE_CONTENT`를 가져와 런타임용 `.env` 파일을 생성합니다.
-    - `npm ci`를 실행하여 마이그레이션 스크립트 실행에 필요한 의존성을 설치합니다.
-2.  **Zero-downtime DB Migration (Expand)**:
-    - `npx prisma migrate deploy`를 실행합니다.
-    - **Expand 전략**: 현재 운영 중인 Blue 컨테이너에 영향을 주지 않도록, 새로운 컬럼/테이블을 **추가(Add)**하는 변경사항만 적용됩니다.
-3.  **Blue/Green Deployment (`scripts/deploy.sh`)**:
+2.  **Blue/Green Deployment (`scripts/deploy.sh`)**:
     - **Target Recognition**: Nginx 설정을 확인하여 현재 비활성 상태인 환경(Green 또는 Blue)을 배포 대상으로 선정합니다.
     - **Image Pull & Run**: 최신 Docker 이미지를 Pull하고, 대상 컨테이너(`app-green` 등)를 실행합니다.
     - **Health Check**: `curl`을 통해 `localhost:PORT/api/health` 엔드포인트를 주기적으로 호출하여 서비스 정상 구동을 확인합니다.
-4.  **Traffic Switch**:
+3.  **Traffic Switch**:
     - Health Check 통과 시, Nginx 설정(Symlink)을 변경하여 트래픽을 새 컨테이너로 전환합니다.
     - `sudo systemctl reload nginx`로 무중단 적용합니다.
-5.  **Cleanup**:
+4.  **Cleanup**:
     - 구 버전(Blue) 컨테이너를 중지(Stop)하고 제거(Remove)하여 리소스를 확보합니다.
     - (Optional) `.env` 파일 보안 삭제.
 
