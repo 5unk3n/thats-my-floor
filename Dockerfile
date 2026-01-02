@@ -28,11 +28,6 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-# Set dummy DATABASE_URL for Prisma generate (actual URL is provided at runtime)
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-
-
-
 RUN --mount=type=secret,id=env_file,target=.env \
   if [ -f yarn.lock ]; then npx prisma generate && yarn run build; \
   elif [ -f package-lock.json ]; then npx prisma generate && npm run build; \
