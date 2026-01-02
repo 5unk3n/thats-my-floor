@@ -43,6 +43,7 @@ jobs:
       - name: Create .env file
         run: |
           echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+          sed -i 's|^DATABASE_URL=.*|DATABASE_URL=${{ secrets.CI_DATABASE_URL }}|' .env
           chmod 600 .env
 
       - name: Setup Node.js
@@ -71,7 +72,7 @@ jobs:
           context: .
           push: true
           secrets: |
-            "env_file=${{ secrets.ENV_FILE_CONTENT }}"
+            "env_file=.env"
           network: host
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
