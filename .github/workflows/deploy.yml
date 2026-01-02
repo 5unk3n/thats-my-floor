@@ -56,29 +56,8 @@ jobs:
 
       - name: Create .env file
         run: |
-          cat <<EOF > .env
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-          KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-          SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          KOPIS_API_KEY=${{ secrets.KOPIS_API_KEY }}
-          NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
-          NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-          FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
-          CRON_SECRET=${{ secrets.CRON_SECRET }}
-          EOF
-
-          EOF
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+          chmod 600 .env
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
