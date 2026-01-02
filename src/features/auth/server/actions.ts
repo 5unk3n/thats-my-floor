@@ -1,4 +1,30 @@
 'use server';
 
-// This file is intentionally left empty as all read operations have been moved to db.ts
-// and there are no auth mutations handled here (NextAuth handles auth flows).
+import { revalidatePath } from 'next/cache';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/shared/lib/auth';
+
+import { linkLastFmAccount, unlinkLastFmAccount } from './services/lastfm-auth.service';
+
+export async function connectLastFmAction(token: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  await linkLastFmAccount(session.user.id, token);
+  revalidatePath('/mypage');
+}
+
+export async function disconnectLastFmAction() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  await unlinkLastFmAccount(session.user.id);
+  revalidatePath('/mypage');
+}

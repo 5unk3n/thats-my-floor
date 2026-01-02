@@ -2,7 +2,8 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { NextAuthOptions } from 'next-auth';
 import { Adapter } from 'next-auth/adapters';
 import { JWT } from 'next-auth/jwt';
-import SpotifyProvider from 'next-auth/providers/spotify';
+import GoogleProvider from 'next-auth/providers/google';
+import KakaoProvider from 'next-auth/providers/kakao';
 
 import { prisma } from '@/shared/lib/prisma';
 
@@ -64,38 +65,6 @@ async function refreshKakaoToken(token: JWT) {
   };
 }
 
-async function refreshSpotifyToken(token: JWT) {
-  const url = 'https://accounts.spotify.com/api/token';
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization:
-        'Basic ' +
-        Buffer.from(
-          process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
-        ).toString('base64'),
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: token.refreshToken!,
-    }),
-  });
-
-  const refreshedTokens = await response.json();
-
-  if (!response.ok) {
-    throw refreshedTokens;
-  }
-
-  return {
-    ...token,
-    accessToken: refreshedTokens.access_token,
-    accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
-  };
-}
-
 async function refreshAccessToken(token: JWT) {
   try {
     switch (token.provider) {
@@ -103,8 +72,6 @@ async function refreshAccessToken(token: JWT) {
         return await refreshGoogleToken(token);
       case 'kakao':
         return await refreshKakaoToken(token);
-      case 'spotify':
-        return await refreshSpotifyToken(token);
       default:
         return token;
     }
@@ -121,7 +88,6 @@ async function refreshAccessToken(token: JWT) {
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
-    /*
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -137,18 +103,6 @@ export const authOptions: NextAuthOptions = {
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
-*/
-    SpotifyProvider({
-      clientId: process.env.SPOTIFY_CLIENT_ID!,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          scope:
-            'user-read-email user-read-private user-top-read playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-follow-read',
-        },
-      },
       allowDangerousEmailAccountLinking: true,
     }),
   ],
