@@ -1,5 +1,5 @@
 import { searchCache } from '@/shared/lib/cache';
-import { SpotifyService } from '@/shared/lib/spotify/client';
+import { lastFmClient } from '@/shared/lib/lastfm/client';
 
 import { SearchResult } from '../../types';
 import * as searchRepository from '../db';
@@ -24,16 +24,18 @@ export const getSearchResults = async (
   console.log(`[Cache Miss] Fetching fresh data for: "${normalizedQuery}" (type: ${type})`);
 
   try {
-    const [concerts, spotifyArtists] = await Promise.all([
+    const [concerts, lastFmResponse] = await Promise.all([
       // Search Concerts (DB) - Run only if type is 'all' or 'concert'
       type === 'all' || type === 'concert'
         ? searchRepository.searchConcerts(normalizedQuery, 5)
         : Promise.resolve([]),
-      // Search Artists (Spotify API) - Run only if type is 'all' or 'artist'
+      // Search Artists (Last.fm API) - Run only if type is 'all' or 'artist'
       type === 'all' || type === 'artist'
-        ? SpotifyService.searchArtists(normalizedQuery, 5)
-        : Promise.resolve([]),
+        ? lastFmClient.searchArtist(normalizedQuery, 5)
+        : Promise.resolve(null),
     ]);
+
+    const lastFmArtists = lastFmResponse?.results.artistmatches.artist || [];
 
     const result: SearchResult = {
       concerts: concerts.map((c) => ({
@@ -45,10 +47,10 @@ export const getSearchResults = async (
         place: c.place,
         status: c.status,
       })),
-      artists: spotifyArtists.map((a) => ({
-        id: a.id,
+      artists: lastFmArtists.map((a) => ({
+        id: a.mbid || a.url, // Use MBID if available, otherwise URL as fallback ID
         name: a.name,
-        image: a.images[0]?.url || null,
+        image: a.image.find((img) => img.size === 'large')?.['#text'] || null,
       })),
     };
 

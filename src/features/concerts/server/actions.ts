@@ -12,6 +12,7 @@ import { Concert } from '../types';
 import * as AnalysisService from './services/analysis.service';
 import { Candidate } from './services/analysis.service';
 import * as concertService from './services/concert.service';
+import { LastFmCandidate, searchLastFmArtists } from './services/lastfm-search.service';
 
 // --- Admin Pipeline Actions ---
 
@@ -119,12 +120,10 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
   }
 }
 
-// --- Manual Spotify Search ---
+// --- Manual Last.fm Search ---
 
-import * as spotifySearchService from './services/spotify-search.service';
-
-export async function searchSpotifyArtistsAction(query: string): Promise<Candidate[]> {
-  return spotifySearchService.searchSpotifyArtists(query);
+export async function searchExternalArtistsAction(query: string): Promise<LastFmCandidate[]> {
+  return searchLastFmArtists(query);
 }
 
 export async function getConcertsAction(params: {

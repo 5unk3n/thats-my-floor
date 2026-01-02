@@ -1,16 +1,17 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 
 import * as PerplexityService from '@/features/concerts/server/services/perplexity.service';
+import { lastFmClient } from '@/shared/lib/lastfm/client';
 import { prisma } from '@/shared/lib/prisma';
-import { SpotifyService } from '@/shared/lib/spotify/client';
 
 export interface Candidate {
   name: string;
-  spotifyId?: string;
+  lastfmArtistId?: string;
+  url?: string;
   imageUrl?: string;
-  popularity?: number;
-  followers?: number;
-  genres?: string[];
+  listeners?: number;
+  playcount?: number;
+  genres?: string[]; // Last.fm artists might have tags, we can map them if needed
 }
 
 /**
@@ -59,24 +60,22 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
 
       const groupedResults = [];
 
-      // 2. Verification (Spotify) - Loop through EACH detected name
+      // 2. Verification (Last.fm) - Loop through EACH detected name
       for (const name of uniqueNames) {
         try {
-          // Search Spotify for this specific name
-          // We use a broader search here to get candidates
-          // Assumption: SpotifyService.searchArtists (plural) needed or reuse singular
-          // Let's assume we fetch top 3 for each name
-          const candidates = await SpotifyService.searchArtists(name, 3);
+          // Search Last.fm for this specific name
+          const response = await lastFmClient.searchArtist(name, 3);
+          const candidates = response?.results.artistmatches.artist || [];
 
           groupedResults.push({
             query: name,
             candidates: candidates.map((c) => ({
               name: c.name,
-              spotifyId: c.id,
-              imageUrl: c.images[0]?.url,
-              popularity: c.popularity,
-              followers: c.followers.total,
-              genres: c.genres,
+              lastfmArtistId: c.mbid || c.url,
+              url: c.url,
+              imageUrl: c.image.find((img) => img.size === 'large')?.['#text'],
+              listeners: parseInt(c.listeners || '0', 10),
+              // genres: c.tags, // Tags not directly in search result usually
             })),
           });
         } catch {
@@ -118,19 +117,19 @@ export async function publishConcert(concertId: string, selectedCandidates: Cand
   return prisma.$transaction(async (tx) => {
     // 1. Create/Connect Artists
     for (const candidate of selectedCandidates) {
-      if (!candidate.spotifyId) continue; // Skip invalid
+      if (!candidate.lastfmArtistId) continue; // Skip invalid
 
       let artist = await tx.artist.findUnique({
-        where: { spotifyArtistId: candidate.spotifyId },
+        where: { lastfmArtistId: candidate.lastfmArtistId },
       });
 
       if (!artist) {
         artist = await tx.artist.create({
           data: {
             name: candidate.name,
-            spotifyArtistId: candidate.spotifyId,
+            lastfmArtistId: candidate.lastfmArtistId,
             image: candidate.imageUrl,
-            followerCount: candidate.followers || 0,
+            followerCount: 0, // Last.fm search doesn't provide follower count directly in same way
           },
         });
       }
