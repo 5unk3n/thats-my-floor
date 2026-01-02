@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { connectLastFmAction, disconnectLastFmAction } from '@/features/auth/server/actions';
@@ -25,8 +25,13 @@ export function LastFmConnect({ initialUsername, apiKey }: LastFmConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [username, setUsername] = useState<string | null | undefined>(initialUsername);
 
+  const processedTokenRef = useRef<string | null>(null);
+
   useEffect(() => {
     const handleConnect = async (token: string) => {
+      if (processedTokenRef.current === token) return; // Already processed
+      processedTokenRef.current = token;
+
       setIsConnecting(true);
       try {
         await connectLastFmAction(token);
@@ -36,16 +41,17 @@ export function LastFmConnect({ initialUsername, apiKey }: LastFmConnectProps) {
       } catch (error) {
         console.error(error);
         toast.error('계정 연결에 실패했습니다.');
+        processedTokenRef.current = null; // Allow retry on failure if needed, though token likely invalid
       } finally {
         setIsConnecting(false);
       }
     };
 
     const token = searchParams.get('token');
-    if (token && !username && !isConnecting) {
+    if (token && !username) {
       handleConnect(token);
     }
-  }, [searchParams, username, isConnecting, router]);
+  }, [searchParams, username, router]);
 
   const handleDisconnect = async () => {
     if (!confirm('Last.fm 계정 연결을 해제하시겠습니까?')) return;
