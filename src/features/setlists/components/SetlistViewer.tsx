@@ -1,25 +1,21 @@
 'use client';
 
-import { Clock, Music, Play } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { Clock, Music } from 'lucide-react';
 
 import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
-import { playTrack } from '../lib/spotify-player';
-import { usePlayerStore } from '../store/use-player-store';
 import { Setlist } from '../types';
-import { SpotifyPlayer } from './SpotifyPlayer';
 
 interface SetlistViewerProps {
   setlist: Setlist | null;
 }
 
 export function SetlistViewer({ setlist }: SetlistViewerProps) {
-  const { data: session } = useSession();
-  const { deviceId, currentTrack, active } = usePlayerStore();
+  // const { data: session } = useSession();
+  // const { deviceId, currentTrack, active } = usePlayerStore();
 
+  /*
   const handlePlay = async (spotifyTrackId: string) => {
     if (!session?.user?.accessToken || !deviceId) return;
 
@@ -29,6 +25,7 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
       console.error('Failed to play track', error);
     }
   };
+*/
 
   if (!setlist || setlist.tracks.length === 0) {
     return (
@@ -52,7 +49,7 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
         <CardContent>
           <ul className="space-y-2">
             {setlist.tracks.map((track) => {
-              const isPlaying = currentTrack?.id === track.spotifyTrackId;
+              // const isPlaying = currentTrack?.id === track.spotifyTrackId;
 
               return (
                 <li
@@ -62,10 +59,11 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
                   <div className="flex items-center gap-3">
                     <div className="relative flex h-8 w-8 items-center justify-center">
                       <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary ${track.spotifyTrackId ? 'group-hover:opacity-0' : ''}`}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary`}
                       >
                         {track.orderNumber}
                       </span>
+                      {/* 
                       {track.spotifyTrackId && (
                         <Button
                           variant="ghost"
@@ -79,10 +77,9 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
                           />
                         </Button>
                       )}
+                      */}
                     </div>
-                    <span className={`font-medium ${isPlaying ? 'text-primary' : ''}`}>
-                      {track.title}
-                    </span>
+                    <span className={`font-medium`}>{track.title}</span>
                   </div>
                   {track.duration && (
                     <Badge variant="secondary" className="flex items-center gap-1">
@@ -96,7 +93,6 @@ export function SetlistViewer({ setlist }: SetlistViewerProps) {
           </ul>
         </CardContent>
       </Card>
-      <SpotifyPlayer />
     </>
   );
 }

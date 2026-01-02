@@ -29,7 +29,7 @@ export async function requestAnalysis(concertId: string) {
 
 /**
  * Step 2: Batch/Async Analysis Job
- * Triggers grouping analysis: Perplexity -> Spotify (N) -> Grouped Result.
+ * Triggers grouping analysis: Perplexity -> Last.fm (N) -> Grouped Result.
  */
 export async function runAnalysisPipeline(concertId?: string, limit = 5) {
   const where: Prisma.ConcertWhereInput = concertId

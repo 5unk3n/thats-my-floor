@@ -79,7 +79,7 @@ export function ArtistProfile({ artist }: ArtistProfileProps) {
           </div>
         </div>
 
-        {/* Removed redundant Spotify button block that was below description */}
+        {/* Removed redundant button block */}
       </div>
     </div>
   );

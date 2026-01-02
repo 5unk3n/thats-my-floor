@@ -26,7 +26,6 @@ export const createSetlist = async (data: CreateSetlistInput) => {
         create: data.tracks.map((track) => ({
           title: track.title,
           orderNumber: track.orderNumber,
-          spotifyTrackId: track.spotifyTrackId,
           duration: track.duration,
         })),
       },

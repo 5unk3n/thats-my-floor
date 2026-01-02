@@ -39,7 +39,7 @@ export default function LastFmSyncList({ initialArtists }: SyncArtistListProps) 
     // Check service: `const result: LastFmSyncArtist[] = ...`
     // LastFmSyncArtist extends LastFmTopArtist.
     // LastFmTopArtist has name, mbid, url...
-    // The previous Spotify logic used `artist.id`.
+    // LastFmTopArtist has name, mbid, url...
     // I need to use `artist.mbid || artist.url` as the unique key.
 
     const targetId = id;
