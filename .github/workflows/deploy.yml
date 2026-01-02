@@ -65,7 +65,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies for migration
-        run: npm install -g prisma
+        run: npm ci
 
       - name: Run Prisma Migration
         run: npx prisma migrate deploy
