@@ -27,6 +27,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Cloudflare Tunnel
+        run: |
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+
+          # Start Tunnel in Background
+          nohup cloudflared access tcp --hostname db.thatsmyfloor.live --url localhost:5432 \
+            --header "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            --header "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" > cloudflared.log 2>&1 &
+            
+          # Wait for tunnel
+          sleep 5
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -43,6 +56,7 @@ jobs:
           push: true
           secrets: |
             "env_file=${{ secrets.ENV_FILE_CONTENT }}"
+          network: host
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
