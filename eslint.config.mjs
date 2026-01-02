@@ -33,7 +33,7 @@ const eslintConfig = defineConfig([
         {
           mode: 'full',
           type: 'support',
-          pattern: 'src/features/notifications/**/*',
+          pattern: 'src/features/{notifications,auth}/**/*',
         },
         {
           mode: 'full',

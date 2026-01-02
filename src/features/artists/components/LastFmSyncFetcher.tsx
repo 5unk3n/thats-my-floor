@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import LastFmSyncList from '@/features/artists/components/LastFmSyncList';
@@ -14,59 +15,70 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export function LastFmSyncFetcher() {
-  const [username, setUsername] = useState('');
   const [artists, setArtists] = useState<LastFmSyncArtist[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [hasAccount, setHasAccount] = useState(true);
 
-  const handleFetch = async () => {
-    if (!username.trim()) return;
-    setLoading(true);
-    try {
-      const response = await fetchMyLastFmArtistsAction(username);
-      if (response.success && response.data) {
-        setArtists(response.data.artists);
-        setSearched(true);
-      } else {
-        const err = (response as any).error;
-        const errorMsg =
-          typeof err === 'string'
-            ? err
-            : (err as { message: string })?.message || 'Failed to fetch';
-        toast.error(errorMsg);
+  useEffect(() => {
+    const loadArtists = async () => {
+      try {
+        const response = await fetchMyLastFmArtistsAction();
+        if (response.success && response.data) {
+          setArtists(response.data.artists);
+          setHasAccount(true);
+        } else {
+          const err = response.error;
+          const errorMessage = typeof err === 'string' ? err : err?.message;
+
+          if (errorMessage && errorMessage.includes('연동된 Last.fm 계정이 없습니다')) {
+            setHasAccount(false);
+          } else {
+            toast.error(errorMessage || 'Failed to fetch');
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error('오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-      toast.error('오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  if (!searched) {
+    loadArtists();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAccount) {
     return (
       <Card className="w-full max-w-md mx-auto my-8">
         <CardHeader>
-          <CardTitle>Last.fm 연동</CardTitle>
+          <CardTitle>Last.fm 연동 필요</CardTitle>
           <CardDescription>
-            Last.fm 사용자 이름을 입력하여 탑 아티스트를 동기화하세요.
+            내 Top Artists를 가져오기 위해서는 Last.fm 계정 연동이 필요합니다.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Last.fm Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
-            />
-            <Button onClick={handleFetch} disabled={loading}>
-              {loading ? '불러오는 중...' : '조회'}
-            </Button>
-          </div>
+        <CardContent className="flex justify-center">
+          <Button asChild className="bg-[#B90000] hover:bg-[#D51007] text-white">
+            <Link href="/mypage?scrollTo=lastfm">마이페이지에서 연동하기</Link>
+          </Button>
         </CardContent>
       </Card>
     );
@@ -75,10 +87,7 @@ export function LastFmSyncFetcher() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">&apos;{username}&apos;의 Top Artists</h2>
-        <Button variant="outline" onClick={() => setSearched(false)}>
-          다른 계정 검색
-        </Button>
+        <h2 className="text-xl font-bold">내 Top Artists</h2>
       </div>
       <LastFmSyncList initialArtists={artists} />
     </div>

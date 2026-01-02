@@ -75,8 +75,11 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
 
 // --- Last.fm Sync Actions ---
 
+// Update import to include getLastFmSession
+import { getLastFmSession } from '@/features/auth/server/services/lastfm-auth.service';
+
 export async function fetchMyLastFmArtistsAction(
-  username: string,
+  username?: string,
   period: 'overall' | '7day' | '1month' | '3month' | '6month' | '12month' = 'overall'
 ): Promise<ActionResponse<{ artists: LastFmSyncArtist[] }>> {
   const session = await getServerSession(authOptions);
@@ -87,8 +90,22 @@ export async function fetchMyLastFmArtistsAction(
     };
   }
 
+  let targetUsername = username;
+
+  // If no username provided, try to get from connected account
+  if (!targetUsername) {
+    const lastFmAccount = await getLastFmSession(session.user.id);
+    if (!lastFmAccount) {
+      return {
+        success: false,
+        error: { code: ERROR_CODES.BAD_REQUEST, message: '연동된 Last.fm 계정이 없습니다.' },
+      };
+    }
+    targetUsername = lastFmAccount.username;
+  }
+
   const result = await LastFmSyncService.fetchMyLastFmArtists(
-    username,
+    targetUsername!,
     session.user.id,
     50,
     period
