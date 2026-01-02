@@ -28,6 +28,7 @@ export interface LastFmArtist {
   image: LastFmImage[];
   streamable: string;
   ontour: string;
+  listeners?: string; // Search results often have this at top level
   stats?: {
     listeners: string;
     playcount: string;
@@ -74,4 +75,24 @@ export interface LastFmSessionResponse {
 export interface LastFmErrorResponse {
   error: number;
   message: string;
+}
+
+export interface LastFmTopArtist extends LastFmArtist {
+  playcount: string;
+  '@attr': {
+    rank: string;
+  };
+}
+
+export interface LastFmUserTopArtistsResponse {
+  topartists: {
+    artist: LastFmTopArtist[];
+    '@attr': {
+      user: string;
+      totalPages: string;
+      page: string;
+      perPage: string;
+      total: string;
+    };
+  };
 }

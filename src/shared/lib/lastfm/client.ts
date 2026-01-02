@@ -5,6 +5,7 @@ import {
   LastFmArtistSearchResponse,
   LastFmErrorResponse,
   LastFmSessionResponse,
+  LastFmUserTopArtistsResponse,
 } from './types';
 
 const LASTFM_API_URL = 'http://ws.audioscrobbler.com/2.0/';
@@ -126,6 +127,21 @@ export class LastFmClient {
    */
   async getSession(token: string): Promise<LastFmSessionResponse | null> {
     return this.fetch<LastFmSessionResponse>('auth.getSession', { token }, true);
+  }
+
+  /**
+   * Get User's Top Artists
+   */
+  async getUserTopArtists(
+    user: string,
+    limit: number = 50,
+    period: 'overall' | '7day' | '1month' | '3month' | '6month' | '12month' = 'overall'
+  ): Promise<LastFmUserTopArtistsResponse | null> {
+    return this.fetch<LastFmUserTopArtistsResponse>('user.getTopArtists', {
+      user,
+      limit: limit.toString(),
+      period,
+    });
   }
 }
 

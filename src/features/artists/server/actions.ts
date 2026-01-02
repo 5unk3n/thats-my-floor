@@ -8,8 +8,8 @@ import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
 
 import { existsArtistFollow, findFollowedArtists, toggleArtistFollow } from './db';
-import * as SpotifySyncService from './services/spotify-sync.service';
-import { SpotifySyncArtist } from './services/spotify-sync.service';
+import * as LastFmSyncService from './services/lastfm-sync.service';
+import { LastFmSyncArtist } from './services/lastfm-sync.service';
 
 export async function toggleFollow(artistId: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);
@@ -73,23 +73,25 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
   }
 }
 
-// --- Spotify Sync Actions ---
+// --- Last.fm Sync Actions ---
 
-export async function fetchMySpotifyArtistsAction(
-  after?: string
-): Promise<ActionResponse<{ artists: SpotifySyncArtist[]; nextCursor: string | null }>> {
+export async function fetchMyLastFmArtistsAction(
+  username: string,
+  period: 'overall' | '7day' | '1month' | '3month' | '6month' | '12month' = 'overall'
+): Promise<ActionResponse<{ artists: LastFmSyncArtist[] }>> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.accessToken || !session.user.id) {
+  if (!session?.user?.id) {
     return {
       success: false,
-      error: { code: ERROR_CODES.UNAUTHORIZED, message: 'Spotify 계정 연동이 필요합니다.' },
+      error: { code: ERROR_CODES.UNAUTHORIZED, message: '로그인이 필요합니다.' },
     };
   }
 
-  const result = await SpotifySyncService.fetchMySpotifyArtists(
-    session.user.accessToken,
+  const result = await LastFmSyncService.fetchMyLastFmArtists(
+    username,
     session.user.id,
-    after
+    50,
+    period
   );
 
   if (!result.success) {
@@ -104,12 +106,12 @@ export async function fetchMySpotifyArtistsAction(
 
   return {
     success: true,
-    data: { artists: result.data || [], nextCursor: result.nextCursor || null },
+    data: { artists: result.data || [] },
   };
 }
 
-export async function syncSpotifyArtistsAction(
-  artists: SpotifySyncArtist[]
+export async function syncLastFmArtistsAction(
+  artists: LastFmSyncArtist[]
 ): Promise<ActionResponse<{ count: number }>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -119,7 +121,7 @@ export async function syncSpotifyArtistsAction(
     };
   }
 
-  const result = await SpotifySyncService.syncSpotifyArtists(session.user.id, artists);
+  const result = await LastFmSyncService.syncLastFmArtists(session.user.id, artists);
   if (!result.success) {
     return {
       success: false,

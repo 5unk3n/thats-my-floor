@@ -4,7 +4,8 @@ export interface Artist {
   image: string;
   genre: string;
   description: string;
-  spotifyArtistId: string | null;
+  // spotifyArtistId: string | null; // Removed
+  lastfmArtistId: string | null;
 }
 
 export interface ParticipatingConcert {
