@@ -69,8 +69,6 @@ jobs:
 
       - name: Run Prisma Migration
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
