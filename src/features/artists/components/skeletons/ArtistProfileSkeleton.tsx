@@ -16,7 +16,7 @@ export function ArtistProfileSkeleton() {
 
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-24 rounded-md" /> {/* Follow Button */}
-            <Skeleton className="h-10 w-32 rounded-full" /> {/* Spotify Button */}
+            <Skeleton className="h-10 w-32 rounded-full" /> {/* External Link Button */}
           </div>
         </div>
       </div>

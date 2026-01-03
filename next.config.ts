@@ -10,7 +10,10 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    remotePatterns: [new URL('http://www.kopis.or.kr/**'), new URL('https://i.scdn.co/**')],
+    remotePatterns: [
+      new URL('http://www.kopis.or.kr/**'),
+      new URL('https://lastfm.freetls.fastly.net/**'),
+    ],
   },
   cacheComponents: true,
 };

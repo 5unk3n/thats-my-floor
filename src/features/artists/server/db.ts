@@ -76,12 +76,12 @@ export const findFollowedArtists = async (userId: string) => {
   return userArtists.map((ua) => ua.artist);
 };
 
-// --- Spotify Sync Related Queries ---
+// --- Last.fm Sync Related Queries ---
 
-export const findArtistsBySpotifyIds = async (spotifyIds: string[], userId: string) => {
+export const findArtistsByLastfmIds = async (lastfmIds: string[], userId: string) => {
   return prisma.artist.findMany({
     where: {
-      spotifyArtistId: { in: spotifyIds },
+      lastfmArtistId: { in: lastfmIds },
     },
     include: {
       followers: {
@@ -106,7 +106,7 @@ export const createArtistsMany = async (
     name: string;
     image?: string;
     genre?: string;
-    spotifyArtistId: string;
+    lastfmArtistId: string;
     followerCount?: number;
   }[]
 ) => {
@@ -116,10 +116,10 @@ export const createArtistsMany = async (
   });
 };
 
-export const findArtistsBySpotifyIdList = async (spotifyIds: string[]) => {
+export const findArtistsByLastfmIdList = async (lastfmIds: string[]) => {
   return prisma.artist.findMany({
     where: {
-      spotifyArtistId: { in: spotifyIds },
+      lastfmArtistId: { in: lastfmIds },
     },
   });
 };

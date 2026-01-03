@@ -22,7 +22,7 @@ export const getArtistProfile = async (
       image: artist.image || '',
       genre: artist.genre || '',
       description: artist.description || '',
-      spotifyArtistId: artist.spotifyArtistId,
+      lastfmArtistId: artist.lastfmArtistId,
     };
   } catch (error) {
     console.error('Failed to fetch artist profile:', error);

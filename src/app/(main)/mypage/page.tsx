@@ -1,9 +1,9 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { SpotifyConnectSkeleton } from '@/features/artists/components/skeletons/SpotifyConnectSkeleton';
-import { SpotifyConnectFetcher } from '@/features/artists/components/SpotifyConnectFetcher';
+import { LastFmConnectFetcher } from '@/features/auth/components/LastFmConnectFetcher';
 import { LinkedAccountsFetcher } from '@/features/auth/components/LinkedAccountsFetcher';
+import { LastFmConnectSkeleton } from '@/features/auth/components/skeletons/LastFmConnectSkeleton';
 import { LinkedAccountsSkeleton } from '@/features/auth/components/skeletons/LinkedAccountsSkeleton';
 import { UserProfileSkeleton } from '@/features/auth/components/skeletons/UserProfileSkeleton';
 import { UserProfileFetcher } from '@/features/auth/components/UserProfileFetcher';
@@ -32,8 +32,8 @@ export default function MyPage() {
             <LinkedAccountsFetcher />
           </Suspense>
 
-          <Suspense fallback={<SpotifyConnectSkeleton />}>
-            <SpotifyConnectFetcher />
+          <Suspense fallback={<LastFmConnectSkeleton />}>
+            <LastFmConnectFetcher />
           </Suspense>
 
           <NotificationSettings />

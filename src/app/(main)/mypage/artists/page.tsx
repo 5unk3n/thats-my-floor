@@ -39,8 +39,8 @@ export default function FollowedArtistsPage() {
             <DropdownMenuSeparator />
             <ArtistSearchTrigger variant="dropdown" />
             <DropdownMenuItem asChild>
-              <Link href="/mypage/spotify-sync" className="cursor-pointer">
-                🟢 스포티파이 가져오기
+              <Link href="/mypage/lastfm-sync" className="cursor-pointer">
+                🔴 Last.fm 가져오기
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

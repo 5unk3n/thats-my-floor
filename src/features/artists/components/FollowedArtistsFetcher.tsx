@@ -25,8 +25,8 @@ export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsF
         </p>
         <div className="flex justify-center gap-4">
           {searchTrigger}
-          <Button asChild className="bg-[#1DB954] hover:bg-[#1ed760] text-white border-0">
-            <Link href="/mypage/spotify-sync">스포티파이 연동</Link>
+          <Button asChild className="bg-[#B90000] hover:bg-[#D51007] text-white border-0">
+            <Link href="/mypage/lastfm-sync">Last.fm 연동</Link>
           </Button>
         </div>
       </div>

@@ -1,45 +1,47 @@
-import { SpotifyService } from '@/shared/lib/spotify/client';
-import { SpotifyArtist } from '@/shared/lib/spotify/types';
+import { lastFmClient } from '@/shared/lib/lastfm/client';
+import { LastFmTopArtist } from '@/shared/lib/lastfm/types';
 
 import * as artistRepository from '../db';
 
 export type SyncArtistStatus = 'new' | 'exists' | 'following';
 
-export interface SpotifySyncArtist extends SpotifyArtist {
+export interface LastFmSyncArtist extends LastFmTopArtist {
   status: SyncArtistStatus;
   dbId?: string;
+  imageUrl?: string;
 }
 
-export async function fetchMySpotifyArtists(
-  accessToken: string,
+export async function fetchMyLastFmArtists(
+  username: string,
   userId: string,
-  after?: string
+  limit: number = 50,
+  period: 'overall' | '7day' | '1month' | '3month' | '6month' | '12month' = 'overall'
 ): Promise<{
   success: boolean;
-  data?: SpotifySyncArtist[];
-  nextCursor?: string | null;
+  data?: LastFmSyncArtist[];
   error?: string;
 }> {
   try {
-    // 1. Fetch from Spotify
-    const response = await SpotifyService.getFollowedArtists(accessToken, 20, after);
+    // 1. Fetch from Last.fm
+    const response = await lastFmClient.getUserTopArtists(username, limit, period);
 
-    if (!response) {
+    if (!response || !response.topartists) {
       return { success: false, error: '아티스트 목록을 가져오는데 실패했습니다.' };
     }
 
-    const spotifyArtists = response.artists.items;
-    const nextCursor = response.artists.cursors.after;
+    const topArtists = response.topartists.artist;
 
     // 2. Check DB status
-    const spotifyIds = spotifyArtists.map((a) => a.id);
-    const existingArtists = await artistRepository.findArtistsBySpotifyIds(spotifyIds, userId);
+    const lastfmIds = topArtists.map((a) => a.mbid || a.url); // Use URL as fallback ID if MBID missing
+
+    // Check repository capability.
+    const existingArtists = await artistRepository.findArtistsByLastfmIds(lastfmIds, userId);
 
     const now = new Date();
 
-    // 3. Merge data
-    const result: SpotifySyncArtist[] = spotifyArtists.map((artist) => {
-      const existing = existingArtists.find((e) => e.spotifyArtistId === artist.id);
+    const result: LastFmSyncArtist[] = topArtists.map((artist) => {
+      const artId = artist.mbid || artist.url;
+      const existing = existingArtists.find((e) => e.lastfmArtistId === artId);
 
       let status: SyncArtistStatus = 'new';
       if (existing) {
@@ -58,40 +60,37 @@ export async function fetchMySpotifyArtists(
         ...artist,
         status,
         dbId: existing?.id,
+        imageUrl: artist.image.find((i) => i.size === 'large')?.['#text'],
       };
     });
 
-    return { success: true, data: result, nextCursor };
+    return { success: true, data: result };
   } catch (error) {
-    console.error('fetchMySpotifyArtists error:', error);
+    console.error('fetchMyLastFmArtists error:', error);
     return { success: false, error: '서버 에러가 발생했습니다.' };
   }
 }
 
-export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[]) {
+export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist[]) {
   try {
     // 1. Bulk Insert Artists (Performance Optimized)
-    // Updates are less critical, so we use createMany to avoid timeouts with large batches.
+    // Map to db structure
     await artistRepository.createArtistsMany(
       artists.map((artist) => ({
         name: artist.name,
-        image: artist.images[0]?.url,
-        genre: artist.genres[0],
-        spotifyArtistId: artist.id,
+        image: artist.image.find((i) => i.size === 'large')?.['#text'],
+        lastfmArtistId: artist.mbid || artist.url,
         followerCount: 0,
       }))
     );
 
     // Fetch currently stored artists to get their internal IDs
-    const dbArtists = await artistRepository.findArtistsBySpotifyIdList(artists.map((a) => a.id));
+    const lastfmIds = artists.map((a) => a.mbid || a.url);
+    const dbArtists = await artistRepository.findArtistsByLastfmIdList(lastfmIds);
 
     // 2. Bulk Insert UserArtist
-    // First, find existing relations to avoid unique constraint errors (though createMany has skipDuplicates)
-    // We need to count how many were actually added, so finding existing ones first is helpful.
     const artistIds = dbArtists.map((a) => a.id);
-
     const existingFollows = await artistRepository.findUserArtists(userId, artistIds);
-
     const existingArtistIds = new Set(existingFollows.map((f) => f.artistId));
 
     const newFollows = dbArtists
@@ -109,7 +108,7 @@ export async function syncSpotifyArtists(userId: string, artists: SpotifyArtist[
 
     return { success: true, count: addedCount };
   } catch (error) {
-    console.error('syncSpotifyArtists error:', error);
+    console.error('syncLastFmArtists error:', error);
     return { success: false, error: '동기화 중 오류가 발생했습니다.' };
   }
 }

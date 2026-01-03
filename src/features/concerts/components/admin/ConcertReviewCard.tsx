@@ -9,7 +9,7 @@ import { useState } from 'react';
 import {
   publishConcertAction,
   rejectConcertAction,
-  searchSpotifyArtistsAction,
+  searchExternalArtistsAction,
 } from '@/features/concerts/server/actions';
 import { Candidate } from '@/features/concerts/server/services/analysis.service';
 import { Badge } from '@/shared/components/ui/badge';
@@ -25,11 +25,11 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
   const [loading, setLoading] = useState(false);
 
   // Multi-Selection State
-  // Set<spotifyId>
+  // Set<lastfmArtistId>
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Store full candidate objects for lookup
-  // Map<spotifyId, Candidate>
+  // Map<lastfmArtistId, Candidate>
   const [candidateMap, setCandidateMap] = useState<Map<string, Candidate>>(new Map());
 
   // Manual Search State
@@ -63,29 +63,29 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
-    const results = await searchSpotifyArtistsAction(searchQuery);
-    setSearchResults(results);
+    const results = await searchExternalArtistsAction(searchQuery);
+    setSearchResults(results as Candidate[]);
     setIsSearching(false);
   };
 
   const toggleSelection = (candidate: Candidate) => {
-    if (!candidate.spotifyId) return;
+    if (!candidate.lastfmArtistId) return;
 
     const newSet = new Set(selectedIds);
     const newMap = new Map(candidateMap);
 
-    if (newSet.has(candidate.spotifyId)) {
-      newSet.delete(candidate.spotifyId);
+    if (newSet.has(candidate.lastfmArtistId)) {
+      newSet.delete(candidate.lastfmArtistId);
     } else {
-      newSet.add(candidate.spotifyId);
-      newMap.set(candidate.spotifyId, candidate);
+      newSet.add(candidate.lastfmArtistId);
+      newMap.set(candidate.lastfmArtistId, candidate);
     }
 
     setSelectedIds(newSet);
     setCandidateMap(newMap);
   };
 
-  const isSelected = (spotifyId?: string) => (spotifyId ? selectedIds.has(spotifyId) : false);
+  const isSelected = (lastfmId?: string) => (lastfmId ? selectedIds.has(lastfmId) : false);
 
   return (
     <Card className="w-full flex flex-col md:flex-row overflow-hidden">
@@ -148,7 +148,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                     <div
                       key={idx}
                       className={`flex items-center gap-2 p-2 rounded border transition-colors text-sm
-                          ${isSelected(result.spotifyId) ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'hover:bg-accent'}`}
+                          ${isSelected(result.lastfmArtistId) ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'hover:bg-accent'}`}
                     >
                       <div
                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
@@ -167,13 +167,13 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{result.name}</div>
                         </div>
-                        {isSelected(result.spotifyId) && (
+                        {isSelected(result.lastfmArtistId) && (
                           <CheckCircle2 size={16} className="text-green-600" />
                         )}
                       </div>
-                      {result.spotifyId && (
+                      {result.url && (
                         <a
-                          href={`https://open.spotify.com/artist/${result.spotifyId}`}
+                          href={result.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="shrink-0 p-1 hover:bg-primary/10 rounded transition-colors"
@@ -239,7 +239,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                     <div
                       key={cIdx}
                       className={`flex items-center gap-3 p-2 rounded border transition-colors
-                        ${isSelected(cand.spotifyId) ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-accent'}`}
+                        ${isSelected(cand.lastfmArtistId) ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-accent'}`}
                     >
                       <div
                         className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
@@ -259,16 +259,16 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           <div className="font-medium truncate">{cand.name}</div>
                         </div>
                         <div>
-                          {isSelected(cand.spotifyId) ? (
+                          {isSelected(cand.lastfmArtistId) ? (
                             <CheckCircle2 className="text-primary" size={20} />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                           )}
                         </div>
                       </div>
-                      {cand.spotifyId && (
+                      {cand.url && (
                         <a
-                          href={`https://open.spotify.com/artist/${cand.spotifyId}`}
+                          href={cand.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="shrink-0 p-1.5 hover:bg-primary/10 rounded transition-colors"

@@ -3,8 +3,7 @@
 import { Check, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState, useTransition } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/shared/components/ui/badge';
@@ -12,24 +11,16 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
-import { fetchMySpotifyArtistsAction, syncSpotifyArtistsAction } from '../server/actions';
-import { SpotifySyncArtist } from '../server/services/spotify-sync.service';
+import { syncLastFmArtistsAction } from '../server/actions';
+import { LastFmSyncArtist } from '../server/services/lastfm-sync.service';
 
 interface SyncArtistListProps {
-  initialArtists: SpotifySyncArtist[];
-  initialNextCursor?: string | null;
+  initialArtists: LastFmSyncArtist[];
 }
 
-export default function SpotifySyncList({
-  initialArtists,
-  initialNextCursor,
-}: SyncArtistListProps) {
+export default function LastFmSyncList({ initialArtists }: SyncArtistListProps) {
   const router = useRouter();
-
-  const [artists, setArtists] = useState<SpotifySyncArtist[]>(initialArtists);
-  const [nextCursor, setNextCursor] = useState<string | null | undefined>(initialNextCursor);
-  const [isLoadingMore, startTransition] = useTransition();
-  const { ref, inView } = useInView();
+  const [artists] = useState<LastFmSyncArtist[]>(initialArtists);
 
   // Filter new artists (not already following)
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -38,37 +29,30 @@ export default function SpotifySyncList({
   // Allow selecting 'exists' (but not follow relation) and 'new'
   const availableArtists = artists.filter((a) => a.status !== 'following');
 
-  const loadMore = useCallback(() => {
-    startTransition(async () => {
-      if (!nextCursor) return;
-
-      const response = await fetchMySpotifyArtistsAction(nextCursor);
-
-      if (response.success && response.data) {
-        if (response.data) {
-          const { artists: newArtists, nextCursor: newNextCursor } = response.data;
-          setArtists((prev) => [...prev, ...newArtists]);
-          setNextCursor(newNextCursor);
-        }
-      } else {
-        toast.error('추가 데이터를 불러오는데 실패했습니다.');
-      }
-    });
-  }, [startTransition, nextCursor, setArtists, setNextCursor]);
-
-  useEffect(() => {
-    if (inView && nextCursor && !isLoadingMore) {
-      loadMore();
-    }
-  }, [inView, nextCursor, isLoadingMore, loadMore]);
-
+  // Multi-select handlers
   const handleToggle = (id: string) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    // Only map mbid or url as id?
+    // In service we used mbid || url as ID.
+    // Wait, LastFmSyncArtist extends LastFmTopArtist which has mbid and url.
+    // But `artist.id` isn't standard in LastFmTopArtist.
+    // The service mapped it?
+    // Check service: `const result: LastFmSyncArtist[] = ...`
+    // LastFmSyncArtist extends LastFmTopArtist.
+    // LastFmTopArtist has name, mbid, url...
+    // LastFmTopArtist has name, mbid, url...
+    // I need to use `artist.mbid || artist.url` as the unique key.
+
+    const targetId = id;
+    setSelectedIds((prev) =>
+      prev.includes(targetId) ? prev.filter((i) => i !== targetId) : [...prev, targetId]
+    );
   };
+
+  const getArtistId = (artist: LastFmSyncArtist) => artist.mbid || artist.url;
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(availableArtists.map((a) => a.id));
+      setSelectedIds(availableArtists.map(getArtistId));
     } else {
       setSelectedIds([]);
     }
@@ -79,9 +63,9 @@ export default function SpotifySyncList({
 
     try {
       setIsSyncing(true);
-      const targets = availableArtists.filter((a) => selectedIds.includes(a.id));
+      const targets = availableArtists.filter((a) => selectedIds.includes(getArtistId(a)));
 
-      const result = await syncSpotifyArtistsAction(targets);
+      const result = await syncLastFmArtistsAction(targets);
 
       if (result.success && result.data) {
         toast.success(`${result.data.count}명의 아티스트를 팔로우했습니다.`);
@@ -100,20 +84,11 @@ export default function SpotifySyncList({
 
   if (artists.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        스포티파이에서 팔로우한 아티스트가 없습니다.
-      </div>
+      <div className="text-center py-12 text-muted-foreground">동기화할 아티스트가 없습니다.</div>
     );
   }
 
-  // Group by status for better visualization if needed,
-  // but for now simple grid sorted by status
-  // Note: Sorting might jump items around as new items load.
-  // For infinite scroll, keeping fetch order might be better, or only sorting the chunks.
-  // However, users expect "New" artists or "Following" artists to be grouped.
-  // Let's keep sorting for now but be aware of UX.
   const sortedArtists = [...artists].sort((a, b) => {
-    // Priority: new -> exists -> following
     const score = (status: string) => {
       if (status === 'new') return 1;
       if (status === 'exists') return 2;
@@ -151,25 +126,21 @@ export default function SpotifySyncList({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {sortedArtists.map((artist) => {
           const isFollowing = artist.status === 'following';
-          const isSelected = selectedIds.includes(artist.id);
+          const artId = getArtistId(artist);
+          const isSelected = selectedIds.includes(artId);
 
           return (
             <Card
-              key={artist.id}
+              key={artId}
               className={`relative overflow-hidden transition-all ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } ${isFollowing ? 'opacity-60 bg-muted' : 'cursor-pointer hover:shadow-md'}`}
-              onClick={() => !isFollowing && handleToggle(artist.id)}
+              onClick={() => !isFollowing && handleToggle(artId)}
             >
               <CardContent className="p-4 flex flex-col items-center text-center space-y-3">
                 <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted">
-                  {artist.images[0]?.url ? (
-                    <Image
-                      src={artist.images[0].url}
-                      alt={artist.name}
-                      fill
-                      className="object-cover"
-                    />
+                  {artist.imageUrl ? (
+                    <Image src={artist.imageUrl} alt={artist.name} fill className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
                       No Image
@@ -190,14 +161,9 @@ export default function SpotifySyncList({
                     {artist.name}
                   </h3>
                   <div className="flex flex-wrap justify-center gap-1">
-                    {artist.genres.slice(0, 1).map((g) => (
-                      <span
-                        key={g}
-                        className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full capitalize"
-                      >
-                        {g}
-                      </span>
-                    ))}
+                    {/* Last.fm doesn't give genres easily in top artists list without extra calls, 
+                          unless we extend the type. For now, skip genres or use empty if not available 
+                       */}
                     {artist.status === 'exists' && !isFollowing && (
                       <Badge
                         variant="outline"
@@ -213,7 +179,7 @@ export default function SpotifySyncList({
                   <div className="absolute top-3 right-3">
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => handleToggle(artist.id)}
+                      onCheckedChange={() => handleToggle(artId)}
                       className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
                   </div>
@@ -223,16 +189,6 @@ export default function SpotifySyncList({
           );
         })}
       </div>
-
-      {nextCursor && (
-        <div ref={ref} className="flex justify-center py-8">
-          {isLoadingMore ? (
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          ) : (
-            <div className="h-6" /> // Spacer for intersection observer
-          )}
-        </div>
-      )}
     </div>
   );
 }
