@@ -15,6 +15,11 @@ CRON_JOB_TICKET="*/10 * * * * curl https://localhost/api/cron/ticket-open -H \"A
 # 3. Serialize Concert Status (Every day at 10:00 AM)
 CRON_JOB_SYNC="0 10 * * * curl https://localhost/api/cron/sync-concert-status -H \"Authorization: Bearer ${CRON_SECRET}\" --insecure >> /home/azureuser/cron_sync.log 2>&1"
 
+# 4. MusicBrainz Incremental Replication (Hourly)
+# Using PWD since this script is executed during deployment from the project root
+PROJECT_ROOT=$(pwd)
+CRON_JOB_MB="0 * * * * cd ${PROJECT_ROOT} && npx tsx scripts/musicbrainz/replicate.ts >> /home/azureuser/mb_replicate.log 2>&1"
+
 # Function to add cron job if not exists
 add_cron_job() {
   local job="$1"
@@ -34,6 +39,7 @@ fi
 add_cron_job "$CRON_JOB_COLLECT"
 add_cron_job "$CRON_JOB_TICKET"
 add_cron_job "$CRON_JOB_SYNC"
+add_cron_job "$CRON_JOB_MB"
 
 echo "Cron jobs configured successfully."
 crontab -l
