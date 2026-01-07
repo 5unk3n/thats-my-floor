@@ -13,7 +13,7 @@ LATEST_URL="$BASE_URL/LATEST"
 echo "🚀 Starting MusicBrainz Download Workflow..."
 
 # 0. Check Disk Space
-echo "💾 [0/7] Checking disk space..."
+echo "💾 [0/6] Checking disk space..."
 REQUIRED_SPACE_GB=10
 AVAILABLE_SPACE_KB=$(df -k . | awk 'NR==2 {print $4}')
 REQUIRED_SPACE_KB=$(($REQUIRED_SPACE_GB * 1024 * 1024))
@@ -28,7 +28,7 @@ fi
 echo "   Disk space check passed."
 
 # 1. Directory Creation
-echo "📂 [1/7] Creating data directory..."
+echo "📂 [1/6] Creating data directory..."
 mkdir -p "$DATA_DIR"
 
 # Check for parallel decompression tools (7-Zip or lbzip2)
@@ -67,7 +67,7 @@ else
 fi
 
 # 1. Fetch Latest Version
-echo "🔍 [1/7] Fetching LATEST version..."
+echo "🔍 [2/6] Fetching LATEST version..."
 if command -v curl >/dev/null 2>&1; then
   # Fetch the content of the LATEST file (e.g., "20250103-000001")
   VERSION=$(curl -s "$LATEST_URL" | tr -d '[:space:]')
@@ -86,19 +86,8 @@ echo "   Latest Version: $VERSION"
 # Construct specific download URL
 DOWNLOAD_ROOT="$BASE_URL/$VERSION"
 
-# 3. Check if already downloaded
-LOCK_FILE="$DATA_DIR/.version"
-if [ -f "$LOCK_FILE" ]; then
-  CURRENT_VERSION=$(cat "$LOCK_FILE")
-  if [ "$CURRENT_VERSION" == "$VERSION" ]; then
-    echo "✅ [3/7] Already on latest version ($VERSION). Skipping download."
-    exit 0
-  fi
-fi
-echo "   new version found (Current: ${CURRENT_VERSION:-None} -> New: $VERSION)."
-
-# 4. Download
-echo "⬇️  [4/7] Downloading Data..."
+# 3. Download
+echo "⬇️  [3/6] Downloading Data..."
 
 # Files to download
 # We use the Core dump (mbdump) which contains 'artist', 'artist_alias'
@@ -106,32 +95,29 @@ FILE_NAME="mbdump.tar.bz2"
 SEQ_FILE_NAME="REPLICATION_SEQUENCE"
 SCHEMA_SEQ_FILE_NAME="SCHEMA_SEQUENCE"
 TARGET_PATH="$DATA_DIR/$FILE_NAME"
-SEQ_TARGET_PATH="$DATA_DIR/$SEQ_FILE_NAME"
-SCHEMA_SEQ_TARGET_PATH="$DATA_DIR/$SCHEMA_SEQ_FILE_NAME"
 
-echo "⬇️  [4/7] Downloading Data ($FILE_NAME)..."
+echo "⬇️  [3/6] Downloading Data ($FILE_NAME)..."
 
 if command -v curl >/dev/null 2>&1; then
   # -C - : Resumes download
   # --create-dirs : Creates target dir
   curl -C - -L --create-dirs "$DOWNLOAD_ROOT/$FILE_NAME" -o "$TARGET_PATH"
-  curl -s -L --create-dirs "$DOWNLOAD_ROOT/$SEQ_FILE_NAME" -o "$SEQ_TARGET_PATH"
-  curl -s -L --create-dirs "$DOWNLOAD_ROOT/$SCHEMA_SEQ_FILE_NAME" -o "$SCHEMA_SEQ_TARGET_PATH"
 else
   echo "❌ Error: curl not found."
   exit 1
 fi
 
-# 5. Extract
-echo "📦 [5/7] Extracting specific tables (artist, artist_alias, url, l_artist_url)..."
+# 4. Extract
+echo "📦 [4/6] Extracting specific tables (artist, artist_alias, url, l_artist_url, link, link_type)..."
 
 if [ -n "$SEVEN_Z_CMD" ]; then
   # 7-Zip is usually the fastest (Windows/Mac)
   # -so : write to stdout
-  "$SEVEN_Z_CMD" x "$TARGET_PATH" -so | tar -xvf - -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type
+  # Extract tables AND sequence files (which are inside the archive)
+  "$SEVEN_Z_CMD" x "$TARGET_PATH" -so | tar -xvf - -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type REPLICATION_SEQUENCE SCHEMA_SEQUENCE
 elif [ -n "$LBZIP2_CMD" ]; then
   # Use lbzip2 with tar
-  tar --use-compress-program=lbzip2 -xvf "$TARGET_PATH" -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type
+  tar --use-compress-program=lbzip2 -xvf "$TARGET_PATH" -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type REPLICATION_SEQUENCE SCHEMA_SEQUENCE
 fi
 
 
@@ -145,13 +131,10 @@ mv "$DATA_DIR/mbdump/link" "$DATA_DIR/link"
 mv "$DATA_DIR/mbdump/link_type" "$DATA_DIR/link_type"
 rm -rf "$DATA_DIR/mbdump"
 
-# 6. Cleanup
-echo "🧹 [6/7] Cleaning up archives..."
+# 5. Cleanup
+echo "🧹 [5/6] Cleaning up archives..."
 rm "$TARGET_PATH"
 
-# 7. Save Replication Sequence
-echo "📝 [7/7] Saving replication sequence..."
-# Save version (Date) as lock file
-echo "$VERSION" > "$LOCK_FILE"
+
 
 echo "✅ Download Workflow Complete."
