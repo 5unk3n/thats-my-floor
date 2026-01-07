@@ -31,8 +31,43 @@ echo "   Disk space check passed."
 echo "📂 [1/7] Creating data directory..."
 mkdir -p "$DATA_DIR"
 
-# 2. Check Latest Version
-echo "🔍 [2/7] Checking latest version..."
+# Check for parallel decompression tools (7-Zip or lbzip2)
+# This is STRICTLY REQUIRED for local full dump import because standard tar is too slow (1h+ vs 5min)
+SEVEN_Z_CMD=""
+LBZIP2_CMD=""
+
+if command -v 7z >/dev/null 2>&1; then
+  SEVEN_Z_CMD="7z"
+elif command -v 7za >/dev/null 2>&1; then
+  SEVEN_Z_CMD="7za"
+elif [ -f "/c/Program Files/7-Zip/7z.exe" ]; then
+  SEVEN_Z_CMD="/c/Program Files/7-Zip/7z.exe"
+fi
+
+if command -v lbzip2 >/dev/null 2>&1; then
+  LBZIP2_CMD="lbzip2"
+fi
+
+if [ -z "$SEVEN_Z_CMD" ] && [ -z "$LBZIP2_CMD" ]; then
+  echo "❌ Error: No optimized decompression tool found."
+  echo "   Downloading and extracting MusicBrainz full dump requires multi-core decompression."
+  echo "   Using standard 'tar' would take over an hour. Please install one of the following:"
+  echo ""
+  echo "   [Windows] Install 7-Zip (https://www.7-zip.org/)"
+  echo "   [macOS]   brew install p7zip OR brew install lbzip2"
+  echo "   [Linux]   sudo apt-get install lbzip2"
+  echo ""
+  exit 1
+fi
+
+if [ -n "$SEVEN_Z_CMD" ]; then
+  echo "🚀 Optimized Decompression: Using 7-Zip ($SEVEN_Z_CMD)"
+else
+  echo "🚀 Optimized Decompression: Using lbzip2"
+fi
+
+# 1. Fetch Latest Version
+echo "🔍 [1/7] Fetching LATEST version..."
 if command -v curl >/dev/null 2>&1; then
   # Fetch the content of the LATEST file (e.g., "20250103-000001")
   VERSION=$(curl -s "$LATEST_URL" | tr -d '[:space:]')
@@ -90,14 +125,16 @@ fi
 # 5. Extract
 echo "📦 [5/7] Extracting specific tables (artist, artist_alias, url, l_artist_url)..."
 
-# Extract only needed files to save space/time
-# Structure inside tar is usually "mbdump/artist", "mbdump/artist_alias"
-if command -v tar >/dev/null 2>&1; then
-  tar -xvf "$TARGET_PATH" -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type
-else
-  echo "❌ Error: tar not found."
-  exit 1
+if [ -n "$SEVEN_Z_CMD" ]; then
+  # 7-Zip is usually the fastest (Windows/Mac)
+  # -so : write to stdout
+  "$SEVEN_Z_CMD" x "$TARGET_PATH" -so | tar -xvf - -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type
+elif [ -n "$LBZIP2_CMD" ]; then
+  # Use lbzip2 with tar
+  tar --use-compress-program=lbzip2 -xvf "$TARGET_PATH" -C "$DATA_DIR" mbdump/artist mbdump/artist_alias mbdump/url mbdump/l_artist_url mbdump/link mbdump/link_type
 fi
+
+
 
 # Move files to root of data dir for simpler access
 mv "$DATA_DIR/mbdump/artist" "$DATA_DIR/artist"
