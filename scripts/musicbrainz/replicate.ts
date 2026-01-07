@@ -20,8 +20,7 @@ async function main() {
 
   try {
     // Run replication
-    // Limit to 5 packets per run to avoid long running processes in this initial version
-    await replicator.replicate({ limit: 5 });
+    await replicator.replicate({ limit: 100 });
     console.log('✅ Replication finished successfully.');
   } catch (error) {
     console.error('❌ Replication failed:', error);

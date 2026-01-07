@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
-import { TableChange, OperationType } from './types';
+
+import { OperationType, TableChange } from './types';
 
 export class DatabaseHandler {
   private pool: Pool;
@@ -7,6 +8,7 @@ export class DatabaseHandler {
   constructor(connectionString: string) {
     this.pool = new Pool({
       connectionString,
+      ssl: { rejectUnauthorized: false },
     });
   }
 
@@ -54,16 +56,9 @@ export class DatabaseHandler {
   }
 
   private async applyChange(client: PoolClient, change: TableChange) {
-    // Map MB table names to local table names (e.g., artist -> mb_artist)
-    // Assuming 1:1 mapping with 'mb_' prefix for shadowed tables
-    // But some might be diff.
-    // For this implementation, let's assume we mapped them or use a mapper.
-    // The parser should arguably provide the correct local table name or we map here.
-    // Let's map here.
     const tableName = `mb_${change.tableName}`;
 
     // We only replicate specific tables: artist, artist_alias, url, l_artist_url, link, link_type
-    // Ignore others
     const ALLOWED_TABLES = [
       'mb_artist',
       'mb_artist_alias',
@@ -76,44 +71,78 @@ export class DatabaseHandler {
       return;
     }
 
-    if (change.operation === OperationType.INSERT) {
-      const cols = Object.keys(change.values)
-        .map((c) => `"${c}"`)
-        .join(', ');
-      const vals = Object.values(change.values);
-      const params = vals.map((_, i) => `$${i + 1}`).join(', ');
-      const query = `INSERT INTO "${tableName}" (${cols}) VALUES (${params})`;
-      await client.query(query, vals);
-    } else if (change.operation === OperationType.UPDATE) {
-      const setClauses: string[] = [];
-      const vals: any[] = [];
-      let pIdx = 1;
-
-      for (const [k, v] of Object.entries(change.values)) {
-        setClauses.push(`"${k}" = $${pIdx++}`);
-        vals.push(v);
-      }
-
-      const whereClauses: string[] = [];
-      for (const [k, v] of Object.entries(change.keys)) {
-        whereClauses.push(`"${k}" = $${pIdx++}`);
-        vals.push(v);
-      }
-
-      const query = `UPDATE "${tableName}" SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}`;
-      await client.query(query, vals);
-    } else if (change.operation === OperationType.DELETE) {
-      const whereClauses: string[] = [];
-      const vals: any[] = [];
-      let pIdx = 1;
-
-      for (const [k, v] of Object.entries(change.keys)) {
-        whereClauses.push(`"${k}" = $${pIdx++}`);
-        vals.push(v);
-      }
-
-      const query = `DELETE FROM "${tableName}" WHERE ${whereClauses.join(' AND ')}`;
-      await client.query(query, vals);
+    switch (change.operation) {
+      case OperationType.INSERT:
+        await this.applyInsert(client, tableName, change);
+        break;
+      case OperationType.UPDATE:
+        await this.applyUpdate(client, tableName, change);
+        break;
+      case OperationType.DELETE:
+        await this.applyDelete(client, tableName, change);
+        break;
     }
+  }
+
+  private async applyInsert(client: PoolClient, tableName: string, change: TableChange) {
+    if (!change.values || Object.keys(change.values).length === 0) {
+      console.warn(`Skipping INSERT for ${tableName}: No values provided.`);
+      return;
+    }
+    const cols = Object.keys(change.values)
+      .map((c) => `"${c}"`)
+      .join(', ');
+    const vals = Object.values(change.values);
+    const params = vals.map((_, i) => `$${i + 1}`).join(', ');
+    const query = `INSERT INTO "${tableName}" (${cols}) VALUES (${params})`;
+    await client.query(query, vals);
+  }
+
+  private async applyUpdate(client: PoolClient, tableName: string, change: TableChange) {
+    if (!change.keys || Object.keys(change.keys).length === 0) {
+      console.warn(`Skipping UPDATE for ${tableName}: No keys (PK) provided.`);
+      return;
+    }
+    if (!change.values || Object.keys(change.values).length === 0) {
+      console.warn(`Skipping UPDATE for ${tableName}: No values to update.`);
+      return;
+    }
+
+    const setClauses: string[] = [];
+    const vals: (string | number | null | undefined)[] = [];
+    let pIdx = 1;
+
+    for (const [k, v] of Object.entries(change.values)) {
+      setClauses.push(`"${k}" = $${pIdx++}`);
+      vals.push(v);
+    }
+
+    const whereClauses: string[] = [];
+    for (const [k, v] of Object.entries(change.keys)) {
+      whereClauses.push(`"${k}" = $${pIdx++}`);
+      vals.push(v);
+    }
+
+    const query = `UPDATE "${tableName}" SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}`;
+    await client.query(query, vals);
+  }
+
+  private async applyDelete(client: PoolClient, tableName: string, change: TableChange) {
+    if (!change.keys || Object.keys(change.keys).length === 0) {
+      console.warn(`Skipping DELETE for ${tableName}: No keys (PK) provided.`);
+      return;
+    }
+
+    const whereClauses: string[] = [];
+    const vals: (string | number | null | undefined)[] = [];
+    let pIdx = 1;
+
+    for (const [k, v] of Object.entries(change.keys)) {
+      whereClauses.push(`"${k}" = $${pIdx++}`);
+      vals.push(v);
+    }
+
+    const query = `DELETE FROM "${tableName}" WHERE ${whereClauses.join(' AND ')}`;
+    await client.query(query, vals);
   }
 }
