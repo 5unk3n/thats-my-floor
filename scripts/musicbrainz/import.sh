@@ -202,48 +202,23 @@ echo "🔄 [4/5] Performing Atomic Switch..."
 
 psql "$DATABASE_URL" <<EOF
   BEGIN;
-    -- Drop old backups if exist (cleaning up previous runs)
-    DROP TABLE IF EXISTS mb_artist_old CASCADE;
-    DROP TABLE IF EXISTS mb_artist_alias_old CASCADE;
-    DROP TABLE IF EXISTS mb_url_old CASCADE;
-    DROP TABLE IF EXISTS mb_l_artist_url_old CASCADE;
-    DROP TABLE IF EXISTS mb_link_old CASCADE;
-    DROP TABLE IF EXISTS mb_link_type_old CASCADE;
-    DROP TABLE IF EXISTS replication_control_old CASCADE;
+    -- 1. Drop existing tables (Immediate Drop Strategy)
+    -- We drop CASCADE to handle internal FKs (e.g. aliases referencing artist)
+    DROP TABLE IF EXISTS mb_artist CASCADE;
+    DROP TABLE IF EXISTS mb_artist_alias CASCADE;
+    DROP TABLE IF EXISTS mb_url CASCADE;
+    DROP TABLE IF EXISTS mb_l_artist_url CASCADE;
+    DROP TABLE IF EXISTS mb_link CASCADE;
+    DROP TABLE IF EXISTS mb_link_type CASCADE;
+    DROP TABLE IF EXISTS replication_control CASCADE;
 
-    -- Rename current (if exists) into 'old'
-    DO \$\$
-    BEGIN
-      IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_artist') THEN
-          ALTER TABLE mb_artist RENAME TO mb_artist_old;
-      END IF;
-      IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_artist_alias') THEN
-          ALTER TABLE mb_artist_alias RENAME TO mb_artist_alias_old;
-      END IF;
-      IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_url') THEN
-          ALTER TABLE mb_url RENAME TO mb_url_old;
-      END IF;
-       IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_link') THEN
-          ALTER TABLE mb_link RENAME TO mb_link_old;
-      END IF;
-      IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_link_type') THEN
-          ALTER TABLE mb_link_type RENAME TO mb_link_type_old;
-      END IF;
-      IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'mb_l_artist_url') THEN
-          ALTER TABLE mb_l_artist_url RENAME TO mb_l_artist_url_old;
-      END IF;
-       IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'replication_control') THEN
-          ALTER TABLE replication_control RENAME TO replication_control_old;
-      END IF;
-    END \$\$;
-
-    -- Rename new into current
+    -- 2. Rename new tables to production names
     ALTER TABLE mb_artist_new RENAME TO mb_artist;
     ALTER TABLE mb_artist_alias_new RENAME TO mb_artist_alias;
     ALTER TABLE mb_url_new RENAME TO mb_url;
+    ALTER TABLE mb_l_artist_url_new RENAME TO mb_l_artist_url;
     ALTER TABLE mb_link_new RENAME TO mb_link;
     ALTER TABLE mb_link_type_new RENAME TO mb_link_type;
-    ALTER TABLE mb_l_artist_url_new RENAME TO mb_l_artist_url;
     ALTER TABLE replication_control_new RENAME TO replication_control;
     
   COMMIT;
