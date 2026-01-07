@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
@@ -33,21 +33,21 @@ model User {
 }
 
 model Account {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  type              String
-  provider          String
-  providerAccountId String   @map("provider_account_id")
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?  @db.Text
-  session_state     String?
+  id                       String   @id @default(uuid())
+  userId                   String   @map("user_id")
+  type                     String
+  provider                 String
+  providerAccountId        String   @map("provider_account_id")
+  refresh_token            String?  @db.Text
+  access_token             String?  @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?  @db.Text
+  session_state            String?
   refresh_token_expires_in Int?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -55,29 +55,191 @@ model Account {
   @@map("accounts")
 }
 
+// 1. Raw Layer (MusicBrainz Mirror)
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+// 이 테이블은 주기적으로 삭제되고 재생성됩니다.
+// Prisma는 오직 타입 정의와 조회 쿼리를 위해서만 사용됩니다.
+// Prisma Migration을 통해 이 테이블을 생성하거나 수정하지 마십시오.
+model MusicBrainzArtist {
+  id             Int       @unique // MusicBrainz Integrel ID (Foreign Key for Alias)
+  gid            String    @id @db.Uuid // UUID (Primary Key)
+  name           String
+  sortName       String?   @map("sort_name")
+  type           Int?
+  area           Int?
+  gender         Int?
+  comment        String?
+  editsPending   Int?      @map("edits_pending")
+  lastUpdated    DateTime? @map("last_updated") @db.Timestamptz
+  ended          Boolean?
+  beginArea      Int?      @map("begin_area")
+  endArea        Int?      @map("end_area")
+  
+  // Dates
+  beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
+  beginDateMonth Int?      @map("begin_date_month") @db.SmallInt
+  beginDateDay   Int?      @map("begin_date_day") @db.SmallInt
+  endDateYear    Int?      @map("end_date_year") @db.SmallInt
+  endDateMonth   Int?      @map("end_date_month") @db.SmallInt
+  endDateDay     Int?      @map("end_date_day") @db.SmallInt
 
+  // Relations
+  aliases MusicBrainzArtistAlias[]
+  artistLinks MusicBrainzArtistUrl[]
 
+  @@map("mb_artist")
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+model MusicBrainzArtistAlias {
+  id             Int       @id
+  artistId       Int       @map("artist") // References MusicBrainzArtist.id
+  name           String
+  locale         String?
+  type           Int?
+  sortName       String?   @map("sort_name")
+  primary        Boolean?  @map("primary_for_locale")
+  ended          Boolean?
+  
+  editsPending   Int?      @map("edits_pending")
+  lastUpdated    DateTime? @map("last_updated") @db.Timestamptz
+
+  // Dates
+  beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
+  beginDateMonth Int?      @map("begin_date_month") @db.SmallInt
+  beginDateDay   Int?      @map("begin_date_day") @db.SmallInt
+  endDateYear    Int?      @map("end_date_year") @db.SmallInt
+  endDateMonth   Int?      @map("end_date_month") @db.SmallInt
+  endDateDay     Int?      @map("end_date_day") @db.SmallInt
+
+  artist MusicBrainzArtist @relation(fields: [artistId], references: [id], onDelete: NoAction)
+
+  @@map("mb_artist_alias")
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+model MusicBrainzUrl {
+  id           Int       @id
+  gid          String    @db.Uuid
+  url          String    @db.Text
+  editsPending Int?      @map("edits_pending")
+  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+
+  // Relations
+  artistLinks MusicBrainzArtistUrl[]
+
+  @@map("mb_url")
+}
+
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+model MusicBrainzArtistUrl {
+  id           Int       @id
+  link         Int       // Link Type ID
+  artistId     Int       @map("entity0") // Artist ID
+  urlId        Int       @map("entity1") // URL ID
+  editsPending Int?      @map("edits_pending")
+  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+
+  artist MusicBrainzArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  url    MusicBrainzUrl    @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  linkDef MusicBrainzLink  @relation(fields: [link], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
+  @@index([urlId])
+  @@map("mb_l_artist_url")
+}
+
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+model MusicBrainzLink {
+  id           Int       @id
+  linkTypeId   Int       @map("link_type")
+  beginDateYear  Int?    @map("begin_date_year") @db.SmallInt
+  beginDateMonth Int?    @map("begin_date_month") @db.SmallInt
+  beginDateDay   Int?    @map("begin_date_day") @db.SmallInt
+  endDateYear    Int?    @map("end_date_year") @db.SmallInt
+  endDateMonth   Int?    @map("end_date_month") @db.SmallInt
+  endDateDay     Int?    @map("end_date_day") @db.SmallInt
+  attributeCount Int     @map("attribute_count")
+  created      DateTime? @map("created") @db.Timestamptz
+  ended        Boolean?  @default(false)
+
+  // Relations
+  linkType    MusicBrainzLinkType @relation(fields: [linkTypeId], references: [id], onDelete: Cascade)
+  artistUrls  MusicBrainzArtistUrl[]
+
+  @@map("mb_link")
+  @@index([linkTypeId])
+}
+
+// ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
+model MusicBrainzLinkType {
+  id           Int       @id
+  parentId     Int?      @map("parent")
+  childOrder   Int       @default(0) @map("child_order")
+  gid          String    @db.Uuid
+  entityType0  String    @map("entity_type0")
+  entityType1  String    @map("entity_type1")
+  name         String
+  description  String?
+  linkPhrase   String    @map("link_phrase")
+  reverseLinkPhrase String @map("reverse_link_phrase")
+  longLinkPhrase String  @map("long_link_phrase")
+  priority     Int       @default(0)
+  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+  isDeprecated Boolean   @default(false) @map("is_deprecated")
+
+  // Relations
+  links        MusicBrainzLink[]
+  
+  @@map("mb_link_type")
+}
+
+// ⚠️ [주의] MusicBrainz 데이터 복제 상태를 관리하는 테이블입니다.
+model ReplicationControl {
+  id                        Int      @id @default(autoincrement())
+  currentSchemaSequence     Int      @map("current_schema_sequence")
+  currentReplicationSequence Int      @map("current_replication_sequence")
+  lastReplicationDate       DateTime @map("last_replication_date") @db.Timestamptz
+
+  @@map("replication_control")
+}
+
+// 2. Domain Layer (Service Entity)
 model Artist {
-  id              String   @id @default(uuid())
-  name            String
-  image           String?
-  genre           String?
-  description     String?
-  lastfmArtistId  String?  @unique @map("lastfm_artist_id")
-  followerCount   Int      @default(0) @map("follower_count")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             Int      @id @default(autoincrement())
+  mbid           String   @unique @db.Uuid // Maps to MusicBrainzArtist.gid (Loose coupling, no FK)
+  imageUrl       String?  @map("image_url")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  concerts  ConcertArtist[]
-  followers UserArtist[]
-
+  // Relations
+  
+  concerts      ConcertArtist[]
+  followers     UserArtist[]
+  customAliases ArtistCustomAlias[]
 
   @@map("artists")
+}
+model ArtistCustomAlias {
+  id        Int      @id @default(autoincrement())
+  artistMbid String  @map("artist_mbid") @db.Uuid
+  alias     String
+  source    String   @default("user") // 'user', 'admin'
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  artist Artist @relation(fields: [artistMbid], references: [mbid], onDelete: Cascade)
+
+  @@index([alias(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@map("artist_custom_aliases")
 }
 
 model ConcertArtist {
   concertId String @map("concert_id")
-  artistId  String @map("artist_id")
+  artistId  Int    @map("artist_id")
   role      String @default("MAIN") // MAIN, GUEST, etc.
 
   concert Concert @relation(fields: [concertId], references: [id], onDelete: Cascade)
@@ -136,12 +298,10 @@ enum PublishStatus {
   REJECTED
 }
 
-
-
 model UserArtist {
   id        Int      @id @default(autoincrement())
   userId    String   @map("user_id")
-  artistId  String   @map("artist_id")
+  artistId  Int      @map("artist_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
