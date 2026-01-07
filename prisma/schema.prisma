@@ -136,11 +136,14 @@ model MusicBrainzUrl {
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzArtistUrl {
   id           Int       @id
-  link         Int       // Link Type ID
+  link         Int       // Link ID (References mb_link)
   artistId     Int       @map("entity0") // Artist ID
   urlId        Int       @map("entity1") // URL ID
   editsPending Int?      @map("edits_pending")
   lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+  linkOrder    Int       @default(0) @map("link_order")
+  entity0Credit String   @default("") @map("entity0_credit")
+  entity1Credit String   @default("") @map("entity1_credit")
 
   artist MusicBrainzArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
   url    MusicBrainzUrl    @relation(fields: [urlId], references: [id], onDelete: Cascade)
@@ -186,9 +189,11 @@ model MusicBrainzLinkType {
   linkPhrase   String    @map("link_phrase")
   reverseLinkPhrase String @map("reverse_link_phrase")
   longLinkPhrase String  @map("long_link_phrase")
-  priority     Int       @default(0)
   lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
   isDeprecated Boolean   @default(false) @map("is_deprecated")
+  hasDates     Boolean   @default(true) @map("has_dates")
+  entity0Cardinality Int @default(0) @map("entity0_cardinality") @db.SmallInt
+  entity1Cardinality Int @default(0) @map("entity1_cardinality") @db.SmallInt
 
   // Relations
   links        MusicBrainzLink[]

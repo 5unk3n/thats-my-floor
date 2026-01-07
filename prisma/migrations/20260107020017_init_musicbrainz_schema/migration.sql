@@ -16,6 +16,9 @@
   - Changed the type of `artist_id` on the `user_artists` table. No cast exists, the column would be dropped and recreated, which cannot be done if there is data, since the column is required.
 
 */
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
 -- DropForeignKey
 ALTER TABLE "concert_artists" DROP CONSTRAINT "concert_artists_artist_id_fkey";
 

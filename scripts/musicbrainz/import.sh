@@ -22,27 +22,26 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-# 2. Check Data Files
-REQUIRED_FILES=("artist" "artist_alias" "url" "l_artist_url" "REPLICATION_SEQUENCE" "SCHEMA_SEQUENCE")
-for file in "${REQUIRED_FILES[@]}"; do
-  if [ ! -f "$DATA_DIR/$file" ]; then
-    echo "❌ Error: Required file '$file' not found in $DATA_DIR"
-    echo "   Please run ./scripts/musicbrainz/download.sh first."
+# 0. Check data availability
+if [ ! -f "$DATA_DIR/artist" ]; then
+    echo "❌ Error: Data not found."
+    echo "   Please run './scripts/musicbrainz/download.sh' first."
     exit 1
-  fi
-done
+fi
+
+# 1. Read Schema Sequence from downloaded file (extracted from dump)
+if [ -f "$DATA_DIR/SCHEMA_SEQUENCE" ]; then
+    SCHEMA_SEQ=$(cat "$DATA_DIR/SCHEMA_SEQUENCE")
+    echo "ℹ️  Found Schema Sequence: $SCHEMA_SEQ"
+else
+    echo "⚠️  Warning: SCHEMA_SEQUENCE file not found. Defaulting to 0."
+    SCHEMA_SEQ=0
+fi
 
 # Read Replication Sequence
 SEQ=$(cat "$DATA_DIR/REPLICATION_SEQUENCE")
 if [ -z "$SEQ" ]; then
   echo "❌ Error: REPLICATION_SEQUENCE is empty."
-  exit 1
-fi
-
-# Read Schema Sequence
-SCHEMA_SEQ=$(cat "$DATA_DIR/SCHEMA_SEQUENCE")
-if [ -z "$SCHEMA_SEQ" ]; then
-  echo "❌ Error: SCHEMA_SEQUENCE is empty."
   exit 1
 fi
 
@@ -135,7 +134,7 @@ psql "$DATABASE_URL" <<EOF
   CREATE TABLE mb_link_type_new (
       id INTEGER PRIMARY KEY,
       parent INTEGER,
-      child_order INTEGER,
+      child_order INTEGER DEFAULT 0,
       gid UUID,
       entity_type0 TEXT,
       entity_type1 TEXT,
@@ -144,9 +143,11 @@ psql "$DATABASE_URL" <<EOF
       link_phrase TEXT,
       reverse_link_phrase TEXT,
       long_link_phrase TEXT,
-      priority INTEGER,
-      last_updated TIMESTAMP WITH TIME ZONE,
-      is_deprecated BOOLEAN
+      last_updated TIMESTAMP DEFAULT NOW(),
+      is_deprecated BOOLEAN DEFAULT false,
+      has_dates BOOLEAN DEFAULT true,
+      entity0_cardinality SMALLINT DEFAULT 0,
+      entity1_cardinality SMALLINT DEFAULT 0
   );
 
   -- 6. mb_l_artist_url
@@ -156,7 +157,10 @@ psql "$DATABASE_URL" <<EOF
       entity0 INTEGER,
       entity1 INTEGER,
       edits_pending INTEGER,
-      last_updated TIMESTAMP WITH TIME ZONE
+      last_updated TIMESTAMP WITH TIME ZONE,
+      link_order INTEGER DEFAULT 0,
+      entity0_credit TEXT DEFAULT '',
+      entity1_credit TEXT DEFAULT ''
   );
 
   -- 7. replication_control
