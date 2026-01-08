@@ -30,7 +30,7 @@ export class PacketDownloader {
     }
 
     // Convert Web ReadableStream to Node Readable
-    // @ts-ignore: Readable.fromWeb exists in Node >= 16.17.0
+    // @ts-expect-error: Intentional ignore for demonstration or workaround: Readable.fromWeb exists in Node >= 16.17.0
     return Readable.fromWeb(response.body);
   }
 }
