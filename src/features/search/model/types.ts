@@ -1,20 +1,21 @@
+import { Artist } from '@/entities/artist';
+import { Concert } from '@/entities/concert';
+
 export interface SearchResult {
   concerts: SearchConcert[];
   artists: SearchArtist[];
 }
 
-export interface SearchConcert {
-  id: string;
-  title: string;
+export interface SearchConcert extends Omit<
+  Concert,
+  'startDate' | 'endDate' | 'posterUrl' | 'status'
+> {
   posterUrl: string | null;
   startDate: Date;
   endDate: Date;
-  place: string;
   status: string | null;
 }
 
-export interface SearchArtist {
+export interface SearchArtist extends Pick<Artist, 'name' | 'image'> {
   id: string;
-  name: string;
-  image: string | null;
 }

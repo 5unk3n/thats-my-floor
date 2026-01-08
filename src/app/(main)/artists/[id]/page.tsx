@@ -1,8 +1,8 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { ArtistProfileSkeleton } from '@/entities/artist/ui/skeletons/ArtistProfileSkeleton';
-import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
+import { ArtistProfileSkeleton } from '@/entities/artist';
+import { ConcertListSkeleton } from '@/entities/concert';
 import { ArtistProfileFetcher, ArtistService } from '@/features/artists';
 import { ArtistConcertList } from '@/features/concerts';
 

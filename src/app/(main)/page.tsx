@@ -2,7 +2,7 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
+import { ConcertListSkeleton } from '@/entities/concert';
 import { MainConcertFetcher } from '@/features/concerts';
 import { Button } from '@/shared/components/ui/button';
 

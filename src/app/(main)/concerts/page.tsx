@@ -1,8 +1,7 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { ConcertFilterSkeleton } from '@/entities/concert/ui/skeletons/ConcertFilterSkeleton';
-import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
+import { ConcertFilterSkeleton, ConcertListSkeleton } from '@/entities/concert';
 import { ConcertFilter, ConcertList } from '@/features/concerts';
 
 export const metadata: Metadata = {
