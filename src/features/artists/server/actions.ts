@@ -76,7 +76,7 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
 // --- Last.fm Sync Actions ---
 
 // Update import to include getLastFmSession
-import { getLastFmSession } from '@/features/auth/server/services/lastfm-auth.service';
+import { getLastFmSession } from '@/entities/user';
 
 export async function fetchMyLastFmArtistsAction(
   username?: string,

@@ -21,7 +21,7 @@ export const getArtistProfile = async (
       image: artist.imageUrl || '',
       genre: artist.genre || '',
       description: artist.description || '',
-      lastfmArtistId: artist.lastfmArtistId,
+      lastfmArtistId: artist.mbid,
     };
   } catch (error) {
     console.error('Failed to fetch artist profile:', error);
