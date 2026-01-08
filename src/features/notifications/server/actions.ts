@@ -3,12 +3,11 @@ import { NotificationSettings, Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
+import * as notificationRepository from '@/entities/notification/api/notification.queries';
+import * as notificationService from '@/entities/notification/model/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
-
-import * as notificationRepository from './db';
-import * as notificationService from './services/notification.service';
 
 type NotificationWithConcert = Prisma.NotificationGetPayload<{
   include: {

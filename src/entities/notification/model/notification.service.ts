@@ -1,15 +1,14 @@
+import * as notificationRepository from '@/entities/notification/api/notification.queries';
 import { getFirebaseAdmin } from '@/shared/lib/firebase/admin';
 
-import * as notificationRepository from '../db';
-
-export async function notifyConcertRegistration(concertId: string) {
+export async function notifyConcertRegistration(concertId: string, artistNames: string) {
   const concert = await notificationRepository.findConcertForNotification(concertId);
 
   if (!concert || concert.artists.length === 0) return;
 
   // Collect all artist IDs from the concert
+
   const artistIds = concert.artists.map((ca) => ca.artistId);
-  const artistNames = concert.artists.map((ca) => ca.artist.name).join(', ');
 
   // Find users who follow ANY of these artists and have concert registration alert enabled
   const followers = await notificationRepository.findFollowersForNotification(artistIds);

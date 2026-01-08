@@ -3,12 +3,12 @@
 import { PublishStatus } from '@prisma/client';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
-import * as notificationService from '@/features/notifications/server/services/notification.service';
+import { Concert } from '@/entities/concert';
+import * as notificationService from '@/entities/notification/model/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import { Concert } from '@/entities/concert';
 import * as AnalysisService from './services/analysis.service';
 import { Candidate } from './services/analysis.service';
 import * as concertService from './services/concert.service';
@@ -59,7 +59,12 @@ export async function publishConcertAction(
     const concert = await AnalysisService.publishConcert(concertId, candidates);
 
     // Send notification to followers after successful publish
-    await notificationService.notifyConcertRegistration(concert.id);
+    // Send notification to followers after successful publish
+    const detail = await concertService.getConcertDetail(concert.id);
+    if (detail) {
+      const artistNames = detail.artists.map((a) => a.name).join(', ');
+      await notificationService.notifyConcertRegistration(concert.id, artistNames);
+    }
 
     // Invalidate Cache
     // Invalidate Cache

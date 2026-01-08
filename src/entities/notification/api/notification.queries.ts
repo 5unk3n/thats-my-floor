@@ -130,7 +130,7 @@ export const findConcertForNotification = async (concertId: string) => {
   });
 };
 
-export const findFollowersForNotification = async (artistIds: string[]) => {
+export const findFollowersForNotification = async (artistIds: number[]) => {
   return prisma.userArtist.findMany({
     where: {
       artistId: { in: artistIds },
