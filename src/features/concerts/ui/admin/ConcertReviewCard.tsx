@@ -10,8 +10,8 @@ import {
   publishConcertAction,
   rejectConcertAction,
   searchExternalArtistsAction,
-} from '@/features/concerts/server/actions';
-import { Candidate } from '@/features/concerts/server/services/analysis.service';
+} from '@/features/concerts/api/actions';
+import { Candidate } from '@/features/concerts/model/services/analysis.service';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';

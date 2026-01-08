@@ -9,10 +9,10 @@ import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import * as AnalysisService from './services/analysis.service';
-import { Candidate } from './services/analysis.service';
-import * as concertService from './services/concert.service';
-import { LastFmCandidate, searchLastFmArtists } from './services/lastfm-search.service';
+import * as AnalysisService from '../model/services/analysis.service';
+import { Candidate } from '../model/services/analysis.service';
+import * as concertService from '../model/services/concert.service';
+import { LastFmCandidate, searchLastFmArtists } from '../model/services/lastfm-search.service';
 
 // --- Admin Pipeline Actions ---
 

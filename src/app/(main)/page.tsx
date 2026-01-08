@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
-import { MainConcertFetcher } from '@/features/concerts/components/MainConcertFetcher';
+import { MainConcertFetcher } from '@/features/concerts';
 import { Button } from '@/shared/components/ui/button';
 
 export const metadata: Metadata = {

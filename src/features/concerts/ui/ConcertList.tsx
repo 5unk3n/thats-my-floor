@@ -1,5 +1,5 @@
 import { ConcertGrid } from '@/entities/concert';
-import { getConcerts } from '@/features/concerts/server/services/concert.service';
+import { getConcerts } from '@/features/concerts/model/services/concert.service';
 
 import { ConcertPagination } from './ConcertPagination';
 

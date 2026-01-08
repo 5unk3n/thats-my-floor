@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { syncAllConcertStatus } from '@/features/concerts/server/services/sync.service';
+import { syncAllConcertStatus } from '@/features/concerts';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');

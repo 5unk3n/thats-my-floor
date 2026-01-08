@@ -1,4 +1,4 @@
-export * from './api/concert.queries';
+export * from './api/repository';
 export * from './model/types';
 export * from './ui/ConcertCard';
 export * from './ui/ConcertDetail';

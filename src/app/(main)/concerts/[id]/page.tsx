@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { ConcertDetail } from '@/entities/concert';
 import * as concertRepository from '@/entities/concert';
-import * as concertService from '@/features/concerts/server/services/concert.service';
+import { ConcertService } from '@/features/concerts';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const concert = await concertService.getConcertDetail(id);
+  const concert = await ConcertService.getConcertDetail(id);
 
   if (!concert) {
     return {
@@ -61,7 +61,7 @@ export default async function ConcertDetailPage({ params }: PageProps) {
   let concert;
 
   try {
-    concert = await concertService.getConcertDetail(id);
+    concert = await ConcertService.getConcertDetail(id);
   } catch (error) {
     console.error('Failed to fetch concert detail:', error);
     throw error;

@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { ArtistProfileSkeleton } from '@/entities/artist/ui/skeletons/ArtistProfileSkeleton';
 import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
 import { ArtistProfileFetcher, getArtistProfile } from '@/features/artists';
-import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
+import { ArtistConcertList } from '@/features/concerts';
 
 interface ArtistDetailPageProps {
   params: Promise<{ id: string }>;

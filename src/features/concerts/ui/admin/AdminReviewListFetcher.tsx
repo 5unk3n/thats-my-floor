@@ -4,14 +4,15 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 
 import { enrichArtistsWithMetadata } from '@/entities/artist';
-import { ConcertReviewCard } from '@/features/concerts/components/admin/ConcertReviewCard';
 import {
   rejectConcertAction,
   requestAnalysisAction,
   restoreToReviewAction,
-} from '@/features/concerts/server/actions';
+} from '@/features/concerts/api/actions';
 import { Button } from '@/shared/components/ui/button';
 import { prisma } from '@/shared/lib/prisma';
+
+import { ConcertReviewCard } from './ConcertReviewCard';
 
 interface AdminReviewListFetcherProps {
   status: PublishStatus;

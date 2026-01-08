@@ -1,8 +1,9 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 
-import * as PerplexityService from '@/features/concerts/server/services/perplexity.service';
 import { lastFmClient } from '@/shared/lib/lastfm/client';
 import { prisma } from '@/shared/lib/prisma';
+
+import * as PerplexityService from './perplexity.service';
 
 export interface Candidate {
   name: string;

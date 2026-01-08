@@ -1,5 +1,5 @@
 import { ConcertGrid } from '@/entities/concert';
-import * as concertService from '@/features/concerts/server/services/concert.service';
+import * as concertService from '@/features/concerts/model/services/concert.service';
 
 interface MainConcertFetcherProps {
   type: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
