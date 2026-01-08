@@ -1,23 +1,22 @@
-import { Artist } from '@prisma/client';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 
-import { FollowButton } from './FollowButton';
+import { Artist } from '../model/types';
 
 interface ArtistCardProps {
   artist: Artist;
-  isFollowing?: boolean;
+  actionSlot?: React.ReactNode;
 }
 
-export default function ArtistCard({ artist, isFollowing = false }: ArtistCardProps) {
+export function ArtistCard({ artist, actionSlot }: ArtistCardProps) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-square relative bg-muted">
-        {artist.image ? (
+        {artist.imageUrl || artist.image ? (
           <Image
-            src={artist.image}
+            src={artist.imageUrl || artist.image || ''}
             alt={artist.name}
             fill
             className="object-cover"
@@ -35,9 +34,7 @@ export default function ArtistCard({ artist, isFollowing = false }: ArtistCardPr
         </Link>
         <p className="text-sm text-muted-foreground truncate">{artist.genre}</p>
       </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <FollowButton artistId={artist.id} initialIsFollowing={isFollowing} className="w-full" />
-      </CardContent>
+      <CardContent className="p-4 pt-2">{actionSlot}</CardContent>
     </Card>
   );
 }

@@ -1,10 +1,12 @@
 export interface Artist {
-  id: string;
+  id: string | number;
   name: string;
-  image: string;
-  genre: string;
-  description: string;
-  lastfmArtistId: string | null;
+  image?: string | null;
+  imageUrl?: string | null;
+  genre?: string;
+  description?: string;
+  lastfmArtistId?: string | null;
+  mbid?: string;
 }
 
 export interface ParticipatingConcert {

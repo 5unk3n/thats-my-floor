@@ -3,11 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
+import { existsArtistFollow, findFollowedArtists, toggleArtistFollow } from '@/entities/artist';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import { existsArtistFollow, findFollowedArtists, toggleArtistFollow } from './db';
 import * as LastFmSyncService from './services/lastfm-sync.service';
 import { LastFmSyncArtist } from './services/lastfm-sync.service';
 
@@ -21,7 +21,7 @@ export async function toggleFollow(artistId: string): Promise<ActionResponse<boo
   }
 
   try {
-    const isFollowing = await toggleArtistFollow(session.user.id, artistId);
+    const isFollowing = await toggleArtistFollow(session.user.id, parseInt(artistId, 10));
     revalidatePath('/mypage/artists');
     revalidatePath(`/artists/${artistId}`);
     return { success: true, data: isFollowing };
@@ -41,7 +41,7 @@ export async function getFollowStatus(artistId: string): Promise<ActionResponse<
   }
 
   try {
-    const status = await existsArtistFollow(session.user.id, artistId);
+    const status = await existsArtistFollow(session.user.id, parseInt(artistId, 10));
     return { success: true, data: status };
   } catch (error) {
     console.error('getFollowStatus Error:', error);

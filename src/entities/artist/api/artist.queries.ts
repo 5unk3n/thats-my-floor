@@ -2,13 +2,13 @@ import { prisma } from '@/shared/lib/prisma';
 
 // --- Pure Data Access (Repository) ---
 
-export const findArtistById = async (id: string) => {
+export const findArtistById = async (id: number) => {
   return prisma.artist.findUnique({
     where: { id },
   });
 };
 
-export const findArtistConcerts = async (id: string) => {
+export const findArtistConcerts = async (id: number) => {
   return prisma.artist.findUnique({
     where: { id },
     include: {
@@ -26,7 +26,7 @@ export const findArtistConcerts = async (id: string) => {
   });
 };
 
-export const toggleArtistFollow = async (userId: string, artistId: string) => {
+export const toggleArtistFollow = async (userId: string, artistId: number) => {
   const existing = await prisma.userArtist.findUnique({
     where: {
       userId_artistId: {
@@ -57,7 +57,7 @@ export const toggleArtistFollow = async (userId: string, artistId: string) => {
   }
 };
 
-export const existsArtistFollow = async (userId: string, artistId: string) => {
+export const existsArtistFollow = async (userId: string, artistId: number) => {
   const count = await prisma.userArtist.count({
     where: {
       userId,
@@ -81,7 +81,7 @@ export const findFollowedArtists = async (userId: string) => {
 export const findArtistsByLastfmIds = async (lastfmIds: string[], userId: string) => {
   return prisma.artist.findMany({
     where: {
-      lastfmArtistId: { in: lastfmIds },
+      mbid: { in: lastfmIds },
     },
     include: {
       followers: {
@@ -106,7 +106,7 @@ export const createArtistsMany = async (
     name: string;
     image?: string;
     genre?: string;
-    lastfmArtistId: string;
+    mbid: string;
     followerCount?: number;
   }[]
 ) => {
@@ -119,12 +119,12 @@ export const createArtistsMany = async (
 export const findArtistsByLastfmIdList = async (lastfmIds: string[]) => {
   return prisma.artist.findMany({
     where: {
-      lastfmArtistId: { in: lastfmIds },
+      mbid: { in: lastfmIds },
     },
   });
 };
 
-export const findUserArtists = async (userId: string, artistIds: string[]) => {
+export const findUserArtists = async (userId: string, artistIds: number[]) => {
   return prisma.userArtist.findMany({
     where: {
       userId,
@@ -137,7 +137,7 @@ export const findUserArtists = async (userId: string, artistIds: string[]) => {
 export const createUserArtistsMany = async (
   follows: {
     userId: string;
-    artistId: string;
+    artistId: number;
   }[]
 ) => {
   return prisma.userArtist.createMany({

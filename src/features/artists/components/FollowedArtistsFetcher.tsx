@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
-import ArtistCard from '@/features/artists/components/ArtistCard';
-import { findFollowedArtists } from '@/features/artists/server/db';
+import { ArtistCard, findFollowedArtists } from '@/entities/artist';
 import { Button } from '@/shared/components/ui/button';
 import { authOptions } from '@/shared/lib/auth';
+
+import { FollowButton } from './FollowButton';
 
 interface FollowedArtistsFetcherProps {
   searchTrigger: React.ReactNode;
@@ -36,7 +37,13 @@ export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsF
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {followedArtists.map((artist) => (
-        <ArtistCard key={artist.id} artist={artist} isFollowing={true} />
+        <ArtistCard
+          key={artist.id}
+          artist={artist}
+          actionSlot={
+            <FollowButton artistId={artist.id} initialIsFollowing={true} className="w-full" />
+          }
+        />
       ))}
     </div>
   );

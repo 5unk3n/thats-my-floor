@@ -9,7 +9,7 @@ import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
 interface FollowButtonProps {
-  artistId: string;
+  artistId: string | number;
   initialIsFollowing?: boolean;
   className?: string;
 }
@@ -21,11 +21,12 @@ export function FollowButton({
 }: FollowButtonProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const idStr = String(artistId);
 
   const { data: isFollowing, isLoading } = useQuery({
-    queryKey: ['followStatus', artistId],
+    queryKey: ['followStatus', idStr],
     queryFn: async () => {
-      const result = await getFollowStatus(artistId);
+      const result = await getFollowStatus(idStr);
       if (!result.success) throw new Error(result.error?.message);
       return result.data ?? false;
     },
@@ -35,7 +36,7 @@ export function FollowButton({
 
   const { mutate: toggle, isPending } = useMutation({
     mutationFn: async () => {
-      const result = await toggleFollow(artistId);
+      const result = await toggleFollow(idStr);
       if (!result.success) {
         if (result.error?.code === 'AUTH_001') {
           throw new Error('Unauthorized');
@@ -45,16 +46,16 @@ export function FollowButton({
       return result.data;
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['followStatus', artistId] });
-      const previousStatus = queryClient.getQueryData(['followStatus', artistId]);
+      await queryClient.cancelQueries({ queryKey: ['followStatus', idStr] });
+      const previousStatus = queryClient.getQueryData(['followStatus', idStr]);
 
-      queryClient.setQueryData(['followStatus', artistId], (old: boolean) => !old);
+      queryClient.setQueryData(['followStatus', idStr], (old: boolean) => !old);
 
       return { previousStatus };
     },
     onError: (err, _, context) => {
       if (context?.previousStatus !== undefined) {
-        queryClient.setQueryData(['followStatus', artistId], context.previousStatus);
+        queryClient.setQueryData(['followStatus', idStr], context.previousStatus);
       }
       if (err.message === 'Unauthorized') {
         router.push('/login');
@@ -63,7 +64,7 @@ export function FollowButton({
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['followStatus', artistId] });
+      queryClient.invalidateQueries({ queryKey: ['followStatus', idStr] });
       router.refresh();
     },
   });

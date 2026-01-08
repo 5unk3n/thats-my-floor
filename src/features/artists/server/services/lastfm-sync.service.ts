@@ -1,7 +1,6 @@
+import * as artistRepository from '@/entities/artist';
 import { lastFmClient } from '@/shared/lib/lastfm/client';
 import { LastFmTopArtist } from '@/shared/lib/lastfm/types';
-
-import * as artistRepository from '../db';
 
 export type SyncArtistStatus = 'new' | 'exists' | 'following';
 
@@ -32,7 +31,9 @@ export async function fetchMyLastFmArtists(
     const topArtists = response.topartists.artist;
 
     // 2. Check DB status
-    const lastfmIds = topArtists.map((a) => a.mbid || a.url); // Use URL as fallback ID if MBID missing
+    // Filter out artists without mbid as our DB requires valid UUID mbid
+    const validArtists = topArtists.filter((a) => a.mbid);
+    const lastfmIds = validArtists.map((a) => a.mbid).filter((id): id is string => !!id);
 
     // Check repository capability.
     const existingArtists = await artistRepository.findArtistsByLastfmIds(lastfmIds, userId);
@@ -40,8 +41,9 @@ export async function fetchMyLastFmArtists(
     const now = new Date();
 
     const result: LastFmSyncArtist[] = topArtists.map((artist) => {
-      const artId = artist.mbid || artist.url;
-      const existing = existingArtists.find((e) => e.lastfmArtistId === artId);
+      const artId = artist.mbid;
+      // If we don't have an mbid, we can't match against DB (UUID required)
+      const existing = artId ? existingArtists.find((e) => e.mbid === artId) : undefined;
 
       let status: SyncArtistStatus = 'new';
       if (existing) {
@@ -59,7 +61,7 @@ export async function fetchMyLastFmArtists(
       return {
         ...artist,
         status,
-        dbId: existing?.id,
+        dbId: existing?.id ? String(existing.id) : undefined,
         imageUrl: artist.image.find((i) => i.size === 'large')?.['#text'],
       };
     });
@@ -75,17 +77,20 @@ export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist
   try {
     // 1. Bulk Insert Artists (Performance Optimized)
     // Map to db structure
-    await artistRepository.createArtistsMany(
-      artists.map((artist) => ({
+    // Only insert artists with MBID
+    const artistsToCreate = artists
+      .filter((a) => a.mbid)
+      .map((artist) => ({
         name: artist.name,
         image: artist.image.find((i) => i.size === 'large')?.['#text'],
-        lastfmArtistId: artist.mbid || artist.url,
+        mbid: artist.mbid!,
         followerCount: 0,
-      }))
-    );
+      }));
+
+    await artistRepository.createArtistsMany(artistsToCreate);
 
     // Fetch currently stored artists to get their internal IDs
-    const lastfmIds = artists.map((a) => a.mbid || a.url);
+    const lastfmIds = artists.map((a) => a.mbid).filter((id): id is string => !!id);
     const dbArtists = await artistRepository.findArtistsByLastfmIdList(lastfmIds);
 
     // 2. Bulk Insert UserArtist
