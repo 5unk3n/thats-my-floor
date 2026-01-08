@@ -2,8 +2,8 @@ import { PublishStatus } from '@prisma/client';
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
+import { AdminReviewListSkeleton } from '@/entities/concert/ui/skeletons/AdminReviewListSkeleton';
 import { AdminReviewListFetcher } from '@/features/concerts/components/admin/AdminReviewListFetcher';
-import { AdminReviewListSkeleton } from '@/features/concerts/components/skeletons/AdminReviewListSkeleton';
 import { runPipelineAction } from '@/features/concerts/server/actions';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';

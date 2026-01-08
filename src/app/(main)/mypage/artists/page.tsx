@@ -2,8 +2,8 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+import { FollowedArtistsSkeleton } from '@/entities/artist/ui/skeletons/FollowedArtistsSkeleton';
 import { FollowedArtistsFetcher } from '@/features/artists/components/FollowedArtistsFetcher';
-import { FollowedArtistsSkeleton } from '@/features/artists/components/skeletons/FollowedArtistsSkeleton';
 import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
 import { Button } from '@/shared/components/ui/button';
 import {

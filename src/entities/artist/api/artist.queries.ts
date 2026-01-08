@@ -2,10 +2,35 @@ import { prisma } from '@/shared/lib/prisma';
 
 // --- Pure Data Access (Repository) ---
 
+// Helper to fetch names from MusicBrainz
+export const enrichArtistsWithMetadata = async <T extends { mbid: string }>(artists: T[]) => {
+  if (artists.length === 0) return [];
+  const mbids = artists.map((a) => a.mbid);
+  const mbArtists = await prisma.musicBrainzArtist.findMany({
+    where: { gid: { in: mbids } },
+    select: { gid: true, name: true },
+  });
+  const mbArtistMap = new Map(mbArtists.map((a) => [a.gid, a.name]));
+
+  return artists.map((a) => ({
+    ...a,
+    name: mbArtistMap.get(a.mbid) || 'Unknown Artist',
+  }));
+};
+
 export const findArtistById = async (id: number) => {
-  return prisma.artist.findUnique({
+  const artist = await prisma.artist.findUnique({
     where: { id },
   });
+
+  if (!artist) return null;
+
+  const [enriched] = await enrichArtistsWithMetadata([artist]);
+  return {
+    ...enriched,
+    genre: '', // Schema doesn't have genre yet
+    description: '', // Schema doesn't have description yet
+  };
 };
 
 export const findArtistConcerts = async (id: number) => {
@@ -73,7 +98,9 @@ export const findFollowedArtists = async (userId: string) => {
     include: { artist: true },
     orderBy: { createdAt: 'desc' },
   });
-  return userArtists.map((ua) => ua.artist);
+
+  const rawArtists = userArtists.map((ua) => ua.artist);
+  return enrichArtistsWithMetadata(rawArtists);
 };
 
 // --- Last.fm Sync Related Queries ---
@@ -110,8 +137,13 @@ export const createArtistsMany = async (
     followerCount?: number;
   }[]
 ) => {
+  const data = artists.map((a) => ({
+    mbid: a.mbid,
+    imageUrl: a.image,
+  }));
+
   return prisma.artist.createMany({
-    data: artists,
+    data,
     skipDuplicates: true,
   });
 };

@@ -1,10 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { Artist } from '@/entities/artist/model/types';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 
-import { Artist } from '../types';
 import { FollowButton } from './FollowButton';
 
 interface ArtistProfileProps {

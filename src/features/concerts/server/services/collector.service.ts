@@ -2,7 +2,6 @@ import * as concertRepository from '@/entities/concert';
 import * as concertService from '@/features/concerts/server/services/concert.service';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
-import { Concert } from '@/entities/concert';
 
 export const collectConcerts = async () => {
   const today = new Date();
@@ -78,7 +77,7 @@ export const collectConcerts = async () => {
           const artist = await concertRepository.findArtistByName(name);
           if (artist) {
             artistId = artist.id;
-            console.log(`[Collector] Matched artist: ${artist.name}`);
+            console.log(`[Collector] Matched artist: ${name}`);
             break;
           }
         }
@@ -113,7 +112,7 @@ export const collectConcerts = async () => {
         region: detail.area,
         status: detail.prfstate,
         runtime: detail.prfruntime,
-        artistId,
+        artistId: artistId ? String(artistId) : undefined,
         isGlobal: detail.visit === 'Y',
         isFestival: detail.festival === 'Y',
 

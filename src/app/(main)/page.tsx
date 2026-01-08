@@ -2,8 +2,8 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
 import { MainConcertFetcher } from '@/features/concerts/components/MainConcertFetcher';
-import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 import { Button } from '@/shared/components/ui/button';
 
 export const metadata: Metadata = {

@@ -1,11 +1,11 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
+import { ArtistProfileSkeleton } from '@/entities/artist/ui/skeletons/ArtistProfileSkeleton';
+import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
 import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
-import { ArtistProfileSkeleton } from '@/features/artists/components/skeletons/ArtistProfileSkeleton';
 import { getArtistProfile } from '@/features/artists/server/services/artist.service';
 import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
-import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 
 interface ArtistDetailPageProps {
   params: Promise<{ id: string }>;

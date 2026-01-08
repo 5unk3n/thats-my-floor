@@ -1,9 +1,8 @@
 import { PublishStatus } from '@prisma/client';
 
+import * as concertRepository from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
-
-import * as concertRepository from '@/entities/concert';
 
 /**
  * 모든 유효한 공연의 상태를 KOPIS와 동기화합니다.

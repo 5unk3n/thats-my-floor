@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { connection } from 'next/server';
 
+import { enrichArtistsWithMetadata } from '@/entities/artist/api/artist.queries';
 import { ConcertReviewCard } from '@/features/concerts/components/admin/ConcertReviewCard';
 import {
   rejectConcertAction,
@@ -106,6 +107,10 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
 
   // 4. PUBLISHED (발행 완료)
   if (status === PublishStatus.PUBLISHED) {
+    const rawArtists = concerts.flatMap((c) => c.artists.map((ca) => ca.artist));
+    const enrichedArtists = await enrichArtistsWithMetadata(rawArtists);
+    const artistNameMap = new Map(enrichedArtists.map((a) => [a.id, a.name]));
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {concerts.map((concert) => (
@@ -115,7 +120,10 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
           >
             <h3 className="font-bold text-sm">{concert.title}</h3>
             <p className="text-xs text-gray-600">
-              🎤 {concert.artists?.map((a) => a.artist.name).join(', ') || '알 수 없음'}
+              🎤{' '}
+              {concert.artists
+                ?.map((a) => artistNameMap.get(a.artist.id) || 'Unknown Artist')
+                .join(', ') || '알 수 없음'}
             </p>
             <div className="text-sm text-gray-500">
               {new Date(concert.startDate).toLocaleDateString()}

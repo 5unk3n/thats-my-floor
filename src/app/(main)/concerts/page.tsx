@@ -1,10 +1,10 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
+import { ConcertFilterSkeleton } from '@/entities/concert/ui/skeletons/ConcertFilterSkeleton';
+import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
 import { ConcertFilter } from '@/features/concerts/components/ConcertFilter';
 import { ConcertList } from '@/features/concerts/components/ConcertList';
-import { ConcertFilterSkeleton } from '@/features/concerts/components/skeletons/ConcertFilterSkeleton';
-import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
 
 export const metadata: Metadata = {
   title: '공연 목록',

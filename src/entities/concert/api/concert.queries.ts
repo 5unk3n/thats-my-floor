@@ -115,13 +115,19 @@ export const upsertConcertWithArtist = async (data: {
 };
 
 export const findArtistByName = async (name: string) => {
-  return prisma.artist.findFirst({
+  const mbArtist = await prisma.musicBrainzArtist.findFirst({
     where: {
       name: {
         equals: name,
         mode: 'insensitive',
       },
     },
+  });
+
+  if (!mbArtist) return null;
+
+  return prisma.artist.findUnique({
+    where: { mbid: mbArtist.gid },
   });
 };
 

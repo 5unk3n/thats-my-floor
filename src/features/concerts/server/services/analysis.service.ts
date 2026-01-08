@@ -120,16 +120,14 @@ export async function publishConcert(concertId: string, selectedCandidates: Cand
       if (!candidate.lastfmArtistId) continue; // Skip invalid
 
       let artist = await tx.artist.findUnique({
-        where: { lastfmArtistId: candidate.lastfmArtistId },
+        where: { mbid: candidate.lastfmArtistId },
       });
 
       if (!artist) {
         artist = await tx.artist.create({
           data: {
-            name: candidate.name,
-            lastfmArtistId: candidate.lastfmArtistId,
-            image: candidate.imageUrl,
-            followerCount: 0, // Last.fm search doesn't provide follower count directly in same way
+            mbid: candidate.lastfmArtistId,
+            imageUrl: candidate.imageUrl,
           },
         });
       }
