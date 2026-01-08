@@ -1,8 +1,8 @@
 import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { ConcertDetail } from '@/features/concerts/components/ConcertDetail';
-import * as concertRepository from '@/features/concerts/server/db';
+import { ConcertDetail } from '@/entities/concert';
+import * as concertRepository from '@/entities/concert';
 import * as concertService from '@/features/concerts/server/services/concert.service';
 
 interface PageProps {
