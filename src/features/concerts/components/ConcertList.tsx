@@ -1,5 +1,6 @@
-import { getConcerts } from '../server/services/concert.service';
-import { ConcertGrid } from './ConcertGrid';
+import { ConcertGrid } from '@/entities/concert';
+import { getConcerts } from '@/features/concerts/server/services/concert.service';
+
 import { ConcertPagination } from './ConcertPagination';
 
 interface ConcertListProps {

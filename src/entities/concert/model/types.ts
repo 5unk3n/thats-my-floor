@@ -13,7 +13,7 @@ export interface BookingLink {
   url: string;
 }
 
-export interface ConcertDetail extends Concert {
+export interface ConcertDetailModel extends Concert {
   runtime: string;
   price: string;
   description: string;

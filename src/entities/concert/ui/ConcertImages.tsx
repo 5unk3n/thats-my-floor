@@ -1,9 +1,9 @@
 import Image from 'next/image';
 
-import { ConcertDetail } from '@/features/concerts/types';
+import { ConcertDetailModel } from '@/entities/concert';
 
 interface ConcertImagesProps {
-  concert: ConcertDetail;
+  concert: ConcertDetailModel;
 }
 
 export function ConcertImages({ concert }: ConcertImagesProps) {

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 
+import { CONCERT_TYPES, REGIONS } from '@/entities/concert';
 import {
   Select,
   SelectContent,
@@ -10,8 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-
-import { CONCERT_TYPES, REGIONS } from '../types';
 
 export function ConcertFilter() {
   const router = useRouter();
@@ -50,7 +49,7 @@ export function ConcertFilter() {
             }
           }}
         >
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-35">
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
@@ -77,7 +76,7 @@ export function ConcertFilter() {
             }
           }}
         >
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-35">
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>

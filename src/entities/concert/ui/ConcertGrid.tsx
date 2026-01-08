@@ -1,4 +1,4 @@
-import { Concert } from '../types';
+import { Concert } from '@/entities/concert';
 import { ConcertCard } from './ConcertCard';
 
 interface ConcertGridProps {

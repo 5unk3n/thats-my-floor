@@ -1,8 +1,8 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheLife, cacheTag } from 'next/cache';
 
-import { BookingLink, Concert, ConcertDetail, ConcertFilterParams } from '../../types';
-import * as concertRepository from '../db';
+import { BookingLink, Concert, ConcertDetailModel, ConcertFilterParams } from '@/entities/concert';
+import * as concertRepository from '@/entities/concert';
 
 export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[]> => {
   'use cache';
@@ -46,7 +46,7 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
   }));
 };
 
-export const getConcertDetail = async (id: string): Promise<ConcertDetail | null> => {
+export const getConcertDetail = async (id: string): Promise<ConcertDetailModel | null> => {
   'use cache';
   cacheLife('max');
   cacheTag(`concert-detail-${id}`);
@@ -91,7 +91,7 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetail | null
     images: concert.images,
     schedule: concert.schedule || '',
     relates,
-    artists: concert.artists.map((a) => ({ id: a.artist.id, name: a.artist.name })),
+    artists: concert.artists.map((a) => ({ id: String(a.artist.id), name: a.artist.name })),
   };
 };
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { Card, CardContent } from '@/shared/components/ui/card';
 
-import { Concert } from '../types';
+import { Concert } from '@/entities/concert';
 
 interface ConcertCardProps {
   concert: Concert;

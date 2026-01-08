@@ -2,13 +2,13 @@ import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ConcertDetail } from '@/features/concerts/types';
+import { ConcertDetailModel } from '@/entities/concert';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 
 interface ConcertInfoProps {
-  concert: ConcertDetail;
+  concert: ConcertDetailModel;
 }
 
 export function ConcertInfo({ concert }: ConcertInfoProps) {
@@ -17,7 +17,7 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Poster Section */}
-          <div className="w-full md:w-[300px] shrink-0">
+          <div className="w-full md:w-75 shrink-0">
             <div className="relative aspect-3/4 w-full overflow-hidden rounded-lg shadow-md border">
               {concert.posterUrl ? (
                 <Image

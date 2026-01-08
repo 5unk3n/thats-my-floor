@@ -88,23 +88,26 @@ export const upsertConcertWithArtist = async (data: {
   });
 
   if (data.artistId) {
-    const existing = await prisma.concertArtist.findUnique({
-      where: {
-        concertId_artistId: {
-          concertId: concert.id,
-          artistId: data.artistId,
-        },
-      },
-    });
-
-    if (!existing) {
-      await prisma.concertArtist.create({
-        data: {
-          concertId: concert.id,
-          artistId: data.artistId,
-          role: 'MAIN',
+    const artistIdNum = parseInt(data.artistId, 10);
+    if (!isNaN(artistIdNum)) {
+      const existing = await prisma.concertArtist.findUnique({
+        where: {
+          concertId_artistId: {
+            concertId: concert.id,
+            artistId: artistIdNum,
+          },
         },
       });
+
+      if (!existing) {
+        await prisma.concertArtist.create({
+          data: {
+            concertId: concert.id,
+            artistId: artistIdNum,
+            role: 'MAIN',
+          },
+        });
+      }
     }
   }
 
@@ -144,7 +147,7 @@ export const findRecentConcertsForStaticParams = async (take: number = 100) => {
   });
 };
 
-export const findConcertsByArtistId = async (artistId: string) => {
+export const findConcertsByArtistId = async (artistId: number) => {
   const concerts = await prisma.concert.findMany({
     where: {
       artists: {

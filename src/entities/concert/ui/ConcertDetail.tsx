@@ -1,10 +1,10 @@
-import { ConcertDetail as ConcertDetailType } from '@/features/concerts/types';
+import { ConcertDetailModel } from '@/entities/concert';
 
 import { ConcertImages } from './ConcertImages';
 import { ConcertInfo } from './ConcertInfo';
 
 interface ConcertDetailProps {
-  concert: ConcertDetailType;
+  concert: ConcertDetailModel;
 }
 
 export function ConcertDetail({ concert }: ConcertDetailProps) {

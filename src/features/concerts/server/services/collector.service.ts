@@ -1,7 +1,8 @@
-import * as concertRepository from '@/features/concerts/server/db';
+import * as concertRepository from '@/entities/concert';
 import * as concertService from '@/features/concerts/server/services/concert.service';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
+import { Concert } from '@/entities/concert';
 
 export const collectConcerts = async () => {
   const today = new Date();
