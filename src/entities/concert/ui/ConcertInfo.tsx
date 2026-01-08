@@ -18,7 +18,7 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Poster Section */}
           <div className="w-full md:w-75 shrink-0">
-            <div className="relative aspect-3/4 w-full overflow-hidden rounded-lg shadow-md border">
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md shadow-lg md:w-75">
               {concert.posterUrl ? (
                 <Image
                   src={concert.posterUrl}

@@ -1,6 +1,7 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheLife, cacheTag } from 'next/cache';
 
+import { enrichArtistsWithMetadata } from '@/entities/artist/api/artist.queries';
 import { BookingLink, Concert, ConcertDetailModel, ConcertFilterParams } from '@/entities/concert';
 import * as concertRepository from '@/entities/concert';
 
@@ -73,6 +74,11 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
       .filter((link) => link.name && link.url);
   }
 
+  // Enrich artists with names from MusicBrainz
+  const rawArtists = concert.artists.map((ca) => ca.artist);
+  const enrichedArtists = await enrichArtistsWithMetadata(rawArtists);
+  const artistMap = new Map(enrichedArtists.map((a) => [a.id, a]));
+
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0].replace(/-/g, '.');
   };
@@ -91,7 +97,10 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
     images: concert.images,
     schedule: concert.schedule || '',
     relates,
-    artists: concert.artists.map((a) => ({ id: String(a.artist.id), name: a.artist.name })),
+    artists: concert.artists.map((a) => ({
+      id: String(a.artist.id),
+      name: artistMap.get(a.artist.id)?.name || 'Unknown Artist',
+    })),
   };
 };
 
