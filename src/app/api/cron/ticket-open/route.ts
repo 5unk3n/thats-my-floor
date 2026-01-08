@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import * as SchedulerService from '@/features/notifications/server/services/scheduler.service';
+import { SchedulerService } from '@/features/notifications';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');

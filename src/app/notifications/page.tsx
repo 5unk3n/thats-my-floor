@@ -1,6 +1,6 @@
 import { type Metadata } from 'next';
 
-import { NotificationList } from '@/features/notifications/components/NotificationList';
+import { NotificationList } from '@/features/notifications';
 
 export const metadata: Metadata = {
   title: '알림',

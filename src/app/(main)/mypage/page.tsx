@@ -7,7 +7,7 @@ import { LastFmConnectSkeleton } from '@/features/auth/components/skeletons/Last
 import { LinkedAccountsSkeleton } from '@/features/auth/components/skeletons/LinkedAccountsSkeleton';
 import { UserProfileSkeleton } from '@/features/auth/components/skeletons/UserProfileSkeleton';
 import { UserProfileFetcher } from '@/features/auth/components/UserProfileFetcher';
-import NotificationSettings from '@/features/notifications/components/NotificationSettings';
+import { NotificationSettings } from '@/features/notifications';
 
 export const metadata: Metadata = {
   title: '마이페이지',

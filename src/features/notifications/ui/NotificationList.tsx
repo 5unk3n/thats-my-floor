@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
-import { getNotifications, markAllAsRead, markAsRead } from '../server/actions';
+import { getNotifications, markAllAsRead, markAsRead } from '../api/actions';
 
 export function NotificationList() {
   const router = useRouter();

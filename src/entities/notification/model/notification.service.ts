@@ -1,5 +1,6 @@
-import * as notificationRepository from '@/entities/notification/api/notification.queries';
 import { getFirebaseAdmin } from '@/shared/lib/firebase/admin';
+
+import * as notificationRepository from '../api/repository';
 
 export async function notifyConcertRegistration(concertId: string, artistNames: string) {
   const concert = await notificationRepository.findConcertForNotification(concertId);

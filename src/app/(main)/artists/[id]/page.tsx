@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 import { ArtistProfileSkeleton } from '@/entities/artist/ui/skeletons/ArtistProfileSkeleton';
 import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
-import { ArtistProfileFetcher, getArtistProfile } from '@/features/artists';
+import { ArtistProfileFetcher, ArtistService } from '@/features/artists';
 import { ArtistConcertList } from '@/features/concerts';
 
 interface ArtistDetailPageProps {
@@ -12,7 +12,7 @@ interface ArtistDetailPageProps {
 
 export async function generateMetadata({ params }: ArtistDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const artist = await getArtistProfile(id);
+  const artist = await ArtistService.getArtistProfile(id);
 
   if (!artist) {
     return {

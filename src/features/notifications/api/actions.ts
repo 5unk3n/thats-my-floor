@@ -3,7 +3,7 @@ import { NotificationSettings, Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
-import * as notificationRepository from '@/entities/notification/api/notification.queries';
+import * as notificationRepository from '@/entities/notification/api/repository';
 import * as notificationService from '@/entities/notification/model/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';

@@ -3,7 +3,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
 
-import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
+import { FcmTokenManager } from '@/features/notifications';
 import { SearchInput } from '@/features/search/components/SearchInput';
 import { Footer } from '@/shared/components/footer/Footer';
 import { Header } from '@/shared/components/header/Header';

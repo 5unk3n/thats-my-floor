@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-import useFcmToken from '../hooks/useFcmToken';
+import useFcmToken from '../model/hooks/useFcmToken';
 
 export function FcmTokenManager() {
   const { notificationPermissionStatus, requestPermission } = useFcmToken();

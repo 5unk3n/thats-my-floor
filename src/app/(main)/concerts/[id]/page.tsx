@@ -2,7 +2,7 @@ import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { ConcertDetail } from '@/entities/concert';
-import * as concertRepository from '@/entities/concert';
+import { ConcertRepository } from '@/entities/concert';
 import { ConcertService } from '@/features/concerts';
 
 interface PageProps {
@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const latestConcerts = await concertRepository.findRecentConcertsForStaticParams(100);
+  const latestConcerts = await ConcertRepository.findRecentConcertsForStaticParams(100);
 
   if (latestConcerts.length === 0) {
     return [{ id: '__placeholder__' }];

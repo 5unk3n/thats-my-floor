@@ -13,7 +13,7 @@ import {
 import { Label } from '@/shared/components/ui/label';
 import { Switch } from '@/shared/components/ui/switch';
 
-import { getNotificationSettingsAction, updateNotificationSettingsAction } from '../server/actions';
+import { getNotificationSettingsAction, updateNotificationSettingsAction } from '../api/actions';
 
 interface SettingsState {
   ticketOpenAlert: boolean;
