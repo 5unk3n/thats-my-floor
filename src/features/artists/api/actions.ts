@@ -8,8 +8,8 @@ import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import * as LastFmSyncService from './services/lastfm-sync.service';
-import { LastFmSyncArtist } from './services/lastfm-sync.service';
+import * as LastFmSyncService from '../model/services/lastfm-sync.service';
+import { LastFmSyncArtist } from '../model/services/lastfm-sync.service';
 
 export async function toggleFollow(artistId: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);

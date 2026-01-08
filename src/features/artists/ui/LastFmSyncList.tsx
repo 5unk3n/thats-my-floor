@@ -11,8 +11,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
-import { syncLastFmArtistsAction } from '../server/actions';
-import { LastFmSyncArtist } from '../server/services/lastfm-sync.service';
+import { syncLastFmArtistsAction } from '../api/actions';
+import { LastFmSyncArtist } from '../model/services/lastfm-sync.service';
 
 interface SyncArtistListProps {
   initialArtists: LastFmSyncArtist[];

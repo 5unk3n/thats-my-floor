@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import LastFmSyncList from '@/features/artists/components/LastFmSyncList';
-import { fetchMyLastFmArtistsAction } from '@/features/artists/server/actions';
-import { LastFmSyncArtist } from '@/features/artists/server/services/lastfm-sync.service';
+import { fetchMyLastFmArtistsAction } from '@/features/artists/api/actions';
+import { LastFmSyncArtist } from '@/features/artists/model/services/lastfm-sync.service';
+import LastFmSyncList from '@/features/artists/ui/LastFmSyncList';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,

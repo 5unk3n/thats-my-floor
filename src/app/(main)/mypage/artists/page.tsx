@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { FollowedArtistsSkeleton } from '@/entities/artist/ui/skeletons/FollowedArtistsSkeleton';
-import { FollowedArtistsFetcher } from '@/features/artists/components/FollowedArtistsFetcher';
+import { FollowedArtistsFetcher } from '@/features/artists';
 import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
 import { Button } from '@/shared/components/ui/button';
 import {

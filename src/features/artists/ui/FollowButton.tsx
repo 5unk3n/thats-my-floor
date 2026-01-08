@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import { getFollowStatus, toggleFollow } from '@/features/artists/server/actions';
+import { getFollowStatus, toggleFollow } from '@/features/artists/api/actions';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 

@@ -1,7 +1,7 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheLife, cacheTag } from 'next/cache';
 
-import { enrichArtistsWithMetadata } from '@/entities/artist/api/artist.queries';
+import { enrichArtistsWithMetadata } from '@/entities/artist';
 import { BookingLink, Concert, ConcertDetailModel, ConcertFilterParams } from '@/entities/concert';
 import * as concertRepository from '@/entities/concert';
 

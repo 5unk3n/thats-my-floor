@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
-import { ArtistProfile } from '@/features/artists/components/ArtistProfile';
-import { getArtistProfile } from '@/features/artists/server/services/artist.service';
+import { getArtistProfile } from '@/features/artists/model/services/artist.service';
+import { ArtistProfile } from '@/features/artists/ui/ArtistProfile';
 
 interface ArtistProfileFetcherProps {
   artistId: Promise<string> | string;

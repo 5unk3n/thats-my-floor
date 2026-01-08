@@ -1,4 +1,4 @@
-export * from './api/artist.queries';
+export * from './api/repository';
 export * from './model/types';
 export * from './ui/ArtistCard';
 export * from './ui/skeletons/ArtistProfileSkeleton';

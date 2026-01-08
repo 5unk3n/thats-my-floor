@@ -3,8 +3,7 @@ import { Suspense } from 'react';
 
 import { ArtistProfileSkeleton } from '@/entities/artist/ui/skeletons/ArtistProfileSkeleton';
 import { ConcertListSkeleton } from '@/entities/concert/ui/skeletons/ConcertListSkeleton';
-import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
-import { getArtistProfile } from '@/features/artists/server/services/artist.service';
+import { ArtistProfileFetcher, getArtistProfile } from '@/features/artists';
 import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
 
 interface ArtistDetailPageProps {

@@ -1,6 +1,6 @@
 import { type Metadata } from 'next';
 
-import { LastFmSyncFetcher } from '@/features/artists/components/LastFmSyncFetcher';
+import { LastFmSyncFetcher } from '@/features/artists';
 
 export const metadata: Metadata = {
   title: 'Last.fm 연동', // Updated title

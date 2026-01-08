@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { connection } from 'next/server';
 
-import { enrichArtistsWithMetadata } from '@/entities/artist/api/artist.queries';
+import { enrichArtistsWithMetadata } from '@/entities/artist';
 import { ConcertReviewCard } from '@/features/concerts/components/admin/ConcertReviewCard';
 import {
   rejectConcertAction,
