@@ -1,6 +1,6 @@
 import { PublishStatus } from '@prisma/client';
 
-import * as concertRepository from '@/entities/concert';
+import { ConcertRepository } from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
@@ -62,6 +62,6 @@ async function updateStatusFromKopis(id: string, kopisId: string) {
     throw new Error(`Invalid KOPIS detail for ${kopisId}`);
   }
 
-  await concertRepository.updateConcertStatus(id, detail.prfstate);
+  await ConcertRepository.updateConcertStatus(id, detail.prfstate);
   console.log(`[SyncService] Updated status for ${kopisId}: ${detail.prfstate}`);
 }

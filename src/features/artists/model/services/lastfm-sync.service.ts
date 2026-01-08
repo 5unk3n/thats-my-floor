@@ -1,4 +1,4 @@
-import * as artistRepository from '@/entities/artist';
+import { ArtistRepository } from '@/entities/artist';
 import { lastFmClient } from '@/shared/lib/lastfm/client';
 import { LastFmTopArtist } from '@/shared/lib/lastfm/types';
 
@@ -36,7 +36,7 @@ export async function fetchMyLastFmArtists(
     const lastfmIds = validArtists.map((a) => a.mbid).filter((id): id is string => !!id);
 
     // Check repository capability.
-    const existingArtists = await artistRepository.findArtistsByLastfmIds(lastfmIds, userId);
+    const existingArtists = await ArtistRepository.findArtistsByLastfmIds(lastfmIds, userId);
 
     const now = new Date();
 
@@ -87,15 +87,15 @@ export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist
         followerCount: 0,
       }));
 
-    await artistRepository.createArtistsMany(artistsToCreate);
+    await ArtistRepository.createArtistsMany(artistsToCreate);
 
     // Fetch currently stored artists to get their internal IDs
     const lastfmIds = artists.map((a) => a.mbid).filter((id): id is string => !!id);
-    const dbArtists = await artistRepository.findArtistsByLastfmIdList(lastfmIds);
+    const dbArtists = await ArtistRepository.findArtistsByLastfmIdList(lastfmIds);
 
     // 2. Bulk Insert UserArtist
     const artistIds = dbArtists.map((a) => a.id);
-    const existingFollows = await artistRepository.findUserArtists(userId, artistIds);
+    const existingFollows = await ArtistRepository.findUserArtists(userId, artistIds);
     const existingArtistIds = new Set(existingFollows.map((f) => f.artistId));
 
     const newFollows = dbArtists
@@ -107,7 +107,7 @@ export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist
 
     let addedCount = 0;
     if (newFollows.length > 0) {
-      const result = await artistRepository.createUserArtistsMany(newFollows);
+      const result = await ArtistRepository.createUserArtistsMany(newFollows);
       addedCount = result.count;
     }
 

@@ -2,7 +2,7 @@ export * from './api/actions';
 export * as AnalysisService from './model/services/analysis.service';
 export * as CollectorService from './model/services/collector.service';
 export * as ConcertService from './model/services/concert.service';
-export * from './model/services/sync.service';
+export * as SyncService from './model/services/sync.service';
 export * from './ui/admin/AdminReviewListFetcher';
 export * from './ui/ArtistConcertList';
 export * from './ui/ConcertFilter';

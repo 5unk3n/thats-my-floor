@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
-import { existsArtistFollow, findFollowedArtists, toggleArtistFollow } from '@/entities/artist';
+import { ArtistRepository } from '@/entities/artist';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
@@ -21,7 +21,10 @@ export async function toggleFollow(artistId: string): Promise<ActionResponse<boo
   }
 
   try {
-    const isFollowing = await toggleArtistFollow(session.user.id, parseInt(artistId, 10));
+    const isFollowing = await ArtistRepository.toggleArtistFollow(
+      session.user.id,
+      parseInt(artistId, 10)
+    );
     revalidatePath('/mypage/artists');
     revalidatePath(`/artists/${artistId}`);
     return { success: true, data: isFollowing };
@@ -41,7 +44,10 @@ export async function getFollowStatus(artistId: string): Promise<ActionResponse<
   }
 
   try {
-    const status = await existsArtistFollow(session.user.id, parseInt(artistId, 10));
+    const status = await ArtistRepository.existsArtistFollow(
+      session.user.id,
+      parseInt(artistId, 10)
+    );
     return { success: true, data: status };
   } catch (error) {
     console.error('getFollowStatus Error:', error);
@@ -62,7 +68,7 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
   }
 
   try {
-    const artists = await findFollowedArtists(session.user.id);
+    const artists = await ArtistRepository.findFollowedArtists(session.user.id);
     return { success: true, data: artists };
   } catch (error) {
     console.error('getFollowedArtists Error:', error);

@@ -1,9 +1,14 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheLife, cacheTag } from 'next/cache';
 
-import { enrichArtistsWithMetadata } from '@/entities/artist';
-import { BookingLink, Concert, ConcertDetailModel, ConcertFilterParams } from '@/entities/concert';
-import * as concertRepository from '@/entities/concert';
+import { ArtistRepository } from '@/entities/artist';
+import {
+  BookingLink,
+  Concert,
+  ConcertDetailModel,
+  ConcertFilterParams,
+  ConcertRepository,
+} from '@/entities/concert';
 
 export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[]> => {
   'use cache';
@@ -26,7 +31,7 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
     filter.region = { notIn: ['서울', '경기', '인천'] };
   }
 
-  const concerts = await concertRepository.findConcerts({
+  const concerts = await ConcertRepository.findConcerts({
     where: filter,
     page: params.page || 1,
     size: params.size || 20,
@@ -36,7 +41,8 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
     return date.toISOString().split('T')[0].replace(/-/g, '.');
   };
 
-  return concerts.map((item) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return concerts.map((item: any) => ({
     id: item.id,
     title: item.title,
     posterUrl: item.posterUrl || '',
@@ -52,7 +58,7 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
   cacheLife('max');
   cacheTag(`concert-detail-${id}`);
 
-  const concert = await concertRepository.findConcertById(id);
+  const concert = await ConcertRepository.findConcertById(id);
 
   if (!concert) return null;
 
@@ -75,9 +81,11 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
   }
 
   // Enrich artists with names from MusicBrainz
-  const rawArtists = concert.artists.map((ca) => ca.artist);
-  const enrichedArtists = await enrichArtistsWithMetadata(rawArtists);
-  const artistMap = new Map(enrichedArtists.map((a) => [a.id, a]));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawArtists = concert.artists.map((ca: any) => ca.artist);
+  const enrichedArtists = await ArtistRepository.enrichArtistsWithMetadata(rawArtists);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const artistMap = new Map(enrichedArtists.map((a: any) => [a.id, a]));
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0].replace(/-/g, '.');
@@ -97,9 +105,11 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
     images: concert.images,
     schedule: concert.schedule || '',
     relates,
-    artists: concert.artists.map((a) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    artists: concert.artists.map((a: any) => ({
       id: String(a.artist.id),
-      name: artistMap.get(a.artist.id)?.name || 'Unknown Artist',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      name: (artistMap.get(a.artist.id) as any)?.name || 'Unknown Artist',
     })),
   };
 };
@@ -131,5 +141,5 @@ export const syncConcert = async (data: {
   // Let's assume we keep the 'upsertConcert' in generic form in DB or split it?
   // Current db.ts upsertConcert does: upsert Concert -> optional find/create ConcertArtist.
   // We should move that logic here.
-  return concertRepository.upsertConcertWithArtist(data);
+  return ConcertRepository.upsertConcertWithArtist(data);
 };

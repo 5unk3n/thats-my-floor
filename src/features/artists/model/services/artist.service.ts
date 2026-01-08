@@ -1,7 +1,6 @@
 import { cacheLife, cacheTag } from 'next/cache';
 
-import * as artistRepository from '@/entities/artist';
-import { ArtistDetail } from '@/entities/artist';
+import { ArtistDetail, ArtistRepository } from '@/entities/artist';
 
 export const getArtistProfile = async (
   id: string
@@ -11,7 +10,7 @@ export const getArtistProfile = async (
   cacheTag(`artist-profile-${id}`);
 
   try {
-    const artist = await artistRepository.findArtistById(parseInt(id, 10));
+    const artist = await ArtistRepository.findArtistById(parseInt(id, 10));
 
     if (!artist) return null;
 
@@ -35,7 +34,7 @@ export const getArtistConcerts = async (id: string) => {
   cacheTag(`artist-concerts-${id}`);
 
   try {
-    const artist = await artistRepository.findArtistConcerts(parseInt(id, 10));
+    const artist = await ArtistRepository.findArtistConcerts(parseInt(id, 10));
 
     if (!artist) return [];
 

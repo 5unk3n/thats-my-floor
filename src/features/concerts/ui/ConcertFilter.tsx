@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 
-import { CONCERT_TYPES, REGIONS } from '@/entities/concert';
+import { CONCERT_TYPES, REGIONS } from '@/entities/concert/model/types';
 import {
   Select,
   SelectContent,

@@ -1,4 +1,4 @@
-import * as concertRepository from '@/entities/concert';
+import { ConcertRepository } from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
@@ -75,7 +75,7 @@ export const collectConcerts = async () => {
         for (const name of castNames) {
           if (!name) continue;
           if (!name) continue;
-          const artist = await concertRepository.findArtistByName(name);
+          const artist = await ConcertRepository.findArtistByName(name);
           if (artist) {
             artistId = artist.id;
             console.log(`[Collector] Matched artist: ${name}`);

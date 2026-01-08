@@ -122,7 +122,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
       </Link>
 
       {/* Right: Action Area */}
-      <div className="w-full md:w-2/3 p-6 flex flex-col max-h-[800px]">
+      <div className="w-full md:w-2/3 p-6 flex flex-col max-h-200">
         <div className="flex flex-col h-full">
           {/* Fixed Top Section */}
           <div className="space-y-4 pb-4 border-b">
