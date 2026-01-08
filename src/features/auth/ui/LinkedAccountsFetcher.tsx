@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth';
 
-import LinkedAccounts from '@/features/auth/components/LinkedAccounts';
-import * as authRepository from '@/features/auth/server/db';
+import { UserRepository } from '@/entities/user';
 import { authOptions } from '@/shared/lib/auth';
+
+import LinkedAccounts from './LinkedAccounts';
 
 export async function LinkedAccountsFetcher() {
   const session = await getServerSession(authOptions);
@@ -11,8 +12,8 @@ export async function LinkedAccountsFetcher() {
     return null;
   }
 
-  const accounts = await authRepository.findLinkedAccounts(session.user.id);
-  const linkedProviders = accounts.map((a) => a.provider);
+  const linkedAccounts = await UserRepository.findLinkedAccounts(session.user.id);
+  const linkedProviders = linkedAccounts.map((a) => a.provider);
 
   return <LinkedAccounts linkedProviders={linkedProviders || []} />;
 }

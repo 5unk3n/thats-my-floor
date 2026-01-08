@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
 import { ArtistRepository } from '@/entities/artist';
+import { UserRepository } from '@/entities/user';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
@@ -82,7 +83,6 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
 // --- Last.fm Sync Actions ---
 
 // Update import to include getLastFmSession
-import { getLastFmSession } from '@/entities/user';
 
 export async function fetchMyLastFmArtistsAction(
   username?: string,
@@ -100,14 +100,14 @@ export async function fetchMyLastFmArtistsAction(
 
   // If no username provided, try to get from connected account
   if (!targetUsername) {
-    const lastFmAccount = await getLastFmSession(session.user.id);
-    if (!lastFmAccount) {
+    const account = await UserRepository.findAccount(session.user.id, 'lastfm');
+    if (!account) {
       return {
         success: false,
         error: { code: ERROR_CODES.BAD_REQUEST, message: '연동된 Last.fm 계정이 없습니다.' },
       };
     }
-    targetUsername = lastFmAccount.username;
+    targetUsername = account.providerAccountId;
   }
 
   const result = await LastFmSyncService.fetchMyLastFmArtists(

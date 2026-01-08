@@ -2,8 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
-import { UserProfileCard } from '@/entities/user';
-import * as userQueries from '@/entities/user'; // Direct import from entity
+import { UserProfileCard, UserRepository } from '@/entities/user';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { authOptions } from '@/shared/lib/auth';
 
@@ -15,7 +14,7 @@ export async function UserProfileFetcher() {
   }
 
   // Use entity query directly
-  const user = await userQueries.findUserProfile(session.user.id);
+  const user = await UserRepository.findUserProfile(session.user.id);
 
   if (!user) {
     return <div>사용자 정보를 찾을 수 없습니다.</div>;

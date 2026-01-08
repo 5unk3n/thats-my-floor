@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 
 import { authOptions } from '@/shared/lib/auth';
 
-import { linkLastFmAccount, unlinkLastFmAccount } from './services/lastfm-auth.service';
+import { linkLastFmAccount, unlinkLastFmAccount } from '../model/services/lastfm-auth.service';
 
 export async function connectLastFmAction(token: string) {
   const session = await getServerSession(authOptions);

@@ -1,6 +1,6 @@
 import { type Metadata } from 'next';
 
-import { LoginButton } from '@/features/auth/components/login-button';
+import { LoginButton } from '@/features/auth';
 
 export const metadata: Metadata = {
   title: '로그인',

@@ -1,8 +1,8 @@
 import { getServerSession } from 'next-auth';
 
-import { getLastFmSession } from '@/features/auth/server/services/lastfm-auth.service';
 import { authOptions } from '@/shared/lib/auth';
 
+import { getLastFmSession } from '../model/services/lastfm-auth.service';
 import { LastFmConnect } from './LastFmConnect';
 
 export async function LastFmConnectFetcher() {

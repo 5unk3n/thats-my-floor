@@ -1,8 +1,8 @@
+import { ConcertRepository } from '@/entities/concert';
 import { searchCache } from '@/shared/lib/cache';
 import { lastFmClient } from '@/shared/lib/lastfm/client';
 
-import { SearchResult } from '../../types';
-import * as searchRepository from '../db';
+import { SearchResult } from '../types';
 
 export const getSearchResults = async (
   query: string,
@@ -27,7 +27,7 @@ export const getSearchResults = async (
     const [concerts, lastFmResponse] = await Promise.all([
       // Search Concerts (DB) - Run only if type is 'all' or 'concert'
       type === 'all' || type === 'concert'
-        ? searchRepository.searchConcerts(normalizedQuery, 5)
+        ? ConcertRepository.searchConcerts(normalizedQuery, 5)
         : Promise.resolve([]),
       // Search Artists (Last.fm API) - Run only if type is 'all' or 'artist'
       type === 'all' || type === 'artist'

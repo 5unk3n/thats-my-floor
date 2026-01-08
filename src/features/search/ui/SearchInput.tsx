@@ -8,7 +8,7 @@ import * as React from 'react';
 import { Input } from '@/shared/components/ui/input';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 
-import { searchAction } from '../server/actions';
+import { searchAction } from '../api/actions';
 import { SearchResults } from './SearchResults';
 
 interface SearchInputProps {

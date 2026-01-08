@@ -3,8 +3,8 @@
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import { SearchResult } from '../types';
-import * as searchService from './services/search.service';
+import * as searchService from '../model/services/search.service';
+import { SearchResult } from '../model/types';
 
 export async function searchAction(
   query: string,

@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 
 import { FollowedArtistsSkeleton } from '@/entities/artist/ui/skeletons/FollowedArtistsSkeleton';
 import { FollowedArtistsFetcher } from '@/features/artists';
-import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
+import { ArtistSearchTrigger } from '@/features/search';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,

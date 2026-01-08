@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { connectLastFmAction, disconnectLastFmAction } from '@/features/auth/server/actions';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,
@@ -13,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
+
+import { connectLastFmAction, disconnectLastFmAction } from '../api/actions';
 
 interface LastFmConnectProps {
   initialUsername?: string | null;

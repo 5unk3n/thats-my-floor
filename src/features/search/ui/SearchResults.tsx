@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import * as React from 'react';
 
-import { SearchResult } from '../types';
+import { SearchResult } from '../model/types';
 
 interface SearchResultsProps {
   results: SearchResult;
