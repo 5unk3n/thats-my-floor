@@ -3,8 +3,8 @@ import { NotificationSettings, Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
+import { NotificationService } from '@/entities/notification';
 import * as notificationRepository from '@/entities/notification/api/repository';
-import * as notificationService from '@/entities/notification/model/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
@@ -92,7 +92,7 @@ export async function getNotificationSettingsAction(): Promise<
   }
 
   try {
-    const settings = await notificationService.getNotificationSettings(session.user.id);
+    const settings = await NotificationService.getNotificationSettings(session.user.id);
     return { success: true, data: settings };
   } catch (error) {
     console.error('getNotificationSettings Error:', error);
