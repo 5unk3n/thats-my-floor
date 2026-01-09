@@ -1,58 +1,85 @@
+import { Prisma } from '@prisma/client';
+
 import { prisma } from '@/shared/lib/prisma';
 
-// --- Pure Data Access (Repository) ---
-
-// Helper to fetch names from MusicBrainz
-export const enrichArtistsWithMetadata = async <T extends { mbid: string }>(artists: T[]) => {
-  if (artists.length === 0) return [];
-  const mbids = artists.map((a) => a.mbid);
-  const mbArtists = await prisma.musicBrainzArtist.findMany({
-    where: { gid: { in: mbids } },
-    select: { gid: true, name: true },
-  });
-  const mbArtistMap = new Map(mbArtists.map((a) => [a.gid, a.name]));
-
-  return artists.map((a) => ({
-    ...a,
-    name: mbArtistMap.get(a.mbid) || 'Unknown Artist',
-  }));
-};
-
-export const findArtistById = async (id: number) => {
-  const artist = await prisma.artist.findUnique({
-    where: { id },
-  });
-
-  if (!artist) return null;
-
-  const [enriched] = await enrichArtistsWithMetadata([artist]);
-  return {
-    ...enriched,
-    genre: '', // Schema doesn't have genre yet
-    description: '', // Schema doesn't have description yet
-  };
-};
-
-export const findArtistConcerts = async (id: number) => {
-  return prisma.artist.findUnique({
-    where: { id },
-    include: {
-      concerts: {
-        include: {
-          concert: true,
+// Individual function exports
+export async function findMusicBrainzArtistsByName(query: string, limit = 20) {
+  return prisma.musicBrainzArtist.findMany({
+    where: {
+      OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        {
+          aliases: {
+            some: {
+              name: { contains: query, mode: 'insensitive' },
+            },
+          },
         },
-        orderBy: {
-          concert: {
-            startDate: 'desc',
+      ],
+    },
+    take: limit,
+    include: {
+      aliases: {
+        where: {
+          name: { contains: query, mode: 'insensitive' },
+        },
+        take: 1,
+      },
+    },
+  });
+}
+
+export async function findLocalArtistsByMbids(mbids: string[]) {
+  return prisma.artist.findMany({
+    where: { mbid: { in: mbids } },
+    select: { mbid: true, imageUrl: true },
+  });
+}
+
+export async function findMusicBrainzArtistByGid(gid: string) {
+  return prisma.musicBrainzArtist.findUnique({
+    where: { gid },
+    include: {
+      aliases: true,
+      artistLinks: {
+        include: {
+          url: true,
+          linkDef: {
+            include: {
+              linkType: true,
+            },
           },
         },
       },
     },
   });
-};
+}
 
-export const toggleArtistFollow = async (userId: string, artistId: number) => {
-  const existing = await prisma.userArtist.findUnique({
+export async function findLocalArtistByMbid(mbid: string) {
+  return prisma.artist.findUnique({
+    where: { mbid },
+    include: {
+      customAliases: true,
+    },
+  });
+}
+
+export async function createLocalArtist(data: Prisma.ArtistCreateInput) {
+  return prisma.artist.create({
+    data,
+  });
+}
+
+export async function upsertLocalArtist(gid: string, data: Prisma.ArtistCreateInput) {
+  return prisma.artist.upsert({
+    where: { mbid: gid },
+    create: { ...data, mbid: gid },
+    update: data,
+  });
+}
+
+export async function findUserArtist(userId: string, artistId: number) {
+  return prisma.userArtist.findUnique({
     where: {
       userId_artistId: {
         userId,
@@ -60,140 +87,103 @@ export const toggleArtistFollow = async (userId: string, artistId: number) => {
       },
     },
   });
+}
 
-  if (existing) {
-    await prisma.userArtist.delete({
-      where: {
-        userId_artistId: {
-          userId,
-          artistId,
-        },
-      },
-    });
-    return false;
-  } else {
-    await prisma.userArtist.create({
-      data: {
-        userId,
-        artistId,
-      },
-    });
-    return true;
-  }
-};
-
-export const existsArtistFollow = async (userId: string, artistId: number) => {
-  const count = await prisma.userArtist.count({
-    where: {
+export async function createUserArtist(userId: string, artistId: number) {
+  return prisma.userArtist.create({
+    data: {
       userId,
       artistId,
     },
   });
-  return count > 0;
-};
+}
 
-export const findFollowedArtists = async (userId: string) => {
-  const userArtists = await prisma.userArtist.findMany({
+export async function deleteUserArtist(id: number) {
+  return prisma.userArtist.delete({
+    where: { id },
+  });
+}
+
+export async function findFollowedArtists(userId: string) {
+  const follows = await prisma.userArtist.findMany({
     where: { userId },
-    include: { artist: true },
-    orderBy: { createdAt: 'desc' },
+    include: {
+      artist: true,
+    },
   });
 
-  const rawArtists = userArtists.map((ua) => ua.artist);
-  return enrichArtistsWithMetadata(rawArtists);
-};
+  return follows.map((f) => f.artist);
+}
 
-// --- Last.fm Sync Related Queries ---
-
-export const findArtistsByLastfmIds = async (lastfmIds: string[], userId: string) => {
+export async function findArtistsByLastfmIds(mbids: string[], userId?: string) {
   return prisma.artist.findMany({
     where: {
-      mbid: { in: lastfmIds },
+      mbid: { in: mbids },
     },
     include: {
-      followers: {
-        where: { userId: userId },
-      },
+      followers: userId
+        ? {
+            where: { userId },
+          }
+        : false,
       concerts: {
-        include: {
+        select: {
           concert: {
             select: {
               endDate: true,
-              startDate: true, // Added for completeness if needed logic
+            },
+          },
+        },
+        where: {
+          concert: {
+            endDate: {
+              gte: new Date(),
             },
           },
         },
       },
     },
   });
-};
+}
 
-export const createArtistsMany = async (
-  artists: {
-    name: string;
-    image?: string;
-    genre?: string;
-    mbid: string;
-    followerCount?: number;
-  }[]
-) => {
-  const data = artists.map((a) => ({
-    mbid: a.mbid,
-    imageUrl: a.image,
-  }));
-
-  return prisma.artist.createMany({
-    data,
-    skipDuplicates: true,
-  });
-};
-
-export const findArtistsByLastfmIdList = async (lastfmIds: string[]) => {
+export async function findArtistsByLastfmIdList(mbids: string[]) {
   return prisma.artist.findMany({
-    where: {
-      mbid: { in: lastfmIds },
-    },
+    where: { mbid: { in: mbids } },
+    select: { id: true, mbid: true },
   });
-};
+}
 
-export const findUserArtists = async (userId: string, artistIds: number[]) => {
+export async function findUserArtists(userId: string, artistIds: number[]) {
   return prisma.userArtist.findMany({
     where: {
       userId,
       artistId: { in: artistIds },
     },
-    select: { artistId: true },
   });
-};
+}
 
-export const createUserArtistsMany = async (
-  follows: {
-    userId: string;
-    artistId: number;
-  }[]
-) => {
+export async function createUserArtistsMany(follows: { userId: string; artistId: number }[]) {
   return prisma.userArtist.createMany({
     data: follows,
     skipDuplicates: true,
   });
-};
+}
 
-export const findSubscribedFollowers = async (artistIds: number[]) => {
-  return prisma.userArtist.findMany({
-    where: {
-      artistId: { in: artistIds },
-      user: {
-        notificationSettings: {
-          concertRegistrationAlert: true,
+export async function createArtistsMany(
+  artists: { name: string; mbid: string; image?: string; followerCount?: number }[]
+) {
+  return prisma.$transaction(
+    artists.map((a) =>
+      prisma.artist.upsert({
+        where: { mbid: a.mbid },
+        create: {
+          mbid: a.mbid,
+          imageUrl: a.image,
         },
-      },
-    },
-    include: {
-      user: {
-        include: {
-          devices: true,
+        update: {
+          imageUrl: a.image,
         },
-      },
-    },
-  });
-};
+      })
+    )
+  );
+}

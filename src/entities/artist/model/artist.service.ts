@@ -1,0 +1,111 @@
+import { Prisma } from '@prisma/client';
+
+import {
+  createLocalArtist,
+  createUserArtist,
+  deleteUserArtist,
+  findLocalArtistByMbid,
+  findLocalArtistsByMbids,
+  findMusicBrainzArtistByGid,
+  findMusicBrainzArtistsByName,
+  findUserArtist,
+  upsertLocalArtist,
+} from '../api/repository';
+
+/**
+ * Search artists by name.
+ * Pure domain logic: merges MusicBrainz and Local data.
+ */
+export async function searchArtists(query: string) {
+  // 1. Search in MusicBrainz Artist table
+  const artists = await findMusicBrainzArtistsByName(query);
+
+  if (artists.length === 0) {
+    return [];
+  }
+
+  // 2. Fetch local Artist data (images) for these artists
+  const gids = artists.map((a) => a.gid);
+  const localArtists = await findLocalArtistsByMbids(gids);
+
+  const localArtistMap = new Map(localArtists.map((a) => [a.mbid, a]));
+
+  // 3. Merge data
+  return artists.map((artist) => ({
+    ...artist,
+    localData: localArtistMap.get(artist.gid) || null,
+  }));
+}
+
+/**
+ * Get artist profile by GID.
+ * Pure domain logic: merges MusicBrainz and Local data.
+ */
+export async function getArtistProfile(gid: string) {
+  const mbArtist = await findMusicBrainzArtistByGid(gid);
+  if (!mbArtist) return null;
+
+  const localArtist = await findLocalArtistByMbid(gid);
+
+  const data = { ...mbArtist, localData: localArtist };
+
+  // Transform/Combine data if needed
+  return {
+    id: data.gid,
+    name: data.name,
+    images: data.localData?.imageUrl ? [data.localData.imageUrl] : [],
+    genres: [], // TODO: Tag/Genre implementation
+    links: data.artistLinks.map((l) => ({
+      type: l.linkDef.linkType.name,
+      url: l.url.url,
+    })),
+    image: data.localData?.imageUrl || null, // Compatibility for UI
+  };
+}
+
+/**
+ * Toggle follow status for a user and artist (by MBID).
+ * Business logic moved from repository.
+ */
+export async function toggleArtistFollow(userId: string, artistMbid: string) {
+  // 1. Ensure Artist exists in local DB
+  const artist = await findLocalArtistByMbid(artistMbid);
+  let artistId = artist?.id;
+
+  if (!artistId) {
+    // Fetch details from MB to create local record
+    const mbArtist = await findMusicBrainzArtistByGid(artistMbid);
+    if (!mbArtist) throw new Error('Artist not found in MusicBrainz');
+
+    // Create local artist
+    const newArtist = await createLocalArtist({
+      mbid: artistMbid,
+      // name is not in local Artist table
+      // We can fetch image later or set default
+    });
+    artistId = newArtist.id;
+  }
+
+  // 2. Check existence of follow
+  const existing = await findUserArtist(userId, artistId);
+
+  if (existing) {
+    await deleteUserArtist(existing.id);
+    return false;
+  } else {
+    await createUserArtist(userId, artistId);
+    return true;
+  }
+}
+
+export async function getArtistFollowStatus(userId: string, artistMbid: string) {
+  const artist = await findLocalArtistByMbid(artistMbid);
+  if (!artist) return false;
+
+  const follow = await findUserArtist(userId, artist.id);
+  return !!follow;
+}
+
+export async function upsertArtist(gid: string, data: Prisma.ArtistCreateInput) {
+  return upsertLocalArtist(gid, data);
+}

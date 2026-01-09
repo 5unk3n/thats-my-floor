@@ -36,6 +36,7 @@ export async function fetchMyLastFmArtists(
     const lastfmIds = validArtists.map((a) => a.mbid).filter((id): id is string => !!id);
 
     // Check repository capability.
+    // Use the individual export
     const existingArtists = await ArtistRepository.findArtistsByLastfmIds(lastfmIds, userId);
 
     const now = new Date();
@@ -47,7 +48,8 @@ export async function fetchMyLastFmArtists(
 
       let status: SyncArtistStatus = 'new';
       if (existing) {
-        if (existing.followers.length > 0) {
+        // existing.followers is populated by findArtistsByLastfmIds
+        if (existing.followers && existing.followers.length > 0) {
           status = 'following';
         } else {
           // Check if there is any upcoming concert

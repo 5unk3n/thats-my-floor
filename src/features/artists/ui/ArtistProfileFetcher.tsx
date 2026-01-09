@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { getArtistProfile } from '@/features/artists/model/services/artist.service';
+import { getCachedArtistProfile } from '@/features/artists/model/services/get-artist-profile';
 import { ArtistProfile } from '@/features/artists/ui/ArtistProfile';
 
 interface ArtistProfileFetcherProps {
@@ -9,7 +9,7 @@ interface ArtistProfileFetcherProps {
 
 export async function ArtistProfileFetcher({ artistId }: ArtistProfileFetcherProps) {
   const id = await artistId;
-  const artist = await getArtistProfile(id);
+  const artist = await getCachedArtistProfile(id);
 
   if (!artist) {
     notFound();

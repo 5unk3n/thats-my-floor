@@ -3,14 +3,17 @@
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
-import { ArtistRepository } from '@/entities/artist';
+import { ArtistService } from '@/entities/artist';
 import { UserRepository } from '@/entities/user';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';
 import { ActionResponse } from '@/shared/types/action-response';
 
-import * as LastFmSyncService from '../model/services/lastfm-sync.service';
-import { LastFmSyncArtist } from '../model/services/lastfm-sync.service';
+import {
+  fetchMyLastFmArtists,
+  LastFmSyncArtist,
+  syncLastFmArtists,
+} from '../model/services/lastfm-sync.service';
 
 export async function toggleFollow(artistId: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);
@@ -22,9 +25,9 @@ export async function toggleFollow(artistId: string): Promise<ActionResponse<boo
   }
 
   try {
-    const isFollowing = await ArtistRepository.toggleArtistFollow(
+    const isFollowing = await ArtistService.toggleArtistFollow(
       session.user.id,
-      parseInt(artistId, 10)
+      artistId // Passed as string (MBID)
     );
     revalidatePath('/mypage/artists');
     revalidatePath(`/artists/${artistId}`);
@@ -45,9 +48,9 @@ export async function getFollowStatus(artistId: string): Promise<ActionResponse<
   }
 
   try {
-    const status = await ArtistRepository.existsArtistFollow(
+    const status = await ArtistService.getArtistFollowStatus(
       session.user.id,
-      parseInt(artistId, 10)
+      artistId // Passed as string (MBID)
     );
     return { success: true, data: status };
   } catch (error) {
@@ -82,8 +85,6 @@ export async function getFollowedArtists(): Promise<ActionResponse<unknown[]>> {
 
 // --- Last.fm Sync Actions ---
 
-// Update import to include getLastFmSession
-
 export async function fetchMyLastFmArtistsAction(
   username?: string,
   period: 'overall' | '7day' | '1month' | '3month' | '6month' | '12month' = 'overall'
@@ -110,12 +111,7 @@ export async function fetchMyLastFmArtistsAction(
     targetUsername = account.providerAccountId;
   }
 
-  const result = await LastFmSyncService.fetchMyLastFmArtists(
-    targetUsername!,
-    session.user.id,
-    50,
-    period
-  );
+  const result = await fetchMyLastFmArtists(targetUsername!, session.user.id, 50, period);
 
   if (!result.success) {
     return {
@@ -144,7 +140,7 @@ export async function syncLastFmArtistsAction(
     };
   }
 
-  const result = await LastFmSyncService.syncLastFmArtists(session.user.id, artists);
+  const result = await syncLastFmArtists(session.user.id, artists);
   if (!result.success) {
     return {
       success: false,
