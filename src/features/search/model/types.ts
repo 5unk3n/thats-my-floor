@@ -16,6 +16,6 @@ export interface SearchConcert extends Omit<
   status: string | null;
 }
 
-export interface SearchArtist extends Pick<Artist, 'name' | 'image'> {
+export interface SearchArtist extends Pick<Artist, 'name' | 'imageUrl'> {
   id: string;
 }

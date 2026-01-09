@@ -69,9 +69,9 @@ export function SearchResults({ results, onSelect }: SearchResultsProps) {
                   className="flex w-full items-center gap-3 px-3 py-2 hover:bg-accent hover:text-accent-foreground text-left"
                 >
                   <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                    {artist.image ? (
+                    {artist.imageUrl ? (
                       <Image
-                        src={artist.image}
+                        src={artist.imageUrl}
                         alt={artist.name}
                         fill
                         className="object-cover"

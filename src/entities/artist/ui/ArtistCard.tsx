@@ -14,9 +14,9 @@ export function ArtistCard({ artist, actionSlot }: ArtistCardProps) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-square relative bg-muted">
-        {artist.imageUrl || artist.image ? (
+        {artist.imageUrl ? (
           <Image
-            src={artist.imageUrl || artist.image || ''}
+            src={artist.imageUrl}
             alt={artist.name}
             fill
             className="object-cover"
@@ -32,7 +32,6 @@ export function ArtistCard({ artist, actionSlot }: ArtistCardProps) {
         <Link href={`/artists/${artist.id}`} className="hover:underline">
           <h3 className="font-bold text-lg truncate">{artist.name}</h3>
         </Link>
-        <p className="text-sm text-muted-foreground truncate">{artist.genre}</p>
       </CardHeader>
       <CardContent className="p-4 pt-2">{actionSlot}</CardContent>
     </Card>

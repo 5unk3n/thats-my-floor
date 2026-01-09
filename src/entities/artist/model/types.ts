@@ -1,10 +1,7 @@
 export interface Artist {
   id: string | number;
   name: string;
-  image?: string | null;
   imageUrl?: string | null;
-  genre?: string;
-  description?: string;
   mbid?: string;
 }
 

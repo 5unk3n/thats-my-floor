@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Artist } from '@/entities/artist/model/types';
-import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 
 import { FollowButton } from './FollowButton';
@@ -16,9 +15,9 @@ export function ArtistProfile({ artist, isFollowing }: ArtistProfileProps) {
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       <div className="relative w-full md:w-1/3 aspect-square rounded-xl overflow-hidden shadow-lg bg-gray-100">
-        {artist.image ? (
+        {artist.imageUrl ? (
           <Image
-            src={artist.image}
+            src={artist.imageUrl}
             alt={artist.name}
             fill
             className="object-cover"
@@ -38,11 +37,6 @@ export function ArtistProfile({ artist, isFollowing }: ArtistProfileProps) {
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
               {artist.name}
             </h1>
-            {artist.genre && (
-              <Badge variant="secondary" className="text-sm px-3 py-1">
-                {artist.genre}
-              </Badge>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
