@@ -1,13 +1,15 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { LastFmConnectFetcher } from '@/features/auth/components/LastFmConnectFetcher';
-import { LinkedAccountsFetcher } from '@/features/auth/components/LinkedAccountsFetcher';
-import { LastFmConnectSkeleton } from '@/features/auth/components/skeletons/LastFmConnectSkeleton';
-import { LinkedAccountsSkeleton } from '@/features/auth/components/skeletons/LinkedAccountsSkeleton';
-import { UserProfileSkeleton } from '@/features/auth/components/skeletons/UserProfileSkeleton';
-import { UserProfileFetcher } from '@/features/auth/components/UserProfileFetcher';
-import NotificationSettings from '@/features/notifications/components/NotificationSettings';
+import {
+  LastFmConnectFetcher,
+  LastFmConnectSkeleton,
+  LinkedAccountsFetcher,
+  LinkedAccountsSkeleton,
+  UserProfileFetcher,
+  UserProfileSkeleton,
+} from '@/features/auth';
+import { NotificationSettings } from '@/features/notifications';
 
 export const metadata: Metadata = {
   title: '마이페이지',

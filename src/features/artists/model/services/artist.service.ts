@@ -1,0 +1,65 @@
+import { cacheLife, cacheTag } from 'next/cache';
+
+import { ArtistDetail, ArtistRepository } from '@/entities/artist';
+
+export const getArtistProfile = async (
+  id: string
+): Promise<Omit<ArtistDetail, 'concerts'> | null> => {
+  'use cache';
+  cacheLife('max');
+  cacheTag(`artist-profile-${id}`);
+
+  try {
+    const artist = await ArtistRepository.findArtistById(parseInt(id, 10));
+
+    if (!artist) return null;
+
+    return {
+      id: artist.id,
+      name: artist.name,
+      image: artist.imageUrl || '',
+      genre: artist.genre || '',
+      description: artist.description || '',
+      lastfmArtistId: artist.mbid,
+    };
+  } catch (error) {
+    console.error('Failed to fetch artist profile:', error);
+    return null;
+  }
+};
+
+export const getArtistConcerts = async (id: string) => {
+  'use cache';
+  cacheLife('max');
+  cacheTag(`artist-concerts-${id}`);
+
+  try {
+    const artist = await ArtistRepository.findArtistConcerts(parseInt(id, 10));
+
+    if (!artist) return [];
+
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0].replace(/-/g, '.');
+    };
+
+    return artist.concerts.map(({ concert }) => ({
+      id: concert.id,
+      title: concert.title,
+      posterUrl: concert.posterUrl || '',
+      startDate: formatDate(concert.startDate),
+      endDate: formatDate(concert.endDate),
+      place: concert.place,
+      status: concert.status || 'OPEN',
+    }));
+  } catch (error) {
+    console.error('Failed to fetch artist concerts:', error);
+    return [];
+  }
+};
+
+export const getArtistDetail = async (id: string): Promise<ArtistDetail | null> => {
+  const profile = await getArtistProfile(id);
+  if (!profile) return null;
+  const concerts = await getArtistConcerts(id);
+  return { ...profile, concerts };
+};

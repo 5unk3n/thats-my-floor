@@ -9,6 +9,7 @@ export enum OperationType {
 }
 
 export interface DataRow {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 

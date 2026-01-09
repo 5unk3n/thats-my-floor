@@ -3,12 +3,12 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
 
-import { FcmTokenManager } from '@/features/notifications/components/FcmTokenManager';
-import { SearchInput } from '@/features/search/components/SearchInput';
-import { Footer } from '@/shared/components/footer/Footer';
-import { Header } from '@/shared/components/header/Header';
-import { Toaster } from '@/shared/components/ui/sonner';
+import { FcmTokenManager } from '@/features/notifications';
+import { SearchInput } from '@/features/search';
+import { Footer } from '@/shared/layout/footer/Footer';
+import { Header } from '@/shared/layout/header/Header';
 import Providers from '@/shared/providers';
+import { Toaster } from '@/shared/ui/sonner';
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],

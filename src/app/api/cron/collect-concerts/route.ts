@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import * as CollectorService from '@/features/concerts/server/services/collector.service';
+import { CollectorService } from '@/features/concerts';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');

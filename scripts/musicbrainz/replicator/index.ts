@@ -39,8 +39,8 @@ export class MusicBrainzReplicator {
 
           currentSeq = nextSeq;
           processed++;
-        } catch (e: any) {
-          if (e.message.includes('404')) {
+        } catch (e: unknown) {
+          if (e instanceof Error && e.message.includes('404')) {
             console.log('No new packets available. Up to date.');
             break;
           }
