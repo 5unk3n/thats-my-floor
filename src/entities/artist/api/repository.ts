@@ -187,3 +187,47 @@ export async function createArtistsMany(
     )
   );
 }
+// ... existing code ...
+
+export async function findSubscribedFollowers(artistIds: number[]) {
+  // 1. Find users who follow these artists
+  const userArtists = await prisma.userArtist.findMany({
+    where: {
+      artistId: { in: artistIds },
+    },
+    include: {
+      user: {
+        include: {
+          devices: true,
+          notificationSettings: true,
+        },
+      },
+    },
+  });
+
+  // 2. Filter by notification settings
+  return userArtists
+    .map((ua) => ua.user)
+    .filter(
+      (user) =>
+        user.notificationSettings?.concertRegistrationAlert === true && user.devices.length > 0
+    );
+}
+
+export async function enrichArtistsWithMetadata(
+  artists: { id: number; mbid: string; imageUrl: string | null }[]
+) {
+  const mbids = artists.map((a) => a.mbid);
+
+  const mbArtists = await prisma.musicBrainzArtist.findMany({
+    where: { gid: { in: mbids } },
+    select: { gid: true, name: true },
+  });
+
+  const mbMap = new Map(mbArtists.map((m) => [m.gid, m.name]));
+
+  return artists.map((artist) => ({
+    ...artist,
+    name: mbMap.get(artist.mbid) || 'Unknown Artist',
+  }));
+}
