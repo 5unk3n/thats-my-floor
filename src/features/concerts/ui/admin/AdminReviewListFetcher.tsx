@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { connection } from 'next/server';
 
-import { ArtistRepository } from '@/entities/artist';
+import { ArtistService } from '@/entities/artist';
 import {
   rejectConcertAction,
   requestAnalysisAction,
@@ -109,7 +109,7 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
   // 4. PUBLISHED (발행 완료)
   if (status === PublishStatus.PUBLISHED) {
     const rawArtists = concerts.flatMap((c) => c.artists.map((ca) => ca.artist));
-    const enrichedArtists = await ArtistRepository.enrichArtistsWithMetadata(rawArtists);
+    const enrichedArtists = await ArtistService.enrichArtists(rawArtists);
     const artistNameMap = new Map(enrichedArtists.map((a) => [a.id, a.name]));
 
     return (

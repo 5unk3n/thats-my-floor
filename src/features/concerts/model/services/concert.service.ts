@@ -1,7 +1,7 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 import { cacheLife, cacheTag } from 'next/cache';
 
-import { ArtistRepository } from '@/entities/artist';
+import { ArtistService } from '@/entities/artist';
 import {
   BookingLink,
   Concert,
@@ -83,7 +83,7 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
   // Enrich artists with names from MusicBrainz
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawArtists = concert.artists.map((ca: any) => ca.artist);
-  const enrichedArtists = await ArtistRepository.enrichArtistsWithMetadata(rawArtists);
+  const enrichedArtists = await ArtistService.enrichArtists(rawArtists);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const artistMap = new Map(enrichedArtists.map((a: any) => [a.id, a]));
 

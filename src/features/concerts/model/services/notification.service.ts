@@ -1,4 +1,4 @@
-import * as ArtistRepository from '@/entities/artist/api/repository';
+import { ArtistService } from '@/entities/artist';
 import * as ConcertRepository from '@/entities/concert/api/repository';
 import * as NotificationRepository from '@/entities/notification/api/repository';
 import { getFirebaseAdmin } from '@/shared/lib/firebase/admin';
@@ -12,7 +12,7 @@ export async function notifyConcertRegistration(concertId: string, artistNames: 
   const artistIds = concert.artists.map((ca) => ca.artistId);
 
   // Find users who follow ANY of these artists and have concert registration alert enabled
-  const followers = await ArtistRepository.findSubscribedFollowers(artistIds);
+  const followers = await ArtistService.findSubscribedFollowers(artistIds);
 
   // Deduplicate users (findSubscribedFollowers returns unique users if implemented correctly, but explicit dedup is safe)
   const uniqueFollowersMap = new Map();

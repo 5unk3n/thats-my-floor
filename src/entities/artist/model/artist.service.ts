@@ -4,9 +4,11 @@ import {
   createLocalArtist,
   createUserArtist,
   deleteUserArtist,
+  findFollowersByArtistIds,
   findLocalArtistByMbid,
   findLocalArtistsByMbids,
   findMusicBrainzArtistByGid,
+  findMusicBrainzArtistsByGids,
   findMusicBrainzArtistsByName,
   findUserArtist,
   upsertLocalArtist,
@@ -108,4 +110,33 @@ export async function getArtistFollowStatus(userId: string, artistMbid: string) 
 
 export async function upsertArtist(gid: string, data: Prisma.ArtistCreateInput) {
   return upsertLocalArtist(gid, data);
+}
+
+export async function findSubscribedFollowers(artistIds: number[]) {
+  // 1. Fetch raw data
+  const userArtists = await findFollowersByArtistIds(artistIds);
+
+  // 2. Filter by notification settings (Domain Logic)
+  return userArtists
+    .map((ua) => ua.user)
+    .filter(
+      (user) =>
+        user.notificationSettings?.concertRegistrationAlert === true && user.devices.length > 0
+    );
+}
+
+export async function enrichArtists(
+  artists: { id: number; mbid: string; imageUrl: string | null }[]
+) {
+  const mbids = artists.map((a) => a.mbid);
+
+  // 1. Fetch MB data
+  const mbArtists = await findMusicBrainzArtistsByGids(mbids);
+  const mbMap = new Map(mbArtists.map((m) => [m.gid, m.name]));
+
+  // 2. Merge (Domain Logic)
+  return artists.map((artist) => ({
+    ...artist,
+    name: mbMap.get(artist.mbid) || 'Unknown Artist',
+  }));
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
-import { ArtistCard, ArtistRepository } from '@/entities/artist';
+import { ArtistCard, ArtistRepository, ArtistService } from '@/entities/artist';
 import { authOptions } from '@/shared/lib/auth';
 import { Button } from '@/shared/ui/button';
 
@@ -16,7 +16,7 @@ export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsF
   const user = session?.user;
 
   const followedArtistsRaw = user ? await ArtistRepository.findFollowedArtists(user.id) : [];
-  const followedArtists = await ArtistRepository.enrichArtistsWithMetadata(followedArtistsRaw);
+  const followedArtists = await ArtistService.enrichArtists(followedArtistsRaw);
 
   if (followedArtists.length === 0) {
     return (
