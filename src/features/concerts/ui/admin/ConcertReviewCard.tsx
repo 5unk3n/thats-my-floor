@@ -25,11 +25,11 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
   const [loading, setLoading] = useState(false);
 
   // Multi-Selection State
-  // Set<lastfmArtistId>
+  // Set<mbid>
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Store full candidate objects for lookup
-  // Map<lastfmArtistId, Candidate>
+  // Map<mbid, Candidate>
   const [candidateMap, setCandidateMap] = useState<Map<string, Candidate>>(new Map());
 
   // Manual Search State
@@ -69,23 +69,23 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
   };
 
   const toggleSelection = (candidate: Candidate) => {
-    if (!candidate.lastfmArtistId) return;
+    if (!candidate.mbid) return;
 
     const newSet = new Set(selectedIds);
     const newMap = new Map(candidateMap);
 
-    if (newSet.has(candidate.lastfmArtistId)) {
-      newSet.delete(candidate.lastfmArtistId);
+    if (newSet.has(candidate.mbid)) {
+      newSet.delete(candidate.mbid);
     } else {
-      newSet.add(candidate.lastfmArtistId);
-      newMap.set(candidate.lastfmArtistId, candidate);
+      newSet.add(candidate.mbid);
+      newMap.set(candidate.mbid, candidate);
     }
 
     setSelectedIds(newSet);
     setCandidateMap(newMap);
   };
 
-  const isSelected = (lastfmId?: string) => (lastfmId ? selectedIds.has(lastfmId) : false);
+  const isSelected = (mbid?: string) => (mbid ? selectedIds.has(mbid) : false);
 
   return (
     <Card className="w-full flex flex-col md:flex-row overflow-hidden">
@@ -148,7 +148,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                     <div
                       key={idx}
                       className={`flex items-center gap-2 p-2 rounded border transition-colors text-sm
-                          ${isSelected(result.lastfmArtistId) ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'hover:bg-accent'}`}
+                          ${isSelected(result.mbid) ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'hover:bg-accent'}`}
                     >
                       <div
                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
@@ -167,7 +167,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{result.name}</div>
                         </div>
-                        {isSelected(result.lastfmArtistId) && (
+                        {isSelected(result.mbid) && (
                           <CheckCircle2 size={16} className="text-green-600" />
                         )}
                       </div>
@@ -239,7 +239,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                     <div
                       key={cIdx}
                       className={`flex items-center gap-3 p-2 rounded border transition-colors
-                        ${isSelected(cand.lastfmArtistId) ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-accent'}`}
+                        ${isSelected(cand.mbid) ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-accent'}`}
                     >
                       <div
                         className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
@@ -259,7 +259,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           <div className="font-medium truncate">{cand.name}</div>
                         </div>
                         <div>
-                          {isSelected(cand.lastfmArtistId) ? (
+                          {isSelected(cand.mbid) ? (
                             <CheckCircle2 className="text-primary" size={20} />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-gray-300" />

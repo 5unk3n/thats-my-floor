@@ -1,18 +1,15 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 
-import { lastFmClient } from '@/shared/lib/lastfm/client';
+import { ArtistRepository } from '@/entities/artist';
 import { prisma } from '@/shared/lib/prisma';
 
 import * as PerplexityService from './perplexity.service';
 
 export interface Candidate {
   name: string;
-  lastfmArtistId?: string;
+  mbid: string; // Renamed from lastfmArtistId to mbid for clarity
   url?: string;
   imageUrl?: string;
-  listeners?: number;
-  playcount?: number;
-  genres?: string[]; // Last.fm artists might have tags, we can map them if needed
 }
 
 /**
@@ -30,7 +27,7 @@ export async function requestAnalysis(concertId: string) {
 
 /**
  * Step 2: Batch/Async Analysis Job
- * Triggers grouping analysis: Perplexity -> Last.fm (N) -> Grouped Result.
+ * Triggers grouping analysis: Perplexity -> Local MB Lookup -> Grouped Result.
  */
 export async function runAnalysisPipeline(concertId?: string, limit = 5) {
   const where: Prisma.ConcertWhereInput = concertId
@@ -46,7 +43,7 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
 
   for (const concert of targets) {
     try {
-      // Double-check status update if needed (e.g. if picked up by cron)
+      // Double-check status update if needed
       if (concert.publishStatus !== PublishStatus.ANALYZING) {
         await prisma.concert.update({
           where: { id: concert.id },
@@ -61,25 +58,23 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
 
       const groupedResults = [];
 
-      // 2. Verification (Last.fm) - Loop through EACH detected name
+      // 2. Verification (Local DB) - Loop through EACH detected name
       for (const name of uniqueNames) {
         try {
-          // Search Last.fm for this specific name
-          const response = await lastFmClient.searchArtist(name, 3);
-          const candidates = response?.results.artistmatches.artist || [];
+          // Search MusicBrainz Mirror for this specific name
+          const mbArtists = await ArtistRepository.findMusicBrainzArtistsByName(name, 5);
 
           groupedResults.push({
             query: name,
-            candidates: candidates.map((c) => ({
-              name: c.name,
-              lastfmArtistId: c.mbid || c.url,
-              url: c.url,
-              imageUrl: c.image.find((img) => img.size === 'large')?.['#text'],
-              listeners: parseInt(c.listeners || '0', 10),
-              // genres: c.tags, // Tags not directly in search result usually
+            candidates: mbArtists.map((artist) => ({
+              name: artist.name,
+              mbid: artist.gid,
+              // MB Mirror doesn't have URLs directly in the artist object usually, but let's leave it optional
+              // or we could fetch artistLinks if needed, but for candidate selection simple is better.
             })),
           });
-        } catch {
+        } catch (err) {
+          console.error(`Error searching artist ${name}:`, err);
           // Fallback for this name
           groupedResults.push({ query: name, candidates: [] });
         }
@@ -118,16 +113,16 @@ export async function publishConcert(concertId: string, selectedCandidates: Cand
   return prisma.$transaction(async (tx) => {
     // 1. Create/Connect Artists
     for (const candidate of selectedCandidates) {
-      if (!candidate.lastfmArtistId) continue; // Skip invalid
+      if (!candidate.mbid) continue; // Skip invalid
 
       let artist = await tx.artist.findUnique({
-        where: { mbid: candidate.lastfmArtistId },
+        where: { mbid: candidate.mbid },
       });
 
       if (!artist) {
         artist = await tx.artist.create({
           data: {
-            mbid: candidate.lastfmArtistId,
+            mbid: candidate.mbid,
             imageUrl: candidate.imageUrl,
           },
         });

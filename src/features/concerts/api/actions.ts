@@ -3,6 +3,7 @@
 import { PublishStatus } from '@prisma/client';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
+import { ArtistRepository } from '@/entities/artist';
 import { Concert } from '@/entities/concert';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
@@ -11,7 +12,6 @@ import { ActionResponse } from '@/shared/types/action-response';
 import * as AnalysisService from '../model/services/analysis.service';
 import { Candidate } from '../model/services/analysis.service';
 import * as concertService from '../model/services/concert.service';
-import { LastFmCandidate, searchLastFmArtists } from '../model/services/lastfm-search.service';
 import { notifyConcertRegistration } from '../model/services/notification.service';
 
 // --- Admin Pipeline Actions ---
@@ -125,10 +125,14 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
   }
 }
 
-// --- Manual Last.fm Search ---
+// --- Manual Search (Local DB) ---
 
-export async function searchExternalArtistsAction(query: string): Promise<LastFmCandidate[]> {
-  return searchLastFmArtists(query);
+export async function searchExternalArtistsAction(query: string): Promise<Candidate[]> {
+  const mbArtists = await ArtistRepository.findMusicBrainzArtistsByName(query, 5);
+  return mbArtists.map((artist) => ({
+    name: artist.name,
+    mbid: artist.gid,
+  }));
 }
 
 export async function getConcertsAction(params: {

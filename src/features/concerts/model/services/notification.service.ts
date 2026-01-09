@@ -14,10 +14,10 @@ export async function notifyConcertRegistration(concertId: string, artistNames: 
   // Find users who follow ANY of these artists and have concert registration alert enabled
   const followers = await ArtistRepository.findSubscribedFollowers(artistIds);
 
-  // Deduplicate users (a user might follow multiple artists in the lineup)
+  // Deduplicate users (findSubscribedFollowers returns unique users if implemented correctly, but explicit dedup is safe)
   const uniqueFollowersMap = new Map();
-  followers.forEach((f) => {
-    uniqueFollowersMap.set(f.userId, f.user);
+  followers.forEach((user) => {
+    uniqueFollowersMap.set(user.id, user);
   });
   const uniqueFollowers = Array.from(uniqueFollowersMap.values());
 
