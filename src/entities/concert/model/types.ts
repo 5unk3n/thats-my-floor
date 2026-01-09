@@ -20,7 +20,7 @@ export interface ConcertDetailModel extends Concert {
   images: string[];
   schedule: string;
   relates: BookingLink[];
-  artists: { id: string; name: string }[];
+  artists: { id: string; mbid: string; name: string }[];
 }
 
 export interface ConcertFilterParams {

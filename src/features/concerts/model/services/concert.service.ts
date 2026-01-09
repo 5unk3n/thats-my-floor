@@ -108,6 +108,7 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     artists: concert.artists.map((a: any) => ({
       id: String(a.artist.id),
+      mbid: String(a.artist.mbid),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       name: (artistMap.get(a.artist.id) as any)?.name || 'Unknown Artist',
     })),

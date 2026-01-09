@@ -76,7 +76,7 @@ export function ConcertInfo({ concert }: ConcertInfoProps) {
                     concert.artists.map((artist, index) => (
                       <span key={artist.id}>
                         <Link
-                          href={`/artists/${artist.id}`}
+                          href={`/artists/${artist.mbid}`}
                           className="text-primary hover:underline hover:text-primary/80 transition-colors"
                         >
                           {artist.name}
