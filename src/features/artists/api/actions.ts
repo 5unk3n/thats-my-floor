@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 
-import { ArtistService } from '@/entities/artist';
+import { ArtistRepository, ArtistService } from '@/entities/artist';
 import { UserRepository } from '@/entities/user';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { authOptions } from '@/shared/lib/auth';

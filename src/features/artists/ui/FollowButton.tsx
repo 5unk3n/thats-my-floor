@@ -5,8 +5,8 @@ import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { getFollowStatus, toggleFollow } from '@/features/artists/api/actions';
-import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui/button';
 
 interface FollowButtonProps {
   artistId: string | number;

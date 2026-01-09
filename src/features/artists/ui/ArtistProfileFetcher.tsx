@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { getCachedArtistProfile } from '@/features/artists/model/services/get-artist-profile';
+import { getCachedArtistProfile } from '@/features/artists/model/services/artist-profile.service';
 import { ArtistProfile } from '@/features/artists/ui/ArtistProfile';
 
 interface ArtistProfileFetcherProps {
