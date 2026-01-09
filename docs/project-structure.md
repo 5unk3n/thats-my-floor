@@ -156,6 +156,10 @@ src/
 
 - 모든 Slice는 최상위 `index.ts`를 가져야 합니다.
 - **외부에서는 반드시 `index.ts`를 통해서만 import 해야 합니다.**
+- **Repository와 Service는 Namespace Export 형식을 사용합니다.**
+  - `export * as ArtistRepository from './api/repository';`
+  - `export * as ArtistService from './model/artist.service';`
+  - 사용 시: `ArtistRepository.findArtist(...)`
 - 내부 구조(`ui`, `model` 등)로 직접 접근하는 Deep Import는 금지됩니다.
   - ❌ `import { ArtistCard } from '@/entities/artist/ui/ArtistCard'`
   - ✅ `import { ArtistCard } from '@/entities/artist'`
@@ -173,12 +177,19 @@ src/
 
 ### 4. 캐싱 전략 (Caching Strategy)
 
-- **캐싱이 필요 없는 경우**: Component나 Action에서 `api/`(Repository)를 직접 호출해도 됩니다.
-- **캐싱이 필요한 경우**: 반드시 **Service 함수로 감싸서** `'use cache'`를 적용해야 합니다.
-  - Repository(`api/`)에 직접 캐싱 로직을 적용하지 마세요.
-  - 캐싱 정책은 비즈니스 로직이므로 `model/`의 Service가 담당합니다.
+- **캐싱 위치**: **Feature Layer의 Service**에서 수행하는 것을 원칙으로 합니다.
+  - Entity Service는 순수 도메인 로직에 집중하며, 캐싱은 상위 레이어(Feature)에서 처리합니다.
+  - 단, Entity 내에서만 사용되는 무거운 연산이 있다면 Entity Service 내부 캐싱도 허용됩니다.
+- **구현 방식**: `Next.js`의 `use cache` API를 사용합니다.
+- Repository(`api/`)에는 캐싱 로직을 포함하지 않습니다.
 
-### 5. ESLint Boundaries
+### 5. 구현 스타일 (Implementation Style)
+
+- **Repository & Service**:
+  - `class` 대신 **개별 함수(`export function`)** 형태로 작성합니다.
+  - Tree Shaking에 유리하며, 필요한 함수만 import하여 사용할 수 있습니다.
+
+### 6. ESLint Boundaries
 
 `eslint.config.mjs`를 통해 다음 규칙을 강제할 수 있습니다:
 
