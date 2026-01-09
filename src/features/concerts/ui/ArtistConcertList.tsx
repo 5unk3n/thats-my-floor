@@ -1,4 +1,4 @@
-import { Concert, ConcertCard, ConcertRepository } from '@/entities/concert';
+import { ConcertCard, ConcertService } from '@/entities/concert';
 
 interface ArtistConcertListProps {
   artistId: Promise<string> | string;
@@ -6,7 +6,7 @@ interface ArtistConcertListProps {
 
 export async function ArtistConcertList({ artistId }: ArtistConcertListProps) {
   const id = await artistId;
-  const concerts = await ConcertRepository.findConcertsByArtistId(Number(id));
+  const concerts = await ConcertService.getConcertsByArtistMbid(id);
 
   if (concerts.length === 0) {
     return (
@@ -19,7 +19,7 @@ export async function ArtistConcertList({ artistId }: ArtistConcertListProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {concerts.map((concert) => (
-        <ConcertCard key={concert.id} concert={concert as unknown as Concert} />
+        <ConcertCard key={concert.id} concert={concert} />
       ))}
     </div>
   );

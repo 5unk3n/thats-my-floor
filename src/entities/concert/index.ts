@@ -1,4 +1,5 @@
 export * as ConcertRepository from './api/repository';
+export * as ConcertService from './model/concert.service';
 export * from './model/types';
 export * from './ui/ConcertCard';
 export * from './ui/ConcertDetail';

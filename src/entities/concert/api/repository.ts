@@ -182,19 +182,37 @@ export const findConcertsByArtistId = async (artistId: number) => {
     },
   });
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0].replace(/-/g, '.');
-  };
+  return concerts;
+};
 
-  return concerts.map((c) => ({
-    id: c.id,
-    title: c.title,
-    posterUrl: c.posterUrl || '',
-    startDate: formatDate(c.startDate),
-    endDate: formatDate(c.endDate),
-    place: c.place,
-    status: c.status,
-  }));
+export const findConcertsByArtistMbid = async (artistMbid: string) => {
+  const concerts = await prisma.concert.findMany({
+    where: {
+      artists: {
+        some: {
+          artist: {
+            mbid: artistMbid,
+          },
+        },
+      },
+      publishStatus: PublishStatus.PUBLISHED,
+      status: '공연예정',
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    select: {
+      id: true,
+      title: true,
+      posterUrl: true,
+      startDate: true,
+      endDate: true,
+      place: true,
+      status: true,
+    },
+  });
+
+  return concerts;
 };
 
 export const searchConcerts = async (query: string, limit: number = 5) => {
