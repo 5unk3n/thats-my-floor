@@ -36,9 +36,9 @@ export async function findLocalArtistsByMbids(mbids: string[]) {
   });
 }
 
-export async function findMusicBrainzArtistByGid(gid: string) {
+export async function findMusicBrainzArtistByMbid(mbid: string) {
   return prisma.musicBrainzArtist.findUnique({
-    where: { gid },
+    where: { gid: mbid },
     include: {
       aliases: true,
       artistLinks: {
@@ -70,10 +70,10 @@ export async function createLocalArtist(data: Prisma.ArtistCreateInput) {
   });
 }
 
-export async function upsertLocalArtist(gid: string, data: Prisma.ArtistCreateInput) {
+export async function upsertLocalArtist(mbid: string, data: Prisma.ArtistCreateInput) {
   return prisma.artist.upsert({
-    where: { mbid: gid },
-    create: { ...data, mbid: gid },
+    where: { mbid },
+    create: { ...data, mbid },
     update: data,
   });
 }
@@ -115,7 +115,7 @@ export async function findFollowedArtists(userId: string) {
   return follows.map((f) => f.artist);
 }
 
-export async function findArtistsByLastfmIds(mbids: string[], userId?: string) {
+export async function findArtistsWithConcerts(mbids: string[], userId?: string) {
   return prisma.artist.findMany({
     where: {
       mbid: { in: mbids },
@@ -146,7 +146,7 @@ export async function findArtistsByLastfmIds(mbids: string[], userId?: string) {
   });
 }
 
-export async function findArtistsByLastfmIdList(mbids: string[]) {
+export async function findExistingArtists(mbids: string[]) {
   return prisma.artist.findMany({
     where: { mbid: { in: mbids } },
     select: { id: true, mbid: true },
@@ -204,9 +204,9 @@ export async function findFollowersByArtistIds(artistIds: number[]) {
   });
 }
 
-export async function findMusicBrainzArtistsByGids(gids: string[]) {
+export async function findMusicBrainzArtistsByMbids(mbids: string[]) {
   return prisma.musicBrainzArtist.findMany({
-    where: { gid: { in: gids } },
+    where: { gid: { in: mbids } },
     select: { gid: true, name: true },
   });
 }

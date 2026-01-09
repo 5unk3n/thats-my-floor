@@ -7,8 +7,8 @@ import {
   findFollowersByArtistIds,
   findLocalArtistByMbid,
   findLocalArtistsByMbids,
-  findMusicBrainzArtistByGid,
-  findMusicBrainzArtistsByGids,
+  findMusicBrainzArtistByMbid,
+  findMusicBrainzArtistsByMbids,
   findMusicBrainzArtistsByName,
   findUserArtist,
   upsertLocalArtist,
@@ -27,8 +27,8 @@ export async function searchArtists(query: string) {
   }
 
   // 2. Fetch local Artist data (images) for these artists
-  const gids = artists.map((a) => a.gid);
-  const localArtists = await findLocalArtistsByMbids(gids);
+  const mbids = artists.map((a) => a.gid);
+  const localArtists = await findLocalArtistsByMbids(mbids);
 
   const localArtistMap = new Map(localArtists.map((a) => [a.mbid, a]));
 
@@ -40,20 +40,21 @@ export async function searchArtists(query: string) {
 }
 
 /**
- * Get artist profile by GID.
+ * Get artist profile by MBID.
  * Pure domain logic: merges MusicBrainz and Local data.
  */
-export async function getArtistProfile(gid: string) {
-  const mbArtist = await findMusicBrainzArtistByGid(gid);
+export async function getArtistProfile(mbid: string) {
+  const mbArtist = await findMusicBrainzArtistByMbid(mbid);
   if (!mbArtist) return null;
 
-  const localArtist = await findLocalArtistByMbid(gid);
+  const localArtist = await findLocalArtistByMbid(mbid);
 
   const data = { ...mbArtist, localData: localArtist };
 
   // Transform/Combine data if needed
   return {
     id: data.gid,
+    mbid: data.gid,
     name: data.name,
     images: data.localData?.imageUrl ? [data.localData.imageUrl] : [],
     genres: [], // TODO: Tag/Genre implementation
@@ -76,7 +77,7 @@ export async function toggleArtistFollow(userId: string, artistMbid: string) {
 
   if (!artistId) {
     // Fetch details from MB to create local record
-    const mbArtist = await findMusicBrainzArtistByGid(artistMbid);
+    const mbArtist = await findMusicBrainzArtistByMbid(artistMbid);
     if (!mbArtist) throw new Error('Artist not found in MusicBrainz');
 
     // Create local artist
@@ -108,8 +109,8 @@ export async function getArtistFollowStatus(userId: string, artistMbid: string) 
   return !!follow;
 }
 
-export async function upsertArtist(gid: string, data: Prisma.ArtistCreateInput) {
-  return upsertLocalArtist(gid, data);
+export async function upsertArtist(mbid: string, data: Prisma.ArtistCreateInput) {
+  return upsertLocalArtist(mbid, data);
 }
 
 export async function findSubscribedFollowers(artistIds: number[]) {
@@ -131,7 +132,7 @@ export async function enrichArtists(
   const mbids = artists.map((a) => a.mbid);
 
   // 1. Fetch MB data
-  const mbArtists = await findMusicBrainzArtistsByGids(mbids);
+  const mbArtists = await findMusicBrainzArtistsByMbids(mbids);
   const mbMap = new Map(mbArtists.map((m) => [m.gid, m.name]));
 
   // 2. Merge (Domain Logic)

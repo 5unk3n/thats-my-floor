@@ -37,7 +37,7 @@ export async function fetchMyLastFmArtists(
 
     // Check repository capability.
     // Use the individual export
-    const existingArtists = await ArtistRepository.findArtistsByLastfmIds(lastfmIds, userId);
+    const existingArtists = await ArtistRepository.findArtistsWithConcerts(lastfmIds, userId);
 
     const now = new Date();
 
@@ -48,7 +48,7 @@ export async function fetchMyLastFmArtists(
 
       let status: SyncArtistStatus = 'new';
       if (existing) {
-        // existing.followers is populated by findArtistsByLastfmIds
+        // existing.followers is populated by findArtistsWithConcerts
         if (existing.followers && existing.followers.length > 0) {
           status = 'following';
         } else {
@@ -93,7 +93,7 @@ export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist
 
     // Fetch currently stored artists to get their internal IDs
     const lastfmIds = artists.map((a) => a.mbid).filter((id): id is string => !!id);
-    const dbArtists = await ArtistRepository.findArtistsByLastfmIdList(lastfmIds);
+    const dbArtists = await ArtistRepository.findExistingArtists(lastfmIds);
 
     // 2. Bulk Insert UserArtist
     const artistIds = dbArtists.map((a) => a.id);

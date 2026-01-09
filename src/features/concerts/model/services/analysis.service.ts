@@ -7,7 +7,7 @@ import * as PerplexityService from './perplexity.service';
 
 export interface Candidate {
   name: string;
-  mbid: string; // Renamed from lastfmArtistId to mbid for clarity
+  mbid: string;
   url?: string;
   imageUrl?: string;
 }

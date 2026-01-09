@@ -5,7 +5,6 @@ export interface Artist {
   imageUrl?: string | null;
   genre?: string;
   description?: string;
-  lastfmArtistId?: string | null;
   mbid?: string;
 }
 
