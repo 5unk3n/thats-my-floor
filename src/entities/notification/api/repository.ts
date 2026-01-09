@@ -114,38 +114,3 @@ export const updateNotificationSettingsOnly = async (
     data,
   });
 };
-
-// --- Helper Queries for Notification Logic ---
-
-export const findConcertForNotification = async (concertId: string) => {
-  return prisma.concert.findUnique({
-    where: { id: concertId },
-    include: {
-      artists: {
-        include: {
-          artist: true,
-        },
-      },
-    },
-  });
-};
-
-export const findFollowersForNotification = async (artistIds: number[]) => {
-  return prisma.userArtist.findMany({
-    where: {
-      artistId: { in: artistIds },
-      user: {
-        notificationSettings: {
-          concertRegistrationAlert: true,
-        },
-      },
-    },
-    include: {
-      user: {
-        include: {
-          devices: true,
-        },
-      },
-    },
-  });
-};

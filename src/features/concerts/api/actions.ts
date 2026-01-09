@@ -4,7 +4,6 @@ import { PublishStatus } from '@prisma/client';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { Concert } from '@/entities/concert';
-import * as notificationService from '@/entities/notification/model/notification.service';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
@@ -13,6 +12,7 @@ import * as AnalysisService from '../model/services/analysis.service';
 import { Candidate } from '../model/services/analysis.service';
 import * as concertService from '../model/services/concert.service';
 import { LastFmCandidate, searchLastFmArtists } from '../model/services/lastfm-search.service';
+import { notifyConcertRegistration } from '../model/services/notification.service';
 
 // --- Admin Pipeline Actions ---
 
@@ -63,7 +63,7 @@ export async function publishConcertAction(
     const detail = await concertService.getConcertDetail(concert.id);
     if (detail) {
       const artistNames = detail.artists.map((a) => a.name).join(', ');
-      await notificationService.notifyConcertRegistration(concert.id, artistNames);
+      await notifyConcertRegistration(concert.id, artistNames);
     }
 
     // Invalidate Cache

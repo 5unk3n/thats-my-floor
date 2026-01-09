@@ -177,3 +177,23 @@ export const createUserArtistsMany = async (
     skipDuplicates: true,
   });
 };
+
+export const findSubscribedFollowers = async (artistIds: number[]) => {
+  return prisma.userArtist.findMany({
+    where: {
+      artistId: { in: artistIds },
+      user: {
+        notificationSettings: {
+          concertRegistrationAlert: true,
+        },
+      },
+    },
+    include: {
+      user: {
+        include: {
+          devices: true,
+        },
+      },
+    },
+  });
+};
