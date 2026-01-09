@@ -3,6 +3,12 @@ export interface Artist {
   name: string;
   imageUrl?: string | null;
   mbid?: string;
+  externalLinks?: {
+    appleMusic?: string;
+    spotify?: string;
+    youtube?: string;
+    melon?: string;
+  };
 }
 
 export interface ParticipatingConcert {

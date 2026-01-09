@@ -62,7 +62,16 @@ export async function getArtistProfile(mbid: string) {
       type: l.linkDef.linkType.name,
       url: l.url.url,
     })),
-    image: data.localData?.imageUrl || null, // Compatibility for UI
+    // Compatibility for UI
+    image: data.localData?.imageUrl || null,
+
+    // Domain Logic: Extract External Links
+    externalLinks: {
+      appleMusic: data.artistLinks.find((l) => l.url.url.includes('music.apple.com'))?.url.url,
+      spotify: data.artistLinks.find((l) => l.url.url.includes('spotify.com'))?.url.url,
+      youtube: data.artistLinks.find((l) => l.url.url.includes('youtube.com'))?.url.url,
+      melon: data.artistLinks.find((l) => l.url.url.includes('melon.com'))?.url.url,
+    },
   };
 }
 
