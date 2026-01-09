@@ -1,6 +1,5 @@
+import { ArtistService } from '@/entities/artist';
 import { ConcertRepository } from '@/entities/concert';
-import { searchCache } from '@/shared/lib/cache';
-import { lastFmClient } from '@/shared/lib/lastfm/client';
 
 import { SearchResult } from '../types';
 
@@ -8,34 +7,24 @@ export const getSearchResults = async (
   query: string,
   type: 'all' | 'concert' | 'artist' = 'all'
 ): Promise<SearchResult> => {
+  'use cache';
   if (!query || query.trim().length === 0) {
     return { concerts: [], artists: [] };
   }
 
   const normalizedQuery = query.trim();
-  const cacheKey = `${normalizedQuery}:${type}`;
-
-  // 1. Check Cache
-  if (searchCache.has(cacheKey)) {
-    console.log(`[Cache Hit] Serving search results for: "${normalizedQuery}" (type: ${type})`);
-    return searchCache.get(cacheKey) as SearchResult;
-  }
-
-  console.log(`[Cache Miss] Fetching fresh data for: "${normalizedQuery}" (type: ${type})`);
 
   try {
-    const [concerts, lastFmResponse] = await Promise.all([
-      // Search Concerts (DB) - Run only if type is 'all' or 'concert'
+    const [concerts, artists] = await Promise.all([
+      // Search Concerts
       type === 'all' || type === 'concert'
         ? ConcertRepository.searchConcerts(normalizedQuery, 5)
-        : Promise.resolve([]),
-      // Search Artists (Last.fm API) - Run only if type is 'all' or 'artist'
+        : Promise.resolve([] as Awaited<ReturnType<typeof ConcertRepository.searchConcerts>>),
+      // Search Artists
       type === 'all' || type === 'artist'
-        ? lastFmClient.searchArtist(normalizedQuery, 5)
-        : Promise.resolve(null),
+        ? ArtistService.searchArtists(normalizedQuery)
+        : Promise.resolve([] as Awaited<ReturnType<typeof ArtistService.searchArtists>>),
     ]);
-
-    const lastFmArtists = lastFmResponse?.results.artistmatches.artist || [];
 
     const result: SearchResult = {
       concerts: concerts.map((c) => ({
@@ -45,17 +34,15 @@ export const getSearchResults = async (
         startDate: c.startDate,
         endDate: c.endDate,
         place: c.place,
-        status: c.status,
+        status: c.status || '공연예정', // Handle potential null status
       })),
-      artists: lastFmArtists.map((a) => ({
-        id: a.mbid || a.url, // Use MBID if available, otherwise URL as fallback ID
+      artists: artists.map((a) => ({
+        id: a.gid,
         name: a.name,
-        image: a.image.find((img) => img.size === 'large')?.['#text'] || null,
+        // If image exists in localData use it, otherwise null.
+        image: a.localData?.imageUrl || null,
       })),
     };
-
-    // 2. Set Cache
-    searchCache.set(cacheKey, result);
 
     return result;
   } catch (error) {
