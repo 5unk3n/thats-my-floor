@@ -9,288 +9,225 @@
 
 ---
 
-## 디렉토리 구조 (요약)
+## 아키텍처 개요 (Feature-Sliced Design)
 
+이 프로젝트는 **Feature-Sliced Design (FSD)** 아키텍처를 따릅니다.
+코드베이스는 **레이어(Layer)**, **슬라이스(Slice)**, **세그먼트(Segment)**의 3단계로 구성됩니다.
+
+### 의존성 규칙 (Dependency Rule)
+
+**의존성은 항상 "위에서 아래로(Unidirectional)"만 흘러야 합니다.**
+
+```mermaid
+graph TD
+    App[App Layer] --> Features[Features Layer]
+    App --> Entities[Entities Layer]
+    App --> Shared[Shared Layer]
+
+    Features --> Entities
+    Features --> Shared
+
+    Entities --> Shared
 ```
-concert-notification-service/
-├── src/
-│   ├── app/                    # [Composition Root] 페이지 조합 및 라우팅
-│   │   ├── (auth)/             # 인증 관련 라우트 그룹
-│   │   ├── (main)/             # 메인 앱 라우트 그룹
-│   │   └── api/                # External Webhooks (NextAuth, Spotify)
-│   ├── features/               # [Domain Logic] 기능별 격리된 모듈
-│   │   ├── [feature-name]/     # 예: auth, concerts, artists, notifications, setlists
-│   │   │   ├── components/     # UI Components (Client/Server)
-│   │   │   ├── hooks/          # Feature Hooks
-│   │   │   ├── server/         # [Isolated] Server Actions & DB Logic
-│   │   │   │   ├── services/   # Business Logic Services (*.service.ts, Functional Style)
-│   │   │   │   ├── actions.ts  # Public Server Actions
-│   │   │   │   └── db.ts       # Internal DB Access
-│   │   │   └── types.ts
-│   ├── shared/                 # [Shared] 재사용 가능한 UI 및 유틸리티
-│   │   ├── components/         # UI Library (Button, Modal etc.)
-│   │   ├── hooks/              # Utility Hooks
-│   │   ├── lib/                # Utils (prisma, date-fns, lru-cache)
-│   │   └── providers/          # Global Providers (QueryClient, Session)
-│   ├── types/                  # Global Types (declarations)
-│   └── proxy.ts                # [Interceptor] Lightweight Request Proxy
-├── prisma/
-├── public/
-└── ...config files
+
+1.  **상위 레이어는 하위 레이어를 참조할 수 있습니다.**
+2.  **하위 레이어는 상위 레이어를 참조할 수 없습니다.** (예: Entity는 Feature를 알 수 없음)
+3.  **동일 레이어 간의 참조는 금지됩니다.** (예: Feature A -> Feature B 금지, Entity A -> Entity B 금지)
+
+---
+
+## 디렉토리 구조 (Directory Structure)
+
+```bash
+src/
+├── app/                    # [Layer] App: Composition Root
+│   ├── (auth)/             #   - 인증 관련 라우트 그룹
+│   ├── (main)/             #   - 메인 라우트 그룹
+│   ├── api/                #   - Next.js API Routes (Webhooks 등)
+│   └── layout.tsx          #   - Root Layout, Global CSS Import
+│
+├── features/               # [Layer] Features: User Scenarios (사용자 기능)
+│   ├── [slice]/            #   [Slice] 예: authentication, ticketing, search
+│   │   ├── ui/             #     [Segment] Smart UI (Container, Form, Interaction)
+│   │   ├── model/          #     [Segment] Business Logic (Hook, Store, Schema)
+│   │   ├── api/            #     [Segment] Orchestration (Server Actions)
+│   │   ├── lib/            #     [Segment] Helpers (해당 기능 전용 유틸리티)
+│   │   └── index.ts        #     [Public API] 외부 노출 모듈 정의
+│
+├── entities/               # [Layer] Entities: Business Domain (비즈니스 실체)
+│   ├── [slice]/            #   [Slice] 예: user, concert, artist, notification
+│   │   ├── ui/             #     [Segment] Dumb UI (Presentational, Props only)
+│   │   ├── model/          #     [Segment] Domain Model (Type, Service, Cache)
+│   │   ├── api/            #     [Segment] Data Access (Repository, DB)
+│   │   └── index.ts        #     [Public API] 외부 노출 모듈 정의
+│
+├── shared/                 # [Layer] Shared: Reusable Infrastructure (공용 인프라)
+│   ├── ui/                 #   - 공용 UI 컴포넌트 (Button, Modal, Input - Shadcn/ui)
+│   ├── layout/             #   - 레이아웃 컴포넌트 (Header, Footer)
+│   ├── lib/                #   - 유틸리티 (Prisma, Date, Axios)
+│   ├── hooks/              #   - 공용 Hooks
+│   ├── providers/          #   - 전역 Providers (QueryClient, Session)
+│   ├── constants/          #   - 상수 정의
+│   └── types/              #   - 전역 타입 정의
+│
+├── proxy.ts                # [Interceptor] Lightweight Request Proxy (Middleware 대체)
+└── ...
 ```
 
 ---
 
-## 주요 파일 설명
+## 레이어별 상세 역할 (Roles & Responsibilities)
 
-### 1. `src/app/layout.tsx` (루트 레이아웃)
+### 1. App Layer (`src/app`)
 
-```typescript
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import Providers from '@/shared/providers';
+- **역할**: 애플리케이션의 진입점. 하위 레이어의 요소들을 **조합(Composition)**하여 페이지를 구성합니다.
+- **규칙**:
+  - 비즈니스 로직을 직접 포함하지 않습니다.
+  - Feature의 UI와 Server Action을 연결하는 역할을 수행합니다.
 
-const inter = Inter({ subsets: ['latin'] });
+### 2. Features Layer (`src/features`)
 
-export const metadata: Metadata = {
-  title: '공연 알림 서비스',
-  description: '좋아하는 아티스트의 공연 정보를 놓치지 마세요',
-};
+- **역할**: 사용자에게 가치를 제공하는 구체적인 **기능 단위(User Scenario)**.
+- **구성**:
+  - **`ui`**: 사용자와 상호작용하는 컴포넌트 (`LoginForm`, `SearchFilter`). Entity UI를 포함하여 구성할 수 있습니다.
+  - **`model`**: 해당 기능을 수행하기 위한 상태 판별, 유효성 검사, React Query Hooks.
+  - **`api`**: **Orchestration(조율)**을 담당하는 Server Actions.
+    - 클라이언트 요청 수신 → 유효성 검사 → Entity Service/Repository 호출 → 응답 반환.
+- **예시**: `concerts` (공연 목록 조회 및 필터링), `auth` (로그인/회원가입 프로세스), `search` (통합 검색).
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang='ko'>
-      <body className={inter.className}>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
-}
-```
+### 3. Entities Layer (`src/entities`)
 
-### 2. `src/shared/providers/index.tsx` (클라이언트 Providers)
+- **역할**: 비즈니스 로직의 핵심이 되는 **도메인 모델(Business Domain)**.
+- **구성**:
+  - **`ui`**: 데이터 표현에 집중하는 순수 컴포넌트 (`ArtistCard`, `ConcertBadge`). 상태나 로직이 없거나 최소화되어야 합니다.
+  - **`model`**: 핵심 데이터 타입(`type`), 도메인 서비스 로직(`*.service.ts`), 캐싱 정책(`use cache`).
+  - **`api`**: **Data Access(데이터 접근)**를 담당하는 Repository. Prisma 호출이나 외부 API(Spotify, KOPIS) 호출.
+- **주의**: Entity는 어떤 Feature에서 사용될지 알 수 없으므로, 특정 유즈케이스에 종속적인 로직을 포함하면 안 됩니다.
 
-```typescript
-'use client';
+### 4. Shared Layer (`src/shared`)
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SessionProvider } from 'next-auth/react';
-import { useState } from 'react';
-
-export default function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
-
-  return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </SessionProvider>
-  );
-}
-```
-
-### 3. `src/app/(main)/page.tsx` (홈 - Composition Example)
-
-페이지 파일은 직접적인 로직을 수행하지 않고, Features의 컴포넌트와 Server Action을 **조합(Composition)**하는 역할만 수행합니다.
-
-```typescript
-import { getConcerts } from '@/features/concerts/server/actions'; // Server Action 호출
-import ConcertList from '@/features/concerts/components/ConcertList';
-import SearchBar from '@/shared/components/forms/SearchBar';
-
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: { page?: string; status?: string; region?: string };
-}) {
-  // Feature의 Server Action 호출
-  const concerts = await getConcerts({
-    page: Number(searchParams.page) || 1,
-    status: searchParams.status,
-    region: searchParams.region,
-  });
-
-  return (
-    <main className='container mx-auto px-4 py-8'>
-      <h1 className='text-3xl font-bold mb-6'>공연 목록</h1>
-      {/* Shared Component */}
-      <SearchBar />
-      {/* Feature Component */}
-      <ConcertList concerts={concerts} />
-    </main>
-  );
-}
-```
-
-### 4. `src/proxy.ts` (요청 인터셉터)
-
-Next.js 16의 새로운 Interceptor 파일로, 기존 Middleware를 대체합니다.
-페이지가 렌더링되기 전에 요청을 가로채어 리다이렉트나 헤더 수정을 수행합니다.
-
-**주요 역할**:
-
-- **인증 리다이렉트**: 보호된 경로(`/mypage` 등) 접근 시 쿠키 확인 후 `/login`으로 이동
-- **보안 헤더**: 응답에 `X-Frame-Options`, `X-Content-Type-Options` 등 보안 헤더 추가
-
-```typescript
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-export default function proxy(request: NextRequest) {
-  // 1. 보안 헤더 추가
-  const headers = new Headers(request.headers);
-  headers.set('X-Content-Type-Options', 'nosniff');
-
-  // 2. 인증 리다이렉트 (Lightweight)
-  const isAuthenticated = request.cookies.has('auth-token');
-  const isProtected = request.nextUrl.pathname.startsWith('/mypage');
-
-  if (isProtected && !isAuthenticated) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  return NextResponse.next({
-    request: {
-      headers,
-    },
-  });
-}
-```
-
-### 5. `src/features/concerts/server/actions.ts` (Server Actions)
-
-DB 로직과 Server Action이 분리된 구조입니다.
-
-```typescript
-'use server';
-
-import { getConcertsFromDB } from './db'; // Internal DB Logic
-
-export async function getConcerts(params: {
-  page: number;
-  limit?: number;
-  status?: string;
-  region?: string;
-  genre?: string;
-}) {
-  // Controller Logic: Validation, Auth Check etc.
-  return await getConcertsFromDB(params);
-}
-```
+- **역할**: 특정 도메인에 종속되지 않는 범용적인 코드.
+- **구성**: 디자인 시스템 컴포넌트(`ui`), 레이아웃(`layout`), 유틸리티 라이브러리(`lib`), 전역 훅(`hooks`) 등.
 
 ---
 
-## 라우트 그룹 설명
+## Segment 상세 가이드 (Segment Guide)
 
-### `(auth)` - 인증 관련 라우트
+각 Slice 내부의 폴더(Segment) 역할 정의입니다.
 
-- 인증 페이지에만 적용되는 레이아웃 (중앙 정렬, 배경 등)
-- 경로: `/login`
+### A. UI Segment (`ui/`)
 
-### `(main)` - 메인 앱 라우트
+| 구분       | Entities UI                          | Features UI                                 |
+| :--------- | :----------------------------------- | :------------------------------------------ |
+| **성격**   | Dumb / Presentational                | Smart / Container                           |
+| **데이터** | Props로만 데이터 수신                | 데이터를 직접 Fetch하거나 Store 연결        |
+| **로직**   | 데이터 포맷팅 등 표현 로직만 허용    | 이벤트 핸들링, 폼 제출, 상태 관리 로직 포함 |
+| **예시**   | `ArtistProfileImage`, `ConcertTitle` | `LoginModal`, `ArtistSubscribeButton`       |
 
-- 헤더, 네비게이션이 포함된 레이아웃
-- 경로: `/`, `/concerts`, `/artists`, `/mypage`, `/calendar`
+### B. Model Segment (`model/`)
+
+- **Types**: 해당 슬라이스에서 사용하는 TypeScript 타입 정의.
+- **Service (`*.service.ts`)**:
+  - **순수 비즈니스 로직**과 **캐싱 전략**을 담당.
+  - `use cache`, `cacheTag`는 주로 이곳에서 선언합니다.
+  - Repository를 호출하여 데이터를 가져오고, 비즈니스 요구사항에 맞게 가공합니다.
+- **Hooks**: Client-side 로직을 위한 Custom Hooks.
+
+### C. API Segment (`api/`)
+
+| 구분       | Entities API (Repository)           | Features API (Actions)                            |
+| :--------- | :---------------------------------- | :------------------------------------------------ |
+| **역할**   | **Data Access Layer (DAO)**         | **Controller / Orchestrator**                     |
+| **내용**   | Prisma Query, External API Fetch    | Server Actions (`use server`)                     |
+| **특징**   | 로직 없이 순수 CRUD/Fetch 수행      | 유효성 검사, 권한 체크 후 Repository/Service 호출 |
+| **Naming** | `find...`, `create...`, `update...` | `Verb`+`Noun` (ex: `login`, `submitReview`)       |
+
+### D. Lib Segment (`lib/`)
+
+- **역할**: 해당 Slice 내에서만 사용하는 헬퍼 함수 및 유틸리티.
+- **예시**: 날짜 포맷팅, 가격 계산, 문자열 변환 등.
+- **주의**: 여러 Slice에서 공통으로 사용되는 유틸리티는 `shared/lib`로 이동합니다.
 
 ---
 
-## Server Components vs Client Components
+## 주요 개발 규칙 (Development Rules)
 
-### Server Components (기본)
+### 1. Public API (Index File) 활용
+
+- 모든 Slice는 최상위 `index.ts`를 가져야 합니다.
+- **외부에서는 반드시 `index.ts`를 통해서만 import 해야 합니다.**
+- 내부 구조(`ui`, `model` 등)로 직접 접근하는 Deep Import는 금지됩니다.
+  - ❌ `import { ArtistCard } from '@/entities/artist/ui/ArtistCard'`
+  - ✅ `import { ArtistCard } from '@/entities/artist'`
+
+### 2. Cross-Boundary 참조 금지
+
+- **Features -> Features**: 금지. 필요 시 상위(App)에서 조합하거나 Shared로 로직 이동.
+- **Entities -> Entities**: 금지. 필요 시 상위(Features)에서 데이터를 조합하여 해결.
+  - 예: `Concert` Entity에서 `Artist` 정보가 필요하다면, Repository 레벨에서 조인(Join)하여 가져오거나 Feature 서비스에서 두 Entity를 호출하여 합칩니다.
+
+### 3. Server Isolation (서버 격리)
+
+- 서버 전용 코드(DB 접근, 비밀 키 사용 등)는 반드시 `api`, `model` 내부의 서버 전용 파일에 위치해야 합니다.
+- 클라이언트 컴포넌트에서 서버 모듈을 직접 import 하지 않도록 주의합니다.
+
+### 4. 캐싱 전략 (Caching Strategy)
+
+- **캐싱이 필요 없는 경우**: Component나 Action에서 `api/`(Repository)를 직접 호출해도 됩니다.
+- **캐싱이 필요한 경우**: 반드시 **Service 함수로 감싸서** `'use cache'`를 적용해야 합니다.
+  - Repository(`api/`)에 직접 캐싱 로직을 적용하지 마세요.
+  - 캐싱 정책은 비즈니스 로직이므로 `model/`의 Service가 담당합니다.
+
+### 5. ESLint Boundaries
+
+`eslint.config.mjs`를 통해 다음 규칙을 강제할 수 있습니다:
+
+- **Shared**: `features`, `entities`를 참조할 수 없음. 오직 다른 `shared` 모듈만 참조 가능.
+- **Entities**: `features`를 참조할 수 없음. 다른 `entities`도 참조 금지.
+- **Features**: 다른 `features`를 직접 import 할 수 없음. `entities`와 `shared`만 참조 가능.
+- **App**: `features`, `entities`, `shared`를 모두 import 하여 조합(Composition) 가능.
+
+---
+
+## Server/Client Component 사용 기준
+
+### Server Components (기본값)
 
 - 데이터 페칭이 필요한 페이지
 - SEO가 중요한 페이지 (공연 상세, 아티스트 상세)
+- DB 접근이 필요한 로직
 - 예: `app/(main)/concerts/[id]/page.tsx`
 
 ### Client Components (`'use client'`)
 
-- 사용자 상호작용이 필요한 컴포넌트
-- 상태 관리, 이벤트 핸들러 사용
+다음 조건 중 **하나라도 해당**되면 Client Component로 선언합니다:
+
+- **이벤트 핸들러 사용**: `onClick`, `onChange`, `onSubmit` 등
+- **브라우저 API 사용**: `localStorage`, `window`, `navigator` 등
+- **React Hooks 사용**: `useState`, `useEffect`, `useRef` 등
+- **상태 관리 라이브러리 사용**: Zustand Store, React Query Hooks 등
 - 예: `SearchBar`, `FollowButton`, `Modal`
 
-## 개발 가이드라인 및 아키텍처 규칙
+---
 
-### 1. Server Isolation (서버 로직 격리)
+## 파일 네이밍 컨벤션 (File Naming Convention)
 
-- **규칙**: 모든 DB 접근(Prisma)과 Server Actions는 반드시 `features/[feature]/server/` 디렉토리 안에 위치해야 합니다.
-- **목적**: 클라이언트 번들에 서버 코드가 포함되는 것을 방지하고, 코드의 실행 위치를 명확히 합니다.
+| 파일 유형          | 네이밍 패턴     | 예시                                      |
+| :----------------- | :-------------- | :---------------------------------------- |
+| **컴포넌트**       | PascalCase      | `ArtistCard.tsx`, `LoginForm.tsx`         |
+| **서비스**         | `*.service.ts`  | `artist.service.ts`, `concert.service.ts` |
+| **Repository/DB**  | `repository.ts` | `repository.ts`                           |
+| **Server Actions** | `actions.ts`    | `actions.ts`                              |
+| **타입 정의**      | `types.ts`      | `types.ts`                                |
+| **Hooks**          | `use*.ts`       | `useArtistQuery.ts`, `useLoginForm.ts`    |
+| **Zustand Store**  | `*Store.ts`     | `authStore.ts`, `filterStore.ts`          |
+| **상수**           | `constants.ts`  | `constants.ts`                            |
+| **Public API**     | `index.ts`      | `index.ts`                                |
 
-### 2. ESLint Boundaries (엄격한 의존성 관리)
+### 함수 네이밍 규칙
 
-`.eslintrc.json`을 통해 다음 규칙을 강제합니다.
-
-- **Shared**: `features`를 참조할 수 없음. 오직 다른 `shared` 모듈만 참조 가능.
-- **Features**: 다른 `feature`를 직접 import 할 수 없음. (예: `concerts`에서 `artists` import 금지).
-- **App**: `features`와 `shared`를 모두 import 하여 조합(Composition) 가능.
-
-### 3. Feature Composition (기능 조합)
-
-기능 간의 의존성이 필요한 경우(예: 공연 상세에 아티스트 카드 표시), 직접 import 대신 **Page 레벨 조합**을 사용합니다.
-
-````typescript
-// src/app/(main)/concerts/[id]/page.tsx
-// Page 파일이 '접착제' 역할을 하여 두 기능을 조합
-import { ConcertDetail } from '@/features/concerts/components';
-import { ArtistCard } from '@/features/artists/components';
-
-export default function Page() {
-  return (
-    <ConcertDetail>
-      <ArtistCard />
-    </ConcertDetail>
-  );
-}
-
-### 4. Server Layer Roles & Guidelines (서버 계층 역할 및 규칙)
-
-Vertical Slice 아키텍처 내에서 서버 모듈들의 역할과 책임을 명확히 합니다.
-
-#### A. Data Access Layer (`features/*/server/db.ts`)
-- **역할**: 순수 데이터베이스 접근 (Repository Pattern).
-- **규칙**:
-  - **Functional Style**: `export const findUser = ...` 형태로 개별 함수 내보내기 (Class/Object 지양).
-  - **No Business Logic**: 복잡한 로직이나 데이터 가공 금지. ORM이 반환하는 Raw Data 반환.
-  - **No Caching**: `use cache` 사용 금지. (Service 계층이 캐싱 정책을 결정해야 함).
-  - **Function Naming**:
-    - 조회: `find...`, `count...`, `exists...` (예: `findUserById`, `countAllConcerts`) - `get` 대신 `find` 사용 권장 (DB 검색 의미).
-    - 변경: `create...`, `update...`, `delete...` (CRUD 명확화).
-
-#### B. Service Layer (`features/*/server/services/*.service.ts`)
-- **역할**: 비즈니스 로직, **캐싱(`use cache`)**, 오케스트레이션.
-- **명명 규칙**:
-  - 핵심 도메인 로직: `[feature].service.ts` (예: `concert.service.ts`, `user.service.ts`)
-  - 보조 역할 로직: `[role].service.ts` (예: `collector.service.ts`, `sync.service.ts`)
-- **규칙**:
-  - **Caching**: 조회(Read) 로직에 `'use cache'` 및 `cacheTag` 적용 권장.
-  - **Orchestration**: 여러 DB 함수를 조합하거나 트랜잭션 단위 관리.
-  - **Logic**: 데이터 가공, 기본값 설정, 외부 API 통신 등 수행.
-  - **Function Naming**:
-    - 조회 (캐싱/로직 포함): `get...` (예: `getConcertDetail`) - DB의 `find`와 구분.
-    - 외부 API: `fetch...` (예: `fetchSpotifyArtists`).
-    - 복합 로직: `sync...`, `process...`, `send...` (동사+목적어).
-
-#### C. Server Actions (`features/*/server/actions.ts`)
-- **역할**: 클라이언트 진입점 (Controller 역할), **캐시 무효화**.
-- **규칙**:
-  - **Entry Point**: `'use server'` 지시어 사용.
-  - **Validation**: 사용자 입력값 검증 및 권한 체크.
-  - **Delegation**: 비즈니스 로직은 직접 구현하지 않고 **Service Layer에 위임**.
-  - **Revalidation**: 데이터 변경(Write) 완료 후 `revalidateTag` 호출로 캐시 갱신.
-  - **Function Naming**:
-    - 기본: `Verb` + `Noun` (예: `login`, `submitReview`).
-    - 이름 충돌 방지: Service/DB 함수와 이름이 겹칠 경우 `...Action` 접미사 사용 권장 (예: `getConcertsAction`).
-    - **Client에서만 호출됨을 명시**하기 위해 `Action` 접미사를 붙이는 패턴도 유효합니다.
-
-#### D. Caching Strategy Q&A
-- **Q. 단순한 DB 조회도 Service를 만들어야 하나요?**
-  - **A.** 캐싱이 필요 없다면 Component나 Action에서 `db.ts`를 직접 호출해도 됩니다 (Short-circuiting 허용).
-  - **A.** 단, **캐싱이 필요하다면 반드시 Service 함수로 감싸서(Wrapping)** `'use cache'`를 적용해야 합니다. `db.ts`에 직접 캐싱을 적용하지 마세요.
-
-```
-
-```
-````
+| 레이어/역할       | Prefix                               | 예시                                                     |
+| :---------------- | :----------------------------------- | :------------------------------------------------------- |
+| **Repository**    | `find`, `create`, `update`, `delete` | `findArtistById`, `createConcert`                        |
+| **Service**       | `get`, `fetch`, `process`, `sync`    | `getConcertDetail`, `fetchSpotifyArtists`                |
+| **Server Action** | `...Action` 접미사                   | `loginAction`, `submitReviewAction`, `getConcertsAction` |
