@@ -4,13 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 
 import { CONCERT_TYPES, REGIONS } from '@/entities/concert/model/types';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 export function ConcertFilter() {
   const router = useRouter();

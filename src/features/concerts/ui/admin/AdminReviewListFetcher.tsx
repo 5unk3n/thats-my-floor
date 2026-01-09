@@ -9,7 +9,7 @@ import {
   requestAnalysisAction,
   restoreToReviewAction,
 } from '@/features/concerts/api/actions';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import { prisma } from '@/shared/lib/prisma';
 
 import { ConcertReviewCard } from './ConcertReviewCard';

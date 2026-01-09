@@ -3,9 +3,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { ConcertDetailModel } from '@/entities/concert';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent } from '@/shared/ui/card';
 
 interface ConcertInfoProps {
   concert: ConcertDetailModel;

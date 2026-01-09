@@ -5,7 +5,7 @@ import { Loader2, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 
-import { Input } from '@/shared/components/ui/input';
+import { Input } from '@/shared/ui/input';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 
 import { searchAction } from '../api/actions';

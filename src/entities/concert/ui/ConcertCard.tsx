@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Concert } from '@/entities/concert';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Card, CardContent } from '@/shared/ui/card';
 
 interface ConcertCardProps {
   concert: Concert;

@@ -4,8 +4,8 @@ import { Suspense } from 'react';
 
 import { AdminReviewListSkeleton } from '@/entities/concert';
 import { AdminReviewListFetcher, runPipelineAction } from '@/features/concerts';
-import { Button } from '@/shared/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Button } from '@/shared/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 
 export const metadata: Metadata = {
   title: '공연 등록 관리',

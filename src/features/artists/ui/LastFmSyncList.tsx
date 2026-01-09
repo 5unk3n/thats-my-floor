@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent } from '@/shared/ui/card';
+import { Checkbox } from '@/shared/ui/checkbox';
 
 import { syncLastFmArtistsAction } from '../api/actions';
 import { LastFmSyncArtist } from '../model/services/lastfm-sync.service';

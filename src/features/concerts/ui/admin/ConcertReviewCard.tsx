@@ -12,10 +12,10 @@ import {
   searchExternalArtistsAction,
 } from '@/features/concerts/api/actions';
 import { Candidate } from '@/features/concerts/model/services/analysis.service';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { Input } from '@/shared/ui/input';
 
 interface ConcertReviewCardProps {
   concert: Concert;

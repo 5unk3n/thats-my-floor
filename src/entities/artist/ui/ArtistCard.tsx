@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/shared/ui/card';
 
 import { Artist } from '../model/types';
 

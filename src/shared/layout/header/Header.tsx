@@ -4,8 +4,8 @@ import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Button } from '@/shared/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
+import { Button } from '@/shared/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
+} from '@/shared/ui/dropdown-menu';
 
 interface HeaderProps {
   searchSlot?: React.ReactNode;

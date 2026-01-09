@@ -3,15 +3,15 @@
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/shared/components/ui/dialog';
-import { DropdownMenuItem } from '@/shared/components/ui/dropdown-menu';
+} from '@/shared/ui/dialog';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
 
 import { SearchInput } from './SearchInput';
 

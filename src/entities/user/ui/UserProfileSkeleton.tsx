@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export function UserProfileSkeleton() {
   return (

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
 import { ArtistCard, ArtistRepository } from '@/entities/artist';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import { authOptions } from '@/shared/lib/auth';
 
 import { FollowButton } from './FollowButton';

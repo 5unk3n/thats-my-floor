@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { FollowedArtistsSkeleton } from '@/entities/artist';
 import { FollowedArtistsFetcher } from '@/features/artists';
 import { ArtistSearchTrigger } from '@/features/search';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
+} from '@/shared/ui/dropdown-menu';
 
 export const metadata = {
   title: '팔로우한 아티스트',

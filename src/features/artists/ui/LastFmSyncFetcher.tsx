@@ -7,15 +7,9 @@ import { toast } from 'sonner';
 import { fetchMyLastFmArtistsAction } from '@/features/artists/api/actions';
 import { LastFmSyncArtist } from '@/features/artists/model/services/lastfm-sync.service';
 import LastFmSyncList from '@/features/artists/ui/LastFmSyncList';
-import { Button } from '@/shared/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export function LastFmSyncFetcher() {
   const [artists, setArtists] = useState<LastFmSyncArtist[]>([]);

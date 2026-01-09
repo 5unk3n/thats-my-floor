@@ -3,15 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import { Label } from '@/shared/components/ui/label';
-import { Switch } from '@/shared/components/ui/switch';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Label } from '@/shared/ui/label';
+import { Switch } from '@/shared/ui/switch';
 
 import { getNotificationSettingsAction, updateNotificationSettingsAction } from '../api/actions';
 

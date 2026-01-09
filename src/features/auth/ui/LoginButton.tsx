@@ -2,7 +2,7 @@
 
 import { signIn, signOut, useSession } from 'next-auth/react';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 
 export function LoginButton() {
   const { data: session } = useSession();

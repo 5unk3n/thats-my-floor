@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/shared/ui/button';
 
 interface ConcertPaginationProps {
   hasMore: boolean;

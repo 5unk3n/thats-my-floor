@@ -3,8 +3,8 @@
 import { Check, Link as LinkIcon } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 
 interface LinkedAccountsProps {
   linkedProviders: string[]; // Passed from parent (Server Component or Parent Client Component)

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
 import { UserProfileCard, UserRepository } from '@/entities/user';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Card, CardContent } from '@/shared/ui/card';
 import { authOptions } from '@/shared/lib/auth';
 
 export async function UserProfileFetcher() {
