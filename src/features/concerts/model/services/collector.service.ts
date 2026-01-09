@@ -2,8 +2,6 @@ import { ConcertRepository } from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { prisma } from '@/shared/lib/prisma';
 
-import * as concertService from './concert.service';
-
 export const collectConcerts = async () => {
   const today = new Date();
   const nextMonth = new Date();
@@ -103,7 +101,7 @@ export const collectConcerts = async () => {
         url: item.relateurl,
       }));
 
-      const savedConcert = await concertService.syncConcert({
+      const savedConcert = await ConcertRepository.upsertConcertWithArtist({
         kopisId: detail.mt20id,
         title: detail.prfnm,
         posterUrl: detail.poster,

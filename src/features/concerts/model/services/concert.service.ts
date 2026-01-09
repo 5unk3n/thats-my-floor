@@ -113,33 +113,3 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
     })),
   };
 };
-
-export const syncConcert = async (data: {
-  kopisId: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  place: string;
-  region?: string;
-  posterUrl?: string;
-  status?: string;
-  runtime?: string;
-  price?: string;
-  schedule?: string;
-  description?: string;
-  images?: string[];
-  relates?: Prisma.InputJsonValue[];
-  isGlobal?: boolean;
-  isFestival?: boolean;
-  artistId?: string;
-}) => {
-  // Pass through to repository, but this layer is where we'd put
-  // any additional business logic (e.g. notification triggers, validation)
-  // before hitting the DB.
-  // For now, it delegates to the complex upsert logic in Repository (or we move that here?)
-  // The architecture review suggested moving "Orchestration" here.
-  // Let's assume we keep the 'upsertConcert' in generic form in DB or split it?
-  // Current db.ts upsertConcert does: upsert Concert -> optional find/create ConcertArtist.
-  // We should move that logic here.
-  return ConcertRepository.upsertConcertWithArtist(data);
-};
