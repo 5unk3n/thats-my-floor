@@ -1,5 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -59,29 +60,26 @@ model Account {
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 // 이 테이블은 주기적으로 삭제되고 재생성됩니다.
 // Prisma는 오직 타입 정의와 조회 쿼리를 위해서만 사용됩니다.
-// Prisma Migration을 통해 이 테이블을 생성하거나 수정하지 마십시오.
 model MusicBrainzArtist {
-  id             Int       @unique // MusicBrainz Integrel ID (Foreign Key for Alias)
+  id             Int       @unique @default(autoincrement()) // MusicBrainz Integrel ID (Foreign Key for Alias)
   gid            String    @id @db.Uuid // UUID (Primary Key)
   name           String
-  sortName       String?   @map("sort_name")
-  type           Int?
-  area           Int?
-  gender         Int?
-  comment        String?
-  editsPending   Int?      @map("edits_pending")
-  lastUpdated    DateTime? @map("last_updated") @db.Timestamptz
-  ended          Boolean?
-  beginArea      Int?      @map("begin_area")
-  endArea        Int?      @map("end_area")
-  
-  // Dates
-  beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
+  sortName       String   @map("sort_name")
+    beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
   beginDateMonth Int?      @map("begin_date_month") @db.SmallInt
   beginDateDay   Int?      @map("begin_date_day") @db.SmallInt
   endDateYear    Int?      @map("end_date_year") @db.SmallInt
   endDateMonth   Int?      @map("end_date_month") @db.SmallInt
   endDateDay     Int?      @map("end_date_day") @db.SmallInt
+  type           Int?
+  area           Int?
+  gender         Int?
+  comment        String    @default("") @db.VarChar(255)
+  editsPending   Int       @default(0) @map("edits_pending")
+  lastUpdated    DateTime? @default(now()) @map("last_updated") @db.Timestamptz
+  ended          Boolean   @default(false)
+  beginArea      Int?      @map("begin_area")
+  endArea        Int?      @map("end_area")
 
   // Relations
   aliases MusicBrainzArtistAlias[]
@@ -93,18 +91,15 @@ model MusicBrainzArtist {
 
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzArtistAlias {
-  id             Int       @id
+  id             Int       @id @default(autoincrement())
   artistId       Int       @map("artist") // References MusicBrainzArtist.id
-  name           String
+  name           String    @db.VarChar
   locale         String?
+  editsPending   Int       @default(0) @map("edits_pending")
+  lastUpdated    DateTime? @default(now()) @map("last_updated") @db.Timestamptz
   type           Int?
-  sortName       String?   @map("sort_name")
-  primary        Boolean?  @map("primary_for_locale")
-  ended          Boolean?
+  sortName       String    @map("sort_name") @db.VarChar
   
-  editsPending   Int?      @map("edits_pending")
-  lastUpdated    DateTime? @map("last_updated") @db.Timestamptz
-
   // Dates
   beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
   beginDateMonth Int?      @map("begin_date_month") @db.SmallInt
@@ -112,6 +107,9 @@ model MusicBrainzArtistAlias {
   endDateYear    Int?      @map("end_date_year") @db.SmallInt
   endDateMonth   Int?      @map("end_date_month") @db.SmallInt
   endDateDay     Int?      @map("end_date_day") @db.SmallInt
+
+  primary        Boolean   @default(false) @map("primary_for_locale")
+  ended          Boolean   @default(false)
 
   artist MusicBrainzArtist @relation(fields: [artistId], references: [id], onDelete: NoAction)
 
@@ -121,11 +119,11 @@ model MusicBrainzArtistAlias {
 
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzUrl {
-  id           Int       @id
+  id           Int       @id @default(autoincrement())
   gid          String    @db.Uuid
   url          String    @db.Text
-  editsPending Int?      @map("edits_pending")
-  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+  editsPending Int       @default(0) @map("edits_pending")
+  lastUpdated  DateTime? @default(now()) @map("last_updated") @db.Timestamptz
 
   // Relations
   artistLinks MusicBrainzArtistUrl[]
@@ -135,12 +133,12 @@ model MusicBrainzUrl {
 
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzArtistUrl {
-  id           Int       @id
+  id           Int       @id @default(autoincrement())
   link         Int       // Link ID (References mb_link)
   artistId     Int       @map("entity0") // Artist ID
   urlId        Int       @map("entity1") // URL ID
-  editsPending Int?      @map("edits_pending")
-  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
+  editsPending Int       @default(0) @map("edits_pending")
+  lastUpdated  DateTime? @default(now()) @map("last_updated") @db.Timestamptz
   linkOrder    Int       @default(0) @map("link_order")
   entity0Credit String   @default("") @map("entity0_credit")
   entity1Credit String   @default("") @map("entity1_credit")
@@ -156,17 +154,17 @@ model MusicBrainzArtistUrl {
 
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzLink {
-  id           Int       @id
-  linkTypeId   Int       @map("link_type")
-  beginDateYear  Int?    @map("begin_date_year") @db.SmallInt
-  beginDateMonth Int?    @map("begin_date_month") @db.SmallInt
-  beginDateDay   Int?    @map("begin_date_day") @db.SmallInt
-  endDateYear    Int?    @map("end_date_year") @db.SmallInt
-  endDateMonth   Int?    @map("end_date_month") @db.SmallInt
-  endDateDay     Int?    @map("end_date_day") @db.SmallInt
-  attributeCount Int     @map("attribute_count")
-  created      DateTime? @map("created") @db.Timestamptz
-  ended        Boolean?  @default(false)
+  id             Int       @id @default(autoincrement())
+  linkTypeId     Int       @map("link_type")  // NOT NULL
+  beginDateYear  Int?      @map("begin_date_year") @db.SmallInt
+  beginDateMonth Int?      @map("begin_date_month") @db.SmallInt
+  beginDateDay   Int?      @map("begin_date_day") @db.SmallInt
+  endDateYear    Int?      @map("end_date_year") @db.SmallInt
+  endDateMonth   Int?      @map("end_date_month") @db.SmallInt
+  endDateDay     Int?      @map("end_date_day") @db.SmallInt
+  attributeCount Int       @default(0) @map("attribute_count")  // NOT NULL DEFAULT 0
+  created        DateTime? @default(now()) @map("created") @db.Timestamptz
+  ended          Boolean   @default(false)  // NOT NULL DEFAULT FALSE
 
   // Relations
   linkType    MusicBrainzLinkType @relation(fields: [linkTypeId], references: [id], onDelete: Cascade)
@@ -178,37 +176,54 @@ model MusicBrainzLink {
 
 // ⚠️ [주의] scripts/musicbrainz/import.sh 스크립트에 의해 관리되는 테이블입니다.
 model MusicBrainzLinkType {
-  id           Int       @id
-  parentId     Int?      @map("parent")
-  childOrder   Int       @default(0) @map("child_order")
-  gid          String    @db.Uuid
-  entityType0  String    @map("entity_type0")
-  entityType1  String    @map("entity_type1")
-  name         String
-  description  String?
-  linkPhrase   String    @map("link_phrase")
-  reverseLinkPhrase String @map("reverse_link_phrase")
-  longLinkPhrase String  @map("long_link_phrase")
-  lastUpdated  DateTime? @map("last_updated") @db.Timestamptz
-  isDeprecated Boolean   @default(false) @map("is_deprecated")
-  hasDates     Boolean   @default(true) @map("has_dates")
-  entity0Cardinality Int @default(0) @map("entity0_cardinality") @db.SmallInt
-  entity1Cardinality Int @default(0) @map("entity1_cardinality") @db.SmallInt
+  id                 Int       @id @default(autoincrement())
+  parentId           Int?      @map("parent")
+  childOrder         Int       @default(0) @map("child_order")  // NOT NULL DEFAULT 0
+  gid                String    @db.Uuid  // NOT NULL
+  entityType0        String    @map("entity_type0") @db.VarChar(50)  // NOT NULL
+  entityType1        String    @map("entity_type1") @db.VarChar(50)  // NOT NULL
+  name               String    @db.VarChar(255)  // NOT NULL
+  description        String?   @db.Text
+  linkPhrase         String    @map("link_phrase") @db.VarChar(255)  // NOT NULL
+  reverseLinkPhrase  String    @map("reverse_link_phrase") @db.VarChar(255)  // NOT NULL
+  longLinkPhrase     String    @map("long_link_phrase") @db.VarChar(255)  // NOT NULL
+  lastUpdated        DateTime? @default(now()) @map("last_updated") @db.Timestamptz
+  isDeprecated       Boolean   @default(false) @map("is_deprecated")  // NOT NULL DEFAULT false
+  hasDates           Boolean   @default(true) @map("has_dates")  // NOT NULL DEFAULT true
+  entity0Cardinality Int       @default(0) @map("entity0_cardinality") @db.SmallInt  // NOT NULL DEFAULT 0
+  entity1Cardinality Int       @default(0) @map("entity1_cardinality") @db.SmallInt  // NOT NULL DEFAULT 0
 
   // Relations
   links        MusicBrainzLink[]
-  
+
   @@map("mb_link_type")
 }
 
 // ⚠️ [주의] MusicBrainz 데이터 복제 상태를 관리하는 테이블입니다.
 model ReplicationControl {
-  id                        Int      @id @default(autoincrement())
-  currentSchemaSequence     Int      @map("current_schema_sequence")
-  currentReplicationSequence Int      @map("current_replication_sequence")
-  lastReplicationDate       DateTime @map("last_replication_date") @db.Timestamptz
+  id                         Int       @id @default(autoincrement())
+  currentSchemaSequence      Int       @map("current_schema_sequence")  // NOT NULL
+  currentReplicationSequence Int?      @map("current_replication_sequence")  // nullable in official schema
+  lastReplicationDate        DateTime? @map("last_replication_date") @db.Timestamptz  // nullable in official schema
 
   @@map("replication_control")
+}
+
+// ⚠️ [주의] 검색 성능 최적화를 위한 Materialized View입니다.
+// scripts/musicbrainz/import.sh 에서 생성됩니다.
+view MvArtistSearch {
+  gid                  String   @unique @db.Uuid
+  canonicalName        String   @map("canonical_name")
+  searchName           String   @map("search_name")
+  searchNameNormalized String   @map("search_name_normalized")
+  comment              String
+  source               Int      @db.SmallInt
+  locale               String
+  isPrimary            Boolean? @map("is_primary")
+  lastUpdated          DateTime @map("last_updated") @db.Timestamptz
+
+  @@map("mv_artist_search")
+  @@ignore
 }
 
 // 2. Domain Layer (Service Entity)

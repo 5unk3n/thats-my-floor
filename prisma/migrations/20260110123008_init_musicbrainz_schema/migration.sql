@@ -18,6 +18,7 @@
 */
 -- CreateExtension
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "unaccent";
 
 -- DropForeignKey
 ALTER TABLE "concert_artists" DROP CONSTRAINT "concert_artists_artist_id_fkey";
@@ -54,77 +55,80 @@ ADD COLUMN     "artist_id" INTEGER NOT NULL;
 
 -- CreateTable
 CREATE TABLE "mb_artist" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "gid" UUID NOT NULL,
     "name" TEXT NOT NULL,
-    "sort_name" TEXT,
-    "type" INTEGER,
-    "area" INTEGER,
-    "gender" INTEGER,
-    "comment" TEXT,
-    "edits_pending" INTEGER,
-    "last_updated" TIMESTAMPTZ,
-    "ended" BOOLEAN,
-    "begin_area" INTEGER,
-    "end_area" INTEGER,
+    "sort_name" TEXT NOT NULL,
     "begin_date_year" SMALLINT,
     "begin_date_month" SMALLINT,
     "begin_date_day" SMALLINT,
     "end_date_year" SMALLINT,
     "end_date_month" SMALLINT,
     "end_date_day" SMALLINT,
+    "type" INTEGER,
+    "area" INTEGER,
+    "gender" INTEGER,
+    "comment" VARCHAR(255) NOT NULL DEFAULT '',
+    "edits_pending" INTEGER NOT NULL DEFAULT 0,
+    "last_updated" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "ended" BOOLEAN NOT NULL DEFAULT false,
+    "begin_area" INTEGER,
+    "end_area" INTEGER,
 
     CONSTRAINT "mb_artist_pkey" PRIMARY KEY ("gid")
 );
 
 -- CreateTable
 CREATE TABLE "mb_artist_alias" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "artist" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" VARCHAR NOT NULL,
     "locale" TEXT,
+    "edits_pending" INTEGER NOT NULL DEFAULT 0,
+    "last_updated" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "type" INTEGER,
-    "sort_name" TEXT,
-    "primary_for_locale" BOOLEAN,
-    "ended" BOOLEAN,
-    "edits_pending" INTEGER,
-    "last_updated" TIMESTAMPTZ,
+    "sort_name" VARCHAR NOT NULL,
     "begin_date_year" SMALLINT,
     "begin_date_month" SMALLINT,
     "begin_date_day" SMALLINT,
     "end_date_year" SMALLINT,
     "end_date_month" SMALLINT,
     "end_date_day" SMALLINT,
+    "primary_for_locale" BOOLEAN NOT NULL DEFAULT false,
+    "ended" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "mb_artist_alias_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "mb_url" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "gid" UUID NOT NULL,
     "url" TEXT NOT NULL,
-    "edits_pending" INTEGER,
-    "last_updated" TIMESTAMPTZ,
+    "edits_pending" INTEGER NOT NULL DEFAULT 0,
+    "last_updated" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "mb_url_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "mb_l_artist_url" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "link" INTEGER NOT NULL,
     "entity0" INTEGER NOT NULL,
     "entity1" INTEGER NOT NULL,
-    "edits_pending" INTEGER,
-    "last_updated" TIMESTAMPTZ,
+    "edits_pending" INTEGER NOT NULL DEFAULT 0,
+    "last_updated" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "link_order" INTEGER NOT NULL DEFAULT 0,
+    "entity0_credit" TEXT NOT NULL DEFAULT '',
+    "entity1_credit" TEXT NOT NULL DEFAULT '',
 
     CONSTRAINT "mb_l_artist_url_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "mb_link" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "link_type" INTEGER NOT NULL,
     "begin_date_year" SMALLINT,
     "begin_date_month" SMALLINT,
@@ -132,29 +136,31 @@ CREATE TABLE "mb_link" (
     "end_date_year" SMALLINT,
     "end_date_month" SMALLINT,
     "end_date_day" SMALLINT,
-    "attribute_count" INTEGER NOT NULL,
-    "created" TIMESTAMPTZ,
-    "ended" BOOLEAN DEFAULT false,
+    "attribute_count" INTEGER NOT NULL DEFAULT 0,
+    "created" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "ended" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "mb_link_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "mb_link_type" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
     "parent" INTEGER,
     "child_order" INTEGER NOT NULL DEFAULT 0,
     "gid" UUID NOT NULL,
-    "entity_type0" TEXT NOT NULL,
-    "entity_type1" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "entity_type0" VARCHAR(50) NOT NULL,
+    "entity_type1" VARCHAR(50) NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
     "description" TEXT,
-    "link_phrase" TEXT NOT NULL,
-    "reverse_link_phrase" TEXT NOT NULL,
-    "long_link_phrase" TEXT NOT NULL,
-    "priority" INTEGER NOT NULL DEFAULT 0,
-    "last_updated" TIMESTAMPTZ,
+    "link_phrase" VARCHAR(255) NOT NULL,
+    "reverse_link_phrase" VARCHAR(255) NOT NULL,
+    "long_link_phrase" VARCHAR(255) NOT NULL,
+    "last_updated" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "is_deprecated" BOOLEAN NOT NULL DEFAULT false,
+    "has_dates" BOOLEAN NOT NULL DEFAULT true,
+    "entity0_cardinality" SMALLINT NOT NULL DEFAULT 0,
+    "entity1_cardinality" SMALLINT NOT NULL DEFAULT 0,
 
     CONSTRAINT "mb_link_type_pkey" PRIMARY KEY ("id")
 );
@@ -163,8 +169,8 @@ CREATE TABLE "mb_link_type" (
 CREATE TABLE "replication_control" (
     "id" SERIAL NOT NULL,
     "current_schema_sequence" INTEGER NOT NULL,
-    "current_replication_sequence" INTEGER NOT NULL,
-    "last_replication_date" TIMESTAMPTZ NOT NULL,
+    "current_replication_sequence" INTEGER,
+    "last_replication_date" TIMESTAMPTZ,
 
     CONSTRAINT "replication_control_pkey" PRIMARY KEY ("id")
 );
