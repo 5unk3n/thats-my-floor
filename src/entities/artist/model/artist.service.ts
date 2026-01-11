@@ -4,12 +4,11 @@ import {
   createLocalArtist,
   createUserArtist,
   deleteUserArtist,
+  findArtistCandidates,
   findFollowersByArtistIds,
   findLocalArtistByMbid,
-  findLocalArtistsByMbids,
   findMusicBrainzArtistByMbid,
   findMusicBrainzArtistsByMbids,
-  findMusicBrainzArtistsByName,
   findUserArtist,
   upsertLocalArtist,
 } from '../api/repository';
@@ -19,24 +18,8 @@ import {
  * Pure domain logic: merges MusicBrainz and Local data.
  */
 export async function searchArtists(query: string) {
-  // 1. Search in MusicBrainz Artist table
-  const artists = await findMusicBrainzArtistsByName(query);
-
-  if (artists.length === 0) {
-    return [];
-  }
-
-  // 2. Fetch local Artist data (images) for these artists
-  const mbids = artists.map((a) => a.gid);
-  const localArtists = await findLocalArtistsByMbids(mbids);
-
-  const localArtistMap = new Map(localArtists.map((a) => [a.mbid, a]));
-
-  // 3. Merge data
-  return artists.map((artist) => ({
-    ...artist,
-    localData: localArtistMap.get(artist.gid) || null,
-  }));
+  // 1. Search candidates using optimized fuzzy search query
+  return findArtistCandidates(query);
 }
 
 /**

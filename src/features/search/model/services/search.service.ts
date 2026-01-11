@@ -36,12 +36,7 @@ export const getSearchResults = async (
         place: c.place,
         status: c.status || '공연예정', // Handle potential null status
       })),
-      artists: artists.map((a) => ({
-        id: a.gid,
-        name: a.name,
-        // If image exists in localData use it, otherwise null.
-        image: a.localData?.imageUrl || null,
-      })),
+      artists,
     };
 
     return result;

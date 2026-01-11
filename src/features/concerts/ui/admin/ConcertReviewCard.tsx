@@ -6,12 +6,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { ArtistCandidate } from '@/entities/artist';
 import {
   publishConcertAction,
   rejectConcertAction,
   searchExternalArtistsAction,
 } from '@/features/concerts/api/actions';
-import { Candidate } from '@/features/concerts/model/services/analysis.service';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
@@ -30,15 +30,15 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
 
   // Store full candidate objects for lookup
   // Map<mbid, Candidate>
-  const [candidateMap, setCandidateMap] = useState<Map<string, Candidate>>(new Map());
+  const [candidateMap, setCandidateMap] = useState<Map<string, ArtistCandidate>>(new Map());
 
   // Manual Search State
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Candidate[]>([]);
+  const [searchResults, setSearchResults] = useState<ArtistCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const analysisResult = concert.analysisResult as unknown as {
-    results: { query: string; candidates: Candidate[] }[];
+    results: { query: string; candidates: ArtistCandidate[] }[];
   } | null;
 
   const groupedResults = analysisResult?.results || [];
@@ -46,7 +46,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
   const handlePublish = async () => {
     const selectedCandidates = Array.from(selectedIds)
       .map((id) => candidateMap.get(id))
-      .filter(Boolean) as Candidate[];
+      .filter(Boolean) as ArtistCandidate[];
     if (selectedCandidates.length === 0) return;
 
     setLoading(true);
@@ -64,11 +64,11 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     const results = await searchExternalArtistsAction(searchQuery);
-    setSearchResults(results as Candidate[]);
+    setSearchResults(results as ArtistCandidate[]);
     setIsSearching(false);
   };
 
-  const toggleSelection = (candidate: Candidate) => {
+  const toggleSelection = (candidate: ArtistCandidate) => {
     if (!candidate.mbid) return;
 
     const newSet = new Set(selectedIds);
@@ -171,7 +171,8 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           <CheckCircle2 size={16} className="text-green-600" />
                         )}
                       </div>
-                      {result.url && (
+                      {/* TODO: url 추가 방법 생각해보기 */}
+                      {/* {result.url && (
                         <a
                           href={result.url}
                           target="_blank"
@@ -181,7 +182,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         >
                           <ExternalLink size={14} className="text-primary" />
                         </a>
-                      )}
+                      )} */}
                     </div>
                   ))}
                 </div>
@@ -266,7 +267,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           )}
                         </div>
                       </div>
-                      {cand.url && (
+                      {/* {cand.url && (
                         <a
                           href={cand.url}
                           target="_blank"
@@ -276,7 +277,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         >
                           <ExternalLink size={16} className="text-primary" />
                         </a>
-                      )}
+                      )} */}
                     </div>
                   ))}
                   {group.candidates.length === 0 && (

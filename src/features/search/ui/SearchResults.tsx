@@ -63,9 +63,9 @@ export function SearchResults({ results, onSelect }: SearchResultsProps) {
           <h3 className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">아티스트</h3>
           <ul>
             {results.artists.map((artist) => (
-              <li key={artist.id}>
+              <li key={artist.mbid}>
                 <button
-                  onClick={() => onSelect(`/artists/${artist.id}`)} // Assuming artist page exists
+                  onClick={() => onSelect(`/artists/${artist.mbid}`)} // Assuming artist page exists
                   className="flex w-full items-center gap-3 px-3 py-2 hover:bg-accent hover:text-accent-foreground text-left"
                 >
                   <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">

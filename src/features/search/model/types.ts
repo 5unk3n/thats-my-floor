@@ -1,9 +1,9 @@
-import { Artist } from '@/entities/artist';
+import { ArtistCandidate } from '@/entities/artist';
 import { Concert } from '@/entities/concert';
 
 export interface SearchResult {
   concerts: SearchConcert[];
-  artists: SearchArtist[];
+  artists: ArtistCandidate[];
 }
 
 export interface SearchConcert extends Omit<
@@ -14,8 +14,4 @@ export interface SearchConcert extends Omit<
   startDate: Date;
   endDate: Date;
   status: string | null;
-}
-
-export interface SearchArtist extends Pick<Artist, 'name' | 'imageUrl'> {
-  id: string;
 }

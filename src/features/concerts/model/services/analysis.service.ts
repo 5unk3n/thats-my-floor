@@ -1,16 +1,9 @@
 import { Prisma, PublishStatus } from '@prisma/client';
 
-import { ArtistRepository } from '@/entities/artist';
+import { ArtistCandidate, ArtistService } from '@/entities/artist';
 import { prisma } from '@/shared/lib/prisma';
 
 import * as PerplexityService from './perplexity.service';
-
-export interface Candidate {
-  name: string;
-  mbid: string;
-  url?: string;
-  imageUrl?: string;
-}
 
 /**
  * Step 1: Request Analysis (Selection)
@@ -62,16 +55,11 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
       for (const name of uniqueNames) {
         try {
           // Search MusicBrainz Mirror for this specific name
-          const mbArtists = await ArtistRepository.findMusicBrainzArtistsByName(name, 5);
+          const candidates = await ArtistService.searchArtists(name);
 
           groupedResults.push({
             query: name,
-            candidates: mbArtists.map((artist) => ({
-              name: artist.name,
-              mbid: artist.gid,
-              // MB Mirror doesn't have URLs directly in the artist object usually, but let's leave it optional
-              // or we could fetch artistLinks if needed, but for candidate selection simple is better.
-            })),
+            candidates,
           });
         } catch (err) {
           console.error(`Error searching artist ${name}:`, err);
@@ -109,7 +97,7 @@ export async function runAnalysisPipeline(concertId?: string, limit = 5) {
  * Step 3: Publish (Review Approval) - MULTI ARTIST VERSION
  * Accepts multiple selected candidates.
  */
-export async function publishConcert(concertId: string, selectedCandidates: Candidate[]) {
+export async function publishConcert(concertId: string, selectedCandidates: ArtistCandidate[]) {
   return prisma.$transaction(async (tx) => {
     // 1. Create/Connect Artists
     for (const candidate of selectedCandidates) {
