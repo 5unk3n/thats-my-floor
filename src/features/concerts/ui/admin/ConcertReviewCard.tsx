@@ -154,7 +154,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                         onClick={() => toggleSelection(result)}
                       >
-                        <div className="w-8 h-8 relative bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="w-8 h-8 relative bg-gray-200 rounded-full overflow-hidden shrink-0">
                           {result.imageUrl && (
                             <Image
                               src={result.imageUrl}
@@ -171,18 +171,15 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           <CheckCircle2 size={16} className="text-green-600" />
                         )}
                       </div>
-                      {/* TODO: url 추가 방법 생각해보기 */}
-                      {/* {result.url && (
-                        <a
-                          href={result.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 p-1 hover:bg-primary/10 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink size={14} className="text-primary" />
-                        </a>
-                      )} */}
+                      <a
+                        href={`https://musicbrainz.org/artist/${result.mbid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 p-1 hover:bg-primary/10 rounded transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink size={14} className="text-primary" />
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -246,7 +243,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                         onClick={() => toggleSelection(cand)}
                       >
-                        <div className="w-10 h-10 relative bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="w-10 h-10 relative bg-gray-200 rounded-full overflow-hidden shrink-0">
                           {cand.imageUrl && (
                             <Image
                               src={cand.imageUrl}
@@ -267,17 +264,15 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                           )}
                         </div>
                       </div>
-                      {/* {cand.url && (
-                        <a
-                          href={cand.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 p-1.5 hover:bg-primary/10 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink size={16} className="text-primary" />
-                        </a>
-                      )} */}
+                      <a
+                        href={`https://musicbrainz.org/artist/${cand.mbid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 p-1.5 hover:bg-primary/10 rounded transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink size={16} className="text-primary" />
+                      </a>
                     </div>
                   ))}
                   {group.candidates.length === 0 && (
