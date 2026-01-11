@@ -11,7 +11,7 @@
 
 ## ERD 개요
 
-```
+```mermaid
 ┌─────────────┐         ┌──────────────┐         ┌─────────────┐
 │   Accounts  │◄────────┤    Users     │◄────────┤ UserArtists  │
 └─────────────┘         └──────┬───────┘         └──────┬───────┘
@@ -80,36 +80,59 @@ CREATE TABLE accounts (
 );
 ```
 
-### 2. artists (아티스트)
+### 2. MusicBrainz Raw Layer (Mirror)
 
-아티스트 정보를 저장합니다.
+`scripts/musicbrainz/import.sh`와 `replication` 시스템에 의해 관리되는 테이블입니다.
+
+```sql
+model MusicBrainzArtist {
+  id             Int       @unique @default(autoincrement())
+  gid            String    @id @db.Uuid
+  name           String
+  sortName       String    @map("sort_name")
+  // ... (dates, type, area, etc.)
+
+  @@map("mb_artist")
+}
+
+model MusicBrainzArtistAlias {
+  id             Int       @id @default(autoincrement())
+  artistId       Int       @map("artist")
+  name           String
+  locale         String?
+  primary        Boolean   @default(false)
+
+  @@map("mb_artist_alias")
+}
+
+// ... mb_url, mb_l_artist_url, mb_link, mb_link_type, replication_control
+```
+
+_상세 내용은 `prisma/schema.prisma` 및 `docs/artist-data-architecture.md` 참조_
+
+---
+
+### 3. Domain Layer (Persistent Data)
+
+#### 3.1. artists (아티스트)
+
+서비스에서 사용하는 아티스트 정보입니다.
 
 ```sql
 CREATE TABLE artists (
-  id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  image TEXT,
-  genre VARCHAR(100),
-  description TEXT,
-  spotify_artist_id VARCHAR(100),
-  follower_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id SERIAL PRIMARY KEY,
+  mbid UUID UNIQUE NOT NULL, -- MAPs to mb_artist.gid
+  image_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
-
-CREATE INDEX idx_artists_name ON artists(name);
-CREATE INDEX idx_artists_spotify ON artists(spotify_artist_id);
 ```
 
 **컬럼 설명:**
 
-- `id`: 아티스트 고유 ID
-- `name`: 아티스트명
-- `image`: 아티스트 이미지 URL
-- `genre`: 장르
-- `description`: 아티스트 소개
-- `spotify_artist_id`: Spotify 아티스트 ID
-- `follower_count`: 팔로워 수 (캐시)
+- `id`: 내부 관리용 ID (Integer)
+- `mbid`: MusicBrainz GID (UUID, 불변)
+- `image_url`: 아티스트 이미지 URL
 
 ---
 
