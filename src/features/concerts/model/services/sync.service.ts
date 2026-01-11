@@ -32,16 +32,14 @@ export async function syncAllConcertStatus() {
 
 /**
  * 동기화 대상 공연을 추출합니다.
+ * '공연예정' 또는 '공연중' 상태인 공연만 대상으로 합니다.
  */
 async function getTargetConcerts() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   return prisma.concert.findMany({
     where: {
       publishStatus: PublishStatus.PUBLISHED,
-      endDate: {
-        gte: today,
+      status: {
+        in: ['공연예정', '공연중'],
       },
     },
     select: {
