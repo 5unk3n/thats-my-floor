@@ -260,6 +260,52 @@ psql "$DATABASE_URL" <<EOF
   COMMIT;
 EOF
 
+echo "📈 [4/4] Creating Materialized View..."
+psql "$DATABASE_URL" <<EOF
+  -- Create Materialized View on PRODUCTION tables (for REFRESH support)
+  CREATE MATERIALIZED VIEW mv_artist_search AS
+  WITH artist_base AS (
+      -- 1. Artist 본명
+      SELECT
+          gid,
+          name AS canonical_name,
+          name AS search_name,
+          lower(unaccent(name)) AS search_name_normalized,
+          comment,
+          0::smallint AS source,
+          ''::text AS locale,
+          true AS is_primary,
+          now() AS last_updated
+      FROM mb_artist
+      WHERE name IS NOT NULL
+
+      UNION ALL
+
+      -- 2. Artist alias
+      SELECT DISTINCT
+          a.gid,
+          a.name AS canonical_name,
+          aa.name AS search_name,
+          lower(unaccent(aa.name)) AS search_name_normalized,
+          a.comment,
+          1::smallint AS source,
+          COALESCE(aa.locale, '') AS locale,
+          aa.primary_for_locale AS is_primary,
+          now() AS last_updated
+      FROM mb_artist a
+      JOIN mb_artist_alias aa ON a.id = aa.artist
+      WHERE aa.name IS NOT NULL
+  )
+  SELECT * FROM artist_base;
+
+  -- MV Indexes (required for REFRESH CONCURRENTLY)
+  CREATE UNIQUE INDEX idx_mv_artist_search_unique
+  ON mv_artist_search (gid, search_name, source, locale, is_primary);
+
+  CREATE INDEX idx_mv_artist_search_trgm
+  ON mv_artist_search USING GIN (search_name_normalized gin_trgm_ops);
+EOF
+
 # Clean up can be manual or auto. Let's keep old tables for a bit for manual check if needed, or just drop.
 # Echo "Cleaning up..."
 # psql "$DATABASE_URL" -c "DROP TABLE IF EXISTS mb_artist_old CASCADE;" ...

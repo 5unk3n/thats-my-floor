@@ -11,6 +11,14 @@ export interface Artist {
   };
 }
 
+export interface ArtistCandidate {
+  mbid: string;
+  name: string;
+  matchedName: string;
+  comment: string;
+  imageUrl?: string | null;
+}
+
 export interface ParticipatingConcert {
   id: string;
   title: string;

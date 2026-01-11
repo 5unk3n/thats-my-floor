@@ -12,13 +12,13 @@
 
 ### 2.1. 2-Layer Data Strategy (데이터 계층 분리)
 
-1.  **Raw Layer (`mb_*`)**:
-    - MusicBrainz 원본 데이터를 저장하는 **Mirror**입니다.
-    - **Replication**을 통해 MusicBrainz 메인 서버와 동기화 상태를 유지합니다.
+1. **Raw Layer (`mb_*`)**:
+   - MusicBrainz 원본 데이터를 저장하는 **Mirror**입니다.
+   - **Replication**을 통해 MusicBrainz 메인 서버와 동기화 상태를 유지합니다.
 
-2.  **Domain Layer (`artist`, `artist_custom_alias`)**:
-    - 서비스 로직에 필요한 데이터만 `mb_artist`에서 Extract하여 사용합니다.
-    - `gid` (UUID)를 통해 Raw Layer와 느슨하게 연결됩니다.
+2. **Domain Layer (`artist`, `artist_custom_alias`)**:
+   - 서비스 로직에 필요한 데이터만 `mb_artist`에서 Extract하여 사용합니다.
+   - `gid` (UUID)를 통해 Raw Layer와 느슨하게 연결됩니다.
 
 ### 2.2. UUID (GID) Centric
 
@@ -105,12 +105,12 @@ CREATE TABLE artist_custom_alias (
 
 ### 5.2. Data Processing Strategy
 
-1.  **Tuple Parsing**:
-    - `dbmirror`는 데이터를 Tab-separated가 아닌 Postgres Tuple String (`"col1"='val1' "col2"='val2'`) 형태로 전달합니다.
-    - 이를 정규식(`/"([^"]+)"='((?:[^']|'')*)'/g`)으로 파싱하여 Key-Value 객체로 변환합니다.
+1. **Tuple Parsing**:
+   - `dbmirror`는 데이터를 Tab-separated가 아닌 Postgres Tuple String (`"col1"='val1' "col2"='val2'`) 형태로 전달합니다.
+   - 이를 정규식(`/"([^"]+)"='((?:[^']|'')*)'/g`)으로 파싱하여 Key-Value 객체로 변환합니다.
 
-2.  **Schema Normalization**:
-    - 패킷의 테이블명에 포함된 스키마 접두사(예: `"musicbrainz".`)를 제거하여 로컬 테이블명과 매핑합니다.
+2. **Schema Normalization**:
+   - 패킷의 테이블명에 포함된 스키마 접두사(예: `"musicbrainz".`)를 제거하여 로컬 테이블명과 매핑합니다.
 
 ### 5.3. 폴더 구조
 
@@ -130,18 +130,22 @@ scripts/musicbrainz/
 
 ## 6. 검색 로직 (Search Logic)
 
-(기존과 동일)
+### 6.1. 검색 인프라 (Search Infrastructure)
 
-```sql
-SELECT
-    mb.gid,
-    mb.name,
-    COALESCE(a.image_url, NULL) as image_url
-FROM mb_artist mb
-LEFT JOIN mb_artist_alias mba ON mb.id = mba.artist
-LEFT JOIN artist a ON mb.gid = a.gid
-WHERE
-    mb.name ILIKE $1 OR mba.name ILIKE $1
-GROUP BY mb.gid, mb.name, a.image_url
-LIMIT 20;
-```
+- **Materialized View (`mv_artist_search`) 활용**:
+  - `mb_artist` (이름)와 `mb_artist_alias` (별칭)를 `union`하여 하나의 검색 뷰로 통합 관리합니다.
+  - **1 Name = 1 Row** 원칙: 각 이름(이명 포함)이 하나의 행이 되어 검색 효율을 극대화합니다.
+  - 정규화된 검색 컬럼(`search_name_normalized`)을 미리 계산하여 저장합니다 (`lower` + `unaccent`).
+  - `pg_trgm` GIN Index를 적용하여 퍼지 검색 성능을 보장합니다.
+
+### 6.2. 매칭 및 랭킹 알고리즘 (Matching & Ranking Strategy)
+
+사용자의 검색 의도를 정확히 파악하기 위해 다단계 랭킹 시스템을 적용합니다.
+
+1.  **Normalization**: 입력된 쿼리와 DB 데이터 모두 소문자화 및 악센트 제거(`unaccent`)를 수행합니다.
+2.  **Fuzzy Matching**: `pg_trgm`의 `similarity` 함수를 사용하여 오타가 포함된 검색어도 찾아냅니다.
+3.  **Ranking Priority (우선순위 정렬)**:
+    1. **Prefix Rank**: 검색어가 이름의 **접두사(Prefix)**로 시작하는 경우 최상위 노출 (가장 강력한 의도).
+    2. **Name Length**: 이름이 짧을수록 우선 노출 (정확도 높은 간결한 결과 선호).
+    3. **Similarity Score**: 유사도 점수가 높은 순.
+    4. **Meta Priority**: 본명(`canonical_name`)이거나, 주요 별칭(`is_primary`)인 경우 가산점.
