@@ -6,9 +6,10 @@ KOPIS 데이터의 한계(출연진 정보 부족/불명확)를 극복하기 위
 
 ### Core Principles
 
-1.  **Lazy Creation**: 아티스트 데이터는 미리 구축하지 않고, 공연 분석 시점에 존재하지 않으면 생성합니다 (Spotify ID 기준).
-2.  **Cost Efficiency**: 모든 공연을 분석하지 않고, 관리자가 **선별(Selection)**한 공연만 AI 파이프라인을 태워 API 비용을 절감합니다.
-3.  **Human-in-the-Loop**: AI는 후보군(Candidates)만 제안하며, 최종 매칭 및 발행 승인은 반드시 관리자가 수행합니다.
+1. **Lazy Creation**: 아티스트 데이터는 미리 구축하지 않고, 공연 분석 시점에 존재하지 않으면 생성합니다 (**MusicBrainz ID** 기준).
+2. **Cost Efficiency**: 모든 공연을 분석하지 않고, 관리자가 **선별(Selection)**한 공연만 AI 파이프라인을 태워 API 비용을 절감합니다.
+3. **Human-in-the-Loop**: AI는 후보군(Candidates)만 제안하며, 최종 매칭 및 발행 승인은 반드시 관리자가 수행합니다.
+4. **Local First**: **내부 구축된 MusicBrainz DB**를 1차 정보원(Source of Truth)으로 사용합니다.
 
 ## 2. Workflow Levels
 
@@ -36,12 +37,12 @@ graph TD
 - **Step 1: AI Search (Perplexity/Sonar)**
   - Query: `"{공연명}" 출연진 및 아티스트 라인업 알려줘`
   - Result: 아티스트 이름 배열 (예: `['아이유', 'NewJeans']`)
-- **Step 2: Verification (Spotify)**
-  - AI가 찾은 각 이름으로 Spotify Search API 호출.
-  - Top 3 후보군 추출 (상위 인기순).
-  - 유효성 검증(인기도, 팔로워 수 등) 후 메타데이터 확보.
+- **Step 2: Verification (MusicBrainz Local Search)**
+  - AI가 찾은 각 이름으로 **로컬 MusicBrainz DB 퍼지 검색 (`findArtistCandidates`)** 실행.
+  - Top 5 후보군 추출 (유사도 및 인기도 기반 랭킹).
+  - 유효성 검증(MBID 존재 여부, 메타데이터 확보).
 - **Output**:
-  - `analysisResult` JSON 필드에 후보군 저장.
+  - `analysisResult` JSON 필드에 후보군(MBID 포함) 저장.
   - `status` -> `REVIEWING`
 
 ### Phase 3: Review & Publish (검수 및 발행)
@@ -75,7 +76,7 @@ model Concert {
   publishStatus PublishStatus @default(DRAFT)
 
   // AI 분석 결과 (Top N Candidates)
-  // Schema: { candidates: [{ name: string, spotifyId: string, imageUrl: string, popularity: number, ... }] }
+  // Schema: { candidates: [{ mbid: string, name: string, matchedName: string, imageUrl: string, ... }] }
   analysisResult Json?
 }
 ```
@@ -87,4 +88,4 @@ model Concert {
   - `검수 대기(Reviewing)`: 매칭 작업용.
   - `발행 완료(Published)`: 이력 관리용.
 - **Manual Fallback**:
-  - AI 분석 실패 시, 관리자가 직접 검색창에 타이핑하여 Spotify API를 실시간 조회 및 선택할 수 있어야 함.
+  - AI 분석 실패 시, 관리자가 직접 검색창에 타이핑하여 **로컬 MusicBrainz DB**를 실시간 조회 및 선택할 수 있어야 함.

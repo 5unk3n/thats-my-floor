@@ -1,30 +1,30 @@
-import { SpotifyArtist, SpotifyFollowedArtistsResponse,SpotifyTokenResponse } from './types';
-
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
-const SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search';
+const SPOTIFY_API_URL = 'https://api.spotify.com/v1';
 
-export class SpotifyService {
-  private static clientId = process.env.SPOTIFY_CLIENT_ID;
-  private static clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-  private static accessToken: string | null = null;
-  private static tokenExpiresAt: number = 0;
+export class SpotifyClient {
+  private clientId: string;
+  private clientSecret: string;
+  private accessToken: string | null = null;
+  private tokenExpiresAt: number = 0;
 
-  /**
-   * Get valid Client Credentials Token
-   */
-  private static async getAccessToken(): Promise<string | null> {
+  constructor() {
+    this.clientId = process.env.SPOTIFY_CLIENT_ID || '';
+    this.clientSecret = process.env.SPOTIFY_CLIENT_SECRET || '';
+
     if (!this.clientId || !this.clientSecret) {
-      console.warn('SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET is missing.');
-      return null;
+      console.warn('Spotify API keys are missing. Please check your .env file.');
     }
+  }
 
-    // Return cached token if valid (with 60s buffer)
-    if (this.accessToken && Date.now() < this.tokenExpiresAt - 60000) {
+  private async getAccessToken(): Promise<string> {
+    const now = Date.now();
+    if (this.accessToken && this.tokenExpiresAt > now) {
       return this.accessToken;
     }
 
+    const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+
     try {
-      const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
       const response = await fetch(SPOTIFY_TOKEN_URL, {
         method: 'POST',
         headers: {
@@ -35,88 +35,62 @@ export class SpotifyService {
       });
 
       if (!response.ok) {
-        throw new Error(`Spotify Token Error: ${response.statusText}`);
+        throw new Error(`Failed to get Spotify token: ${response.status} ${response.statusText}`);
       }
-
-      const data: SpotifyTokenResponse = await response.json();
-      this.accessToken = data.access_token;
-      this.tokenExpiresAt = Date.now() + data.expires_in * 1000;
-
-      return this.accessToken;
-    } catch (error) {
-      console.error('Failed to get Spotify access token:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Search Artist by Query
-   */
-  static async searchArtist(query: string): Promise<SpotifyArtist | null> {
-    const list = await this.searchArtists(query, 1);
-    return list[0] || null;
-  }
-
-  /**
-   * Search Artists by Query (Multi)
-   */
-  static async searchArtists(query: string, limit = 5): Promise<SpotifyArtist[]> {
-    const token = await this.getAccessToken();
-    if (!token) return [];
-
-    try {
-      // Search for the artist
-      const params = new URLSearchParams({
-        q: query,
-        type: 'artist',
-        limit: limit.toString(),
-      });
-
-      const response = await fetch(`${SPOTIFY_SEARCH_URL}?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) return [];
 
       const data = await response.json();
-      return (data.artists?.items as SpotifyArtist[]) || [];
+      this.accessToken = data.access_token;
+      // Set expiration 1 minute earlier than actual to be safe
+      this.tokenExpiresAt = now + (data.expires_in - 60) * 1000;
+
+      return this.accessToken!;
     } catch (error) {
-      console.error(`Spotify Search Error for "${query}":`, error);
-      return [];
+      console.error('Failed to get Spotify access token:', error);
+      throw error;
     }
   }
-  /**
-   * Get User's Followed Artists
-   * Requires User Access Token (Scope: user-follow-read)
-   */
-  static async getFollowedArtists(
-    accessToken: string,
-    limit = 20,
-    after?: string
-  ): Promise<SpotifyFollowedArtistsResponse | null> {
+
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = await this.getAccessToken();
+    const url = `${SPOTIFY_API_URL}${endpoint}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    };
+
+    let response = await fetch(url, { ...options, headers });
+
+    // Handle Rate Limiting (429)
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get('Retry-After') || '1', 10);
+      console.warn(`[SpotifyClient] Rate limit hit. Retrying after ${retryAfter}s...`);
+
+      await new Promise((resolve) => setTimeout(resolve, (retryAfter + 1) * 1000));
+
+      response = await fetch(url, { ...options, headers });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Spotify API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  public async getArtistImage(spotifyId: string): Promise<string | null> {
     try {
-      const params = new URLSearchParams({
-        type: 'artist',
-        limit: limit.toString(),
-      });
+      const data = await this.request<{ images: { url: string }[] }>(`/artists/${spotifyId}`);
+      const images = data.images;
 
-      if (after) {
-        params.append('after', after);
+      if (images && images.length > 0) {
+        return images[0].url;
       }
-
-      const response = await fetch(`https://api.spotify.com/v1/me/following?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (!response.ok) {
-        console.error(`Spotify Followed Artists Error: ${response.status} ${response.statusText}`);
-        return null;
-      }
-
-      return await response.json();
+      return null;
     } catch (error) {
-      console.error('Failed to get followed artists:', error);
+      console.error(`Failed to fetch Spotify artist ${spotifyId}:`, error);
       return null;
     }
   }
 }
+
+export const spotifyClient = new SpotifyClient();

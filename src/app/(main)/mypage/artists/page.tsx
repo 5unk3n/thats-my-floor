@@ -2,10 +2,10 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { FollowedArtistsFetcher } from '@/features/artists/components/FollowedArtistsFetcher';
-import { FollowedArtistsSkeleton } from '@/features/artists/components/skeletons/FollowedArtistsSkeleton';
-import { ArtistSearchTrigger } from '@/features/search/components/ArtistSearchTrigger';
-import { Button } from '@/shared/components/ui/button';
+import { FollowedArtistsSkeleton } from '@/entities/artist';
+import { FollowedArtistsFetcher } from '@/features/artists';
+import { ArtistSearchTrigger } from '@/features/search';
+import { Button } from '@/shared/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
+} from '@/shared/ui/dropdown-menu';
 
 export const metadata = {
   title: '팔로우한 아티스트',
@@ -39,8 +39,8 @@ export default function FollowedArtistsPage() {
             <DropdownMenuSeparator />
             <ArtistSearchTrigger variant="dropdown" />
             <DropdownMenuItem asChild>
-              <Link href="/mypage/spotify-sync" className="cursor-pointer">
-                🟢 스포티파이 가져오기
+              <Link href="/mypage/lastfm-sync" className="cursor-pointer">
+                🔴 Last.fm 가져오기
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -2,11 +2,10 @@ import { PublishStatus } from '@prisma/client';
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { AdminReviewListFetcher } from '@/features/concerts/components/admin/AdminReviewListFetcher';
-import { AdminReviewListSkeleton } from '@/features/concerts/components/skeletons/AdminReviewListSkeleton';
-import { runPipelineAction } from '@/features/concerts/server/actions';
-import { Button } from '@/shared/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { AdminReviewListSkeleton } from '@/entities/concert';
+import { AdminReviewListFetcher, runPipelineAction } from '@/features/concerts';
+import { Button } from '@/shared/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 
 export const metadata: Metadata = {
   title: '공연 등록 관리',

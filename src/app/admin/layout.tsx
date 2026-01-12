@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import AuthChecker from '@/shared/components/AuthChecker';
+import AuthChecker from '@/features/auth/ui/AuthChecker';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

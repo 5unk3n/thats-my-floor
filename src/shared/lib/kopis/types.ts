@@ -1,3 +1,5 @@
+export type KopisConcertStatus = '공연예정' | '공연중' | '공연완료';
+
 export interface KopisConcertListResponse {
   dbs: {
     db: {
@@ -9,7 +11,7 @@ export interface KopisConcertListResponse {
       poster: string; // 포스터 이미지 경로
       genrenm: string; // 공연 장르명
       openrun: string; // 오픈런 여부
-      prfstate: string; // 공연 상태
+      prfstate: KopisConcertStatus; // 공연 상태
       festival?: string; // 페스티벌 여부 (Y/N)
     }[];
   };
@@ -33,7 +35,7 @@ export interface KopisConcertDetailResponse {
       poster: string; // 포스터 이미지 경로
       sty: string; // 줄거리
       genrenm: string; // 공연 장르명
-      prfstate: string; // 공연 상태
+      prfstate: KopisConcertStatus; // 공연 상태
       openrun: string; // 오픈런 여부
       area?: string; // 지역 (예: 서울, 경기, 인천 등)
       festival?: string; // 페스티벌 여부 (Y/N)
