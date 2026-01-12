@@ -50,25 +50,39 @@ export class SpotifyClient {
     }
   }
 
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = await this.getAccessToken();
+    const url = `${SPOTIFY_API_URL}${endpoint}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    };
+
+    let response = await fetch(url, { ...options, headers });
+
+    // Handle Rate Limiting (429)
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get('Retry-After') || '1', 10);
+      console.warn(`[SpotifyClient] Rate limit hit. Retrying after ${retryAfter}s...`);
+
+      await new Promise((resolve) => setTimeout(resolve, (retryAfter + 1) * 1000));
+
+      response = await fetch(url, { ...options, headers });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Spotify API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
   public async getArtistImage(spotifyId: string): Promise<string | null> {
     try {
-      const token = await this.getAccessToken();
-      const response = await fetch(`${SPOTIFY_API_URL}/artists/${spotifyId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Spotify API Error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await this.request<{ images: { url: string }[] }>(`/artists/${spotifyId}`);
       const images = data.images;
 
       if (images && images.length > 0) {
-        // Return 640px image if available (usually first element)
         return images[0].url;
       }
       return null;
