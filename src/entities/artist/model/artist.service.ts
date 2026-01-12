@@ -48,7 +48,13 @@ export async function getArtistProfile(mbid: string) {
 
   let imageUrl = localArtist?.imageUrl;
 
-  if (!imageUrl) {
+  // Custom Logic: Check for image expiry (30 days)
+  const lastUpdated = localArtist?.updatedAt;
+  const isExpired = lastUpdated
+    ? Date.now() - lastUpdated.getTime() > 30 * 24 * 60 * 60 * 1000
+    : false;
+
+  if (!imageUrl || isExpired) {
     try {
       const syncedUrl = await syncArtistImageByMbid(mbid);
       if (syncedUrl) {
