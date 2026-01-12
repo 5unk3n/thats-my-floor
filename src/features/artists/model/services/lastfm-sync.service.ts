@@ -2,12 +2,10 @@ import { ArtistRepository } from '@/entities/artist';
 import { lastFmClient } from '@/shared/lib/lastfm/client';
 import { LastFmTopArtist } from '@/shared/lib/lastfm/types';
 
-export type SyncArtistStatus = 'new' | 'exists' | 'following';
-
 export interface LastFmSyncArtist extends LastFmTopArtist {
-  status: SyncArtistStatus;
+  isFollowing: boolean;
+  hasUpcomingConcert: boolean;
   dbId?: string;
-  imageUrl?: string;
 }
 
 export async function fetchMyLastFmArtists(
@@ -41,32 +39,38 @@ export async function fetchMyLastFmArtists(
 
     const now = new Date();
 
-    const result: LastFmSyncArtist[] = topArtists.map((artist) => {
-      const artId = artist.mbid;
-      // If we don't have an mbid, we can't match against DB (UUID required)
-      const existing = artId ? existingArtists.find((e) => e.mbid === artId) : undefined;
+    // 3. Map to LastFmSyncArtist
+    const result: LastFmSyncArtist[] = validArtists
+      .map((artist) => {
+        const artMbid = artist.mbid;
 
-      let status: SyncArtistStatus = 'new';
-      if (existing) {
-        // existing.followers is populated by findArtistsWithConcerts
-        if (existing.followers && existing.followers.length > 0) {
-          status = 'following';
-        } else {
-          // Check if there is any upcoming concert
-          const hasUpcomingConcert = existing.concerts.some(
-            ({ concert }) => concert.endDate >= now
-          );
-          status = hasUpcomingConcert ? 'exists' : 'new';
+        if (!artMbid) {
+          return null;
         }
-      }
 
-      return {
-        ...artist,
-        status,
-        dbId: existing?.id ? String(existing.id) : undefined,
-        imageUrl: artist.image.find((i) => i.size === 'large')?.['#text'],
-      };
-    });
+        const existing = existingArtists.find(
+          (e) => e.mbid.toLowerCase() === artMbid.toLowerCase()
+        );
+
+        let isFollowing = false;
+        let hasUpcomingConcert = false;
+
+        if (existing) {
+          if (existing.followers && existing.followers.length > 0) {
+            isFollowing = true;
+          }
+
+          hasUpcomingConcert = existing.concerts.some(({ concert }) => concert.endDate >= now);
+        }
+
+        return {
+          ...artist,
+          isFollowing,
+          hasUpcomingConcert,
+          dbId: existing?.id ? String(existing.id) : undefined,
+        } as LastFmSyncArtist;
+      })
+      .filter((a): a is LastFmSyncArtist => !!a);
 
     return { success: true, data: result };
   } catch (error) {
@@ -84,7 +88,6 @@ export async function syncLastFmArtists(userId: string, artists: LastFmTopArtist
       .filter((a) => a.mbid)
       .map((artist) => ({
         name: artist.name,
-        image: artist.image.find((i) => i.size === 'large')?.['#text'],
         mbid: artist.mbid!,
         followerCount: 0,
       }));
