@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client';
 
+import { spotifyClient } from '@/shared/lib/spotify/client';
+
 import {
   createLocalArtist,
   createUserArtist,
@@ -9,7 +11,9 @@ import {
   findLocalArtistByMbid,
   findMusicBrainzArtistByMbid,
   findMusicBrainzArtistsByMbids,
+  findSpotifyUrlByMbid,
   findUserArtist,
+  updateArtistImage,
   upsertLocalArtist,
 } from '../api/repository';
 
@@ -32,21 +36,36 @@ export async function getArtistProfile(mbid: string) {
 
   const localArtist = await findLocalArtistByMbid(mbid);
 
-  const data = { ...mbArtist, localData: localArtist };
+  let imageUrl = localArtist?.imageUrl;
+
+  if (!imageUrl) {
+    try {
+      const syncedUrl = await syncArtistImageByMbid(mbid);
+      if (syncedUrl) {
+        imageUrl = syncedUrl;
+      }
+    } catch (e) {
+      console.error('[getArtistProfile] Image sync failed:', e);
+    }
+  }
+
+  const data = {
+    ...mbArtist,
+    localData: localArtist ? { ...localArtist, imageUrl } : { imageUrl },
+  };
 
   // Transform/Combine data if needed
   return {
     id: data.gid,
     mbid: data.gid,
     name: data.name,
-    images: data.localData?.imageUrl ? [data.localData.imageUrl] : [],
     genres: [], // TODO: Tag/Genre implementation
     links: data.artistLinks.map((l) => ({
       type: l.linkDef.linkType.name,
       url: l.url.url,
     })),
     // Compatibility for UI
-    image: data.localData?.imageUrl || null,
+    imageUrl: data.localData?.imageUrl,
 
     // Domain Logic: Extract External Links
     externalLinks: {
@@ -132,4 +151,37 @@ export async function enrichArtists(
     ...artist,
     name: mbMap.get(artist.mbid) || 'Unknown Artist',
   }));
+}
+
+export async function syncArtistImageByMbid(artistMbid: string): Promise<string | null> {
+  // 1. Get artist with current image info
+  const artist = await findLocalArtistByMbid(artistMbid);
+  if (!artist) return null;
+
+  // 2. Check if update is needed (Lazy Loading: Only if no image)
+  if (artist.imageUrl) {
+    return artist.imageUrl;
+  }
+
+  // 3. Resolve Spotify ID via MusicBrainz
+  const spotifyUrl = await findSpotifyUrlByMbid(artist.mbid);
+  if (!spotifyUrl) {
+    console.log(`[SyncImage] No Spotify URL found for artist ${artist.mbid}`);
+    return null;
+  }
+
+  // Extract ID from URL (https://open.spotify.com/artist/3HqSLMAZ3g3d5poNaI7GXP)
+  const spotifyId = spotifyUrl.split('/').pop();
+  if (!spotifyId) return null;
+
+  // 4. Fetch from Spotify API
+  const imageUrl = await spotifyClient.getArtistImage(spotifyId);
+
+  // 5. Update DB if image found
+  if (imageUrl) {
+    await updateArtistImage(artist.id, imageUrl);
+    return imageUrl;
+  }
+
+  return null;
 }

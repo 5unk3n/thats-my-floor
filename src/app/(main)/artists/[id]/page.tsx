@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: ArtistDetailPageProps): Promi
     openGraph: {
       title: `${artist.name} | 아티스트 정보`,
       description: `${artist.name}의 공연 정보를 확인하세요.`,
-      images: artist.image ? [artist.image] : [],
+      images: artist.imageUrl ? [artist.imageUrl] : [],
     },
   };
 }

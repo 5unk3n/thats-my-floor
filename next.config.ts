@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       new URL('http://www.kopis.or.kr/**'),
       new URL('https://lastfm.freetls.fastly.net/**'),
+      new URL('https://i.scdn.co/image/**'),
     ],
   },
   cacheComponents: true,

@@ -4,6 +4,33 @@ import { prisma } from '@/shared/lib/prisma';
 
 import { ArtistCandidate } from '../model/types';
 
+export async function findSpotifyUrlByMbid(mbid: string): Promise<string | null> {
+  // 1. Find the URL entity linked to the artist via 'mb_l_artist_url'
+  // We look for URLs containing 'open.spotify.com/artist/'
+  const artistUrl = await prisma.musicBrainzArtistUrl.findFirst({
+    where: {
+      artist: { gid: mbid }, // Assuming mbid is the GID
+      url: {
+        url: {
+          contains: 'open.spotify.com/artist/',
+        },
+      },
+    },
+    include: {
+      url: true,
+    },
+  });
+
+  return artistUrl?.url.url || null;
+}
+
+export async function updateArtistImage(artistId: number, imageUrl: string) {
+  return prisma.artist.update({
+    where: { id: artistId },
+    data: { imageUrl },
+  });
+}
+
 export async function findArtistCandidates(query: string, limit = 5) {
   return prisma.$queryRaw<ArtistCandidate[]>`
     WITH search_input AS (

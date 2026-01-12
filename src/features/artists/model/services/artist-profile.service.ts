@@ -1,3 +1,5 @@
+import { cacheLife, cacheTag } from 'next/cache';
+
 import { ArtistService } from '@/entities/artist';
 
 /**
@@ -6,5 +8,7 @@ import { ArtistService } from '@/entities/artist';
  */
 export async function getCachedArtistProfile(artistId: string) {
   'use cache';
+  cacheLife('max');
+  cacheTag(`artist-profile-${artistId}`);
   return ArtistService.getArtistProfile(artistId);
 }
