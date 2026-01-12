@@ -2,9 +2,9 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { MainConcertFetcher } from '@/features/concerts/components/MainConcertFetcher';
-import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
-import { Button } from '@/shared/components/ui/button';
+import { ConcertListSkeleton } from '@/entities/concert';
+import { MainConcertFetcher } from '@/features/concerts';
+import { Button } from '@/shared/ui/button';
 
 export const metadata: Metadata = {
   title: '홈',

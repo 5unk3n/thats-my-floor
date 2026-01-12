@@ -1,11 +1,10 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { ArtistProfileFetcher } from '@/features/artists/components/ArtistProfileFetcher';
-import { ArtistProfileSkeleton } from '@/features/artists/components/skeletons/ArtistProfileSkeleton';
-import { getArtistProfile } from '@/features/artists/server/services/artist.service';
-import { ArtistConcertList } from '@/features/concerts/components/ArtistConcertList';
-import { ConcertListSkeleton } from '@/features/concerts/components/skeletons/ConcertListSkeleton';
+import { ArtistProfileSkeleton } from '@/entities/artist';
+import { ConcertListSkeleton } from '@/entities/concert';
+import { ArtistProfileFetcher, ArtistService } from '@/features/artists';
+import { ArtistConcertList } from '@/features/concerts';
 
 interface ArtistDetailPageProps {
   params: Promise<{ id: string }>;
@@ -13,7 +12,7 @@ interface ArtistDetailPageProps {
 
 export async function generateMetadata({ params }: ArtistDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const artist = await getArtistProfile(id);
+  const artist = await ArtistService.getCachedArtistProfile(id);
 
   if (!artist) {
     return {
@@ -23,11 +22,11 @@ export async function generateMetadata({ params }: ArtistDetailPageProps): Promi
 
   return {
     title: `${artist.name} | 아티스트 정보`,
-    description: artist.description?.slice(0, 160) || `${artist.name}의 공연 정보를 확인하세요.`,
+    description: `${artist.name}의 공연 정보를 확인하세요.`,
     openGraph: {
       title: `${artist.name} | 아티스트 정보`,
-      description: artist.description?.slice(0, 160) || `${artist.name}의 공연 정보를 확인하세요.`,
-      images: artist.image ? [artist.image] : [],
+      description: `${artist.name}의 공연 정보를 확인하세요.`,
+      images: artist.imageUrl ? [artist.imageUrl] : [],
     },
   };
 }

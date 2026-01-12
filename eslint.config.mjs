@@ -32,8 +32,9 @@ const eslintConfig = defineConfig([
         },
         {
           mode: 'full',
-          type: 'support',
-          pattern: 'src/features/{notifications,auth}/**/*',
+          type: 'entity',
+          pattern: 'src/entities/*/**/*',
+          capture: ['entityName'],
         },
         {
           mode: 'full',
@@ -63,19 +64,19 @@ const eslintConfig = defineConfig([
           rules: [
             {
               from: 'app',
-              allow: ['feature', 'shared', 'app', 'support'],
+              allow: ['feature', 'entity', 'shared', 'app'],
             },
             {
               from: 'shared',
               allow: ['shared'],
             },
             {
-              from: 'feature',
-              allow: ['shared', 'support', ['feature', { featureName: '${from.featureName}' }]],
+              from: 'entity',
+              allow: ['shared', ['entity', { entityName: '${from.entityName}' }]],
             },
             {
-              from: 'support',
-              allow: ['shared', 'support'],
+              from: 'feature',
+              allow: ['entity', 'shared', ['feature', { featureName: '${from.featureName}' }]],
             },
           ],
         },
