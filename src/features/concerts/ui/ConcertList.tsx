@@ -1,7 +1,6 @@
 import { ConcertGrid } from '@/entities/concert';
 import { getConcerts } from '@/features/concerts/model/services/concert.service';
-
-import { ConcertPagination } from './ConcertPagination';
+import { Pagination } from '@/shared/ui/pagination';
 
 interface ConcertListProps {
   searchParams: Promise<{
@@ -14,6 +13,7 @@ interface ConcertListProps {
 export async function ConcertList({ searchParams }: ConcertListProps) {
   const { page: pageParam, type, region } = await searchParams;
   const page = Number(pageParam) || 1;
+  const LIMIT = 20;
 
   const validTypes = ['DOMESTIC', 'GLOBAL', 'FESTIVAL'] as const;
   const concertType = validTypes.find((t) => t === type) || undefined;
@@ -21,21 +21,19 @@ export async function ConcertList({ searchParams }: ConcertListProps) {
   const validRegions = ['METRO', 'OTHERS'] as const;
   const regionType = validRegions.find((r) => r === region) || undefined;
 
-  const concerts = await getConcerts({
+  const { data: concerts, total } = await getConcerts({
     page,
+    size: LIMIT,
     type: concertType,
     region: regionType,
   });
 
-  // Check if there are more results for pagination
-  // This is a simplified check. Ideally, the API should return total count.
-  // For now, if we get a full page (20 items), we assume there might be more.
-  const hasMore = concerts.length === 20;
-
   return (
     <>
       <ConcertGrid concerts={concerts} />
-      <ConcertPagination hasMore={hasMore} />
+      <div className="mt-8 flex justify-center">
+        <Pagination total={total} page={page} limit={LIMIT} />
+      </div>
     </>
   );
 }

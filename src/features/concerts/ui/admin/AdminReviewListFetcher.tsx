@@ -4,37 +4,41 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 
 import { ArtistService } from '@/entities/artist';
+import { ConcertRepository } from '@/entities/concert';
 import {
   rejectConcertAction,
   requestAnalysisAction,
   restoreToReviewAction,
 } from '@/features/concerts/api/actions';
-import { prisma } from '@/shared/lib/prisma';
 import { Button } from '@/shared/ui/button';
+import { Pagination } from '@/shared/ui/pagination';
 
 import { ConcertReviewCard } from './ConcertReviewCard';
 
 interface AdminReviewListFetcherProps {
   status: PublishStatus;
+  page?: number;
 }
 
-export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherProps) {
+export async function AdminReviewListFetcher({ status, page = 1 }: AdminReviewListFetcherProps) {
   await connection();
+  const LIMIT = 50;
 
-  const concerts = await prisma.concert.findMany({
-    where: { publishStatus: status },
-    orderBy: { updatedAt: 'desc' },
-    take: 50,
-    include: { artists: { include: { artist: true } } },
+  const { data: concerts, total } = await ConcertRepository.findConcertsByStatus({
+    status,
+    page,
+    limit: LIMIT,
   });
 
   if (concerts.length === 0) {
     return <p className="text-muted-foreground p-4">해당 상태의 공연이 없습니다.</p>;
   }
 
+  let content;
+
   // 1. DRAFT (수집)
   if (status === PublishStatus.DRAFT) {
-    return (
+    content = (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {concerts.map((concert) => (
           <div key={concert.id} className="group flex flex-col">
@@ -82,8 +86,8 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
   }
 
   // 2. ANALYZING (분석 중)
-  if (status === PublishStatus.ANALYZING) {
-    return (
+  else if (status === PublishStatus.ANALYZING) {
+    content = (
       <div className="grid grid-cols-1 gap-4">
         {concerts.map((concert) => (
           <div key={concert.id} className="p-4 border rounded shadow-sm opacity-70">
@@ -96,8 +100,8 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
   }
 
   // 3. REVIEWING (검토 대기)
-  if (status === PublishStatus.REVIEWING) {
-    return (
+  else if (status === PublishStatus.REVIEWING) {
+    content = (
       <div className="grid grid-cols-1 gap-4">
         {concerts.map((concert) => (
           <ConcertReviewCard key={concert.id} concert={concert} />
@@ -107,12 +111,13 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
   }
 
   // 4. PUBLISHED (발행 완료)
-  if (status === PublishStatus.PUBLISHED) {
-    const rawArtists = concerts.flatMap((c) => c.artists.map((ca) => ca.artist));
+  else if (status === PublishStatus.PUBLISHED) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawArtists = concerts.flatMap((c: any) => c.artists.map((ca: any) => ca.artist));
     const enrichedArtists = await ArtistService.enrichArtists(rawArtists);
     const artistNameMap = new Map(enrichedArtists.map((a) => [a.id, a.name]));
 
-    return (
+    content = (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {concerts.map((concert) => (
           <div
@@ -123,7 +128,10 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
             <p className="text-xs text-gray-600">
               🎤{' '}
               {concert.artists
-                ?.map((a) => artistNameMap.get(a.artist.id) || 'Unknown Artist')
+                ?.map(
+                  (a: { artist: { id: number } }) =>
+                    artistNameMap.get(a.artist.id) || 'Unknown Artist'
+                )
                 .join(', ') || '알 수 없음'}
             </p>
             <div className="text-sm text-gray-500">
@@ -146,8 +154,8 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
   }
 
   // 5. REJECTED (반려)
-  if (status === PublishStatus.REJECTED) {
-    return (
+  else if (status === PublishStatus.REJECTED) {
+    content = (
       <div className="grid grid-cols-1 gap-4">
         {concerts.map((concert) => (
           <div
@@ -172,5 +180,10 @@ export async function AdminReviewListFetcher({ status }: AdminReviewListFetcherP
     );
   }
 
-  return null;
+  return (
+    <div className="space-y-6">
+      {content}
+      <Pagination total={total} page={page} limit={LIMIT} />
+    </div>
+  );
 }

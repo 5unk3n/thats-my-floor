@@ -8,6 +8,7 @@ import { Concert } from '@/entities/concert';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
+import { PaginatedResult } from '@/shared/types/common';
 
 import * as AnalysisService from '../model/services/analysis.service';
 import * as concertService from '../model/services/concert.service';
@@ -136,7 +137,7 @@ export async function getConcertsAction(params: {
   size?: number;
   region?: string;
   type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
-}): Promise<ActionResponse<Concert[]>> {
+}): Promise<ActionResponse<PaginatedResult<Concert>>> {
   try {
     const concerts = await concertService.getConcerts({
       page: params.page,
