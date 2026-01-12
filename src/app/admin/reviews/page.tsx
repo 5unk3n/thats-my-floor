@@ -15,7 +15,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AdminReviewsPage() {
+interface AdminReviewsPageProps {
+  searchParams: Promise<{
+    tab?: string;
+    page?: string;
+  }>;
+}
+
+export default async function AdminReviewsPage(props: AdminReviewsPageProps) {
+  const searchParams = await props.searchParams;
+  const currentTab = searchParams.tab || 'draft';
+  const currentPage = Number(searchParams.page) || 1;
+
   return (
     <div className="container py-8 space-y-6">
       <div className="flex justify-between items-center">
@@ -32,47 +43,57 @@ export default function AdminReviewsPage() {
         </form>
       </div>
 
-      <Tabs defaultValue="draft" className="w-full">
+      <Tabs defaultValue={currentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="draft">수집</TabsTrigger>
-          <TabsTrigger value="analyzing">분석 중</TabsTrigger>
-          <TabsTrigger value="reviews">검토 대기</TabsTrigger>
-          <TabsTrigger value="published">발행 완료</TabsTrigger>
-          <TabsTrigger value="rejected">반려</TabsTrigger>
+          <TabsTrigger value="draft" asChild>
+            <a href="?tab=draft&page=1">수집</a>
+          </TabsTrigger>
+          <TabsTrigger value="analyzing" asChild>
+            <a href="?tab=analyzing&page=1">분석 중</a>
+          </TabsTrigger>
+          <TabsTrigger value="reviews" asChild>
+            <a href="?tab=reviews&page=1">검토 대기</a>
+          </TabsTrigger>
+          <TabsTrigger value="published" asChild>
+            <a href="?tab=published&page=1">발행 완료</a>
+          </TabsTrigger>
+          <TabsTrigger value="rejected" asChild>
+            <a href="?tab=rejected&page=1">반려</a>
+          </TabsTrigger>
         </TabsList>
 
         {/* 1. 수집 탭 */}
         <TabsContent value="draft" className="space-y-4 mt-4">
           <Suspense fallback={<AdminReviewListSkeleton />}>
-            <AdminReviewListFetcher status={PublishStatus.DRAFT} />
+            <AdminReviewListFetcher status={PublishStatus.DRAFT} page={currentPage} />
           </Suspense>
         </TabsContent>
 
         {/* 2. 분석 중 탭 */}
         <TabsContent value="analyzing" className="space-y-4 mt-4">
           <Suspense fallback={<AdminReviewListSkeleton />}>
-            <AdminReviewListFetcher status={PublishStatus.ANALYZING} />
+            <AdminReviewListFetcher status={PublishStatus.ANALYZING} page={currentPage} />
           </Suspense>
         </TabsContent>
 
         {/* 3. 검토 탭 */}
         <TabsContent value="reviews" className="space-y-4 mt-4">
           <Suspense fallback={<AdminReviewListSkeleton />}>
-            <AdminReviewListFetcher status={PublishStatus.REVIEWING} />
+            <AdminReviewListFetcher status={PublishStatus.REVIEWING} page={currentPage} />
           </Suspense>
         </TabsContent>
 
         {/* 4. 발행 완료 탭 */}
         <TabsContent value="published" className="space-y-4 mt-4">
           <Suspense fallback={<AdminReviewListSkeleton />}>
-            <AdminReviewListFetcher status={PublishStatus.PUBLISHED} />
+            <AdminReviewListFetcher status={PublishStatus.PUBLISHED} page={currentPage} />
           </Suspense>
         </TabsContent>
 
         {/* 5. 반려 탭 */}
         <TabsContent value="rejected" className="space-y-4 mt-4">
           <Suspense fallback={<AdminReviewListSkeleton />}>
-            <AdminReviewListFetcher status={PublishStatus.REJECTED} />
+            <AdminReviewListFetcher status={PublishStatus.REJECTED} page={currentPage} />
           </Suspense>
         </TabsContent>
       </Tabs>

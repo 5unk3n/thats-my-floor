@@ -8,7 +8,7 @@ import { ArtistService } from '@/entities/artist';
  */
 export async function getCachedArtistProfile(artistId: string) {
   'use cache';
-  cacheLife('max');
+  cacheLife('hours');
   cacheTag(`artist-profile-${artistId}`);
   return ArtistService.getArtistProfile(artistId);
 }

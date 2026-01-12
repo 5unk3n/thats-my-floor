@@ -21,9 +21,9 @@ import {
  * Search artists by name.
  * Pure domain logic: merges MusicBrainz and Local data.
  */
-export async function searchArtists(query: string) {
+export async function searchArtists(query: string, limit?: number) {
   // 1. Search candidates using optimized fuzzy search query
-  return findArtistCandidates(query);
+  return findArtistCandidates(query, limit);
 }
 
 /**

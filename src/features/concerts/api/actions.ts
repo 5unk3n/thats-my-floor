@@ -8,6 +8,7 @@ import { Concert } from '@/entities/concert';
 import { ERROR_CODES } from '@/shared/constants/error-codes';
 import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
+import { PaginatedResult } from '@/shared/types/common';
 
 import * as AnalysisService from '../model/services/analysis.service';
 import * as concertService from '../model/services/concert.service';
@@ -58,7 +59,6 @@ export async function publishConcertAction(
     const concert = await AnalysisService.publishConcert(concertId, candidates);
 
     // Send notification to followers after successful publish
-    // Send notification to followers after successful publish
     const detail = await concertService.getConcertDetail(concert.id);
     if (detail) {
       const artistNames = detail.artists.map((a) => a.name).join(', ');
@@ -66,20 +66,9 @@ export async function publishConcertAction(
     }
 
     // Invalidate Cache
-    // Invalidate Cache
     revalidatePath('/admin/reviews');
-    // revalidatePath('/'); // Refresh main page explicitly - unnecessary with tags
-    // revalidatePath(`/concerts/${concertId}`); // Refresh detail page - unnecessary with tags
-
-    revalidateTag('concerts', {});
-    revalidateTag(`concert-detail-${concertId}`, {});
-
-    // Invalidate artist pages (ISR/Cache)
-    if (concert.artists) {
-      concert.artists.forEach((ca) => {
-        revalidateTag(`artist-concerts-${ca.artistId}`, {}); // tag-based invalidation
-      });
-    }
+    revalidateTag('concerts', { expire: 0 });
+    revalidateTag(`concert-detail-${concertId}`, { expire: 0 });
 
     return { success: true, data: undefined };
   } catch (error) {
@@ -127,7 +116,7 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
 // --- Manual Search (Local DB) ---
 
 export async function searchExternalArtistsAction(query: string): Promise<ArtistCandidate[]> {
-  const artists = await ArtistService.searchArtists(query);
+  const artists = await ArtistService.searchArtists(query, 10);
   return artists;
 }
 
@@ -136,7 +125,7 @@ export async function getConcertsAction(params: {
   size?: number;
   region?: string;
   type?: 'DOMESTIC' | 'GLOBAL' | 'FESTIVAL';
-}): Promise<ActionResponse<Concert[]>> {
+}): Promise<ActionResponse<PaginatedResult<Concert>>> {
   try {
     const concerts = await concertService.getConcerts({
       page: params.page,

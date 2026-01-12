@@ -9,8 +9,11 @@ import {
   ConcertFilterParams,
   ConcertRepository,
 } from '@/entities/concert';
+import { PaginatedResult } from '@/shared/types/common';
 
-export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[]> => {
+export const getConcerts = async (
+  params: ConcertFilterParams
+): Promise<PaginatedResult<Concert>> => {
   'use cache';
   cacheLife('hours');
   cacheTag('concerts');
@@ -31,26 +34,37 @@ export const getConcerts = async (params: ConcertFilterParams): Promise<Concert[
     filter.region = { notIn: ['서울', '경기', '인천'] };
   }
 
-  const concerts = await ConcertRepository.findConcerts({
-    where: filter,
-    page: params.page || 1,
-    size: params.size || 20,
+  const {
+    data: concerts,
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage,
+  } = await ConcertRepository.findConcerts(filter, params.page || 1, params.size || 20, {
+    startDate: 'asc',
   });
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0].replace(/-/g, '.');
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return concerts.map((item: any) => ({
-    id: item.id,
-    title: item.title,
-    posterUrl: item.posterUrl || '',
-    startDate: formatDate(item.startDate),
-    endDate: formatDate(item.endDate),
-    place: item.place,
-    status: item.status || 'OPEN',
-  }));
+  return {
+    data: concerts.map((item) => ({
+      id: item.id,
+      title: item.title,
+      posterUrl: item.posterUrl || '',
+      startDate: formatDate(item.startDate),
+      endDate: formatDate(item.endDate),
+      place: item.place,
+      status: item.status || 'OPEN',
+    })),
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage,
+  };
 };
 
 export const getConcertDetail = async (id: string): Promise<ConcertDetailModel | null> => {

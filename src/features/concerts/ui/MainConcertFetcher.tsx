@@ -6,7 +6,7 @@ interface MainConcertFetcherProps {
 }
 
 export async function MainConcertFetcher({ type }: MainConcertFetcherProps) {
-  const concerts = await concertService.getConcerts({ type, page: 1, size: 8 });
+  const { data: concerts } = await concertService.getConcerts({ type, page: 1, size: 8 });
 
   return <ConcertGrid concerts={concerts} layout="horizontal" />;
 }

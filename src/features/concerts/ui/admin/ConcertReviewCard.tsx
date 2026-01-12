@@ -143,7 +143,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
               </div>
 
               {searchResults.length > 0 && (
-                <div className="mt-2 grid gap-2 max-h-40 overflow-y-auto">
+                <div className="mt-2 grid gap-2 max-h-60 overflow-y-auto">
                   {searchResults.map((result, idx) => (
                     <div
                       key={idx}
@@ -166,6 +166,11 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{result.name}</div>
+                          {result.comment && (
+                            <div className="text-xs text-muted-foreground truncate">
+                              {result.comment}
+                            </div>
+                          )}
                         </div>
                         {isSelected(result.mbid) && (
                           <CheckCircle2 size={16} className="text-green-600" />
@@ -256,6 +261,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{cand.name}</div>
                         </div>
+                        <div className="text-xs text-muted-foreground truncate">{cand.comment}</div>
                         <div>
                           {isSelected(cand.mbid) ? (
                             <CheckCircle2 className="text-primary" size={20} />

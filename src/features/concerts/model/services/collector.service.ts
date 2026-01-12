@@ -1,40 +1,68 @@
 import { ConcertRepository } from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
+import { KopisConcertListResponse } from '@/shared/lib/kopis/types';
 import { prisma } from '@/shared/lib/prisma';
 
 export const collectConcerts = async () => {
   const today = new Date();
-  const nextMonth = new Date();
-  nextMonth.setMonth(today.getMonth() + 1);
+  const futureLimit = new Date();
+  futureLimit.setFullYear(today.getFullYear() + 1);
 
   const formatDate = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
   const stdate = formatDate(today);
-  const eddate = formatDate(nextMonth);
+  const eddate = formatDate(futureLimit);
 
   console.log('[Collector] Fetching concerts from KOPIS...');
 
-  // 1. Fetch Concerts (Popular Music, Non-Festival)
-  const concertResponse = await kopisClient.getConcertList({
-    cpage: '1',
-    rows: '50',
-    stdate,
-    eddate,
-    shcate: 'CCCD',
-    festival: 'N',
-  });
-  const rawConcerts = concertResponse.dbs?.db || [];
-  const concertList = Array.isArray(rawConcerts) ? rawConcerts : [rawConcerts];
+  // Helper to fetch all pages
+  const fetchAllPages = async (
+    fetcher: (page: string) => Promise<KopisConcertListResponse>,
+    categoryName: string
+  ) => {
+    let page = 1;
+    type ConcertItem = KopisConcertListResponse['dbs']['db'][number];
+    const allItems: ConcertItem[] = [];
 
-  // 2. Fetch Festivals (Popular Music)
-  const festivalResponse = await kopisClient.getFestivalList({
-    cpage: '1',
-    rows: '50',
-    stdate,
-    eddate,
-    shcate: 'CCCD',
-  });
-  const rawFestivals = festivalResponse.dbs?.db || [];
-  const festivalList = Array.isArray(rawFestivals) ? rawFestivals : [rawFestivals];
+    while (true) {
+      console.log(`[Collector] Fetching ${categoryName} page ${page}...`);
+      const response = await fetcher(String(page));
+      const raw = response.dbs?.db || [];
+      const list = Array.isArray(raw) ? raw : [raw];
+
+      allItems.push(...list);
+
+      if (list.length < 100) break;
+      page++;
+    }
+    return allItems;
+  };
+
+  // 1. Fetch Concerts
+  const concertList = await fetchAllPages(
+    (page) =>
+      kopisClient.getConcertList({
+        cpage: page,
+        rows: '100',
+        stdate,
+        eddate,
+        shcate: 'CCCD',
+        festival: 'N',
+      }),
+    'Concerts'
+  );
+
+  // 2. Fetch Festivals
+  const festivalList = await fetchAllPages(
+    (page) =>
+      kopisClient.getFestivalList({
+        cpage: page,
+        rows: '100',
+        stdate,
+        eddate,
+        shcate: 'CCCD',
+      }),
+    'Festivals'
+  );
 
   console.log(
     `[Collector] Found ${concertList.length} concerts and ${festivalList.length} festivals.`

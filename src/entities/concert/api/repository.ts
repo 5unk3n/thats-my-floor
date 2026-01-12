@@ -1,18 +1,78 @@
-import { Prisma, PublishStatus } from '@prisma/client';
+import { Concert, Prisma, PublishStatus } from '@prisma/client';
 
 import { prisma } from '@/shared/lib/prisma';
+import { PaginatedResult } from '@/shared/types/common';
 
-export const findConcerts = async (params: {
-  where: Prisma.ConcertWhereInput;
+// 1. 공통 필터 조건 정의
+type ConcertFilter = Prisma.ConcertWhereInput;
+
+// 2. 일반 공연 목록 조회 (페이지네이션)
+export const findConcerts = async (
+  where: ConcertFilter,
+  page: number,
+  limit: number,
+  orderBy?: Prisma.ConcertOrderByWithRelationInput
+): Promise<PaginatedResult<Concert>> => {
+  const skip = (page - 1) * limit;
+
+  const [total, data] = await Promise.all([
+    prisma.concert.count({ where }),
+    prisma.concert.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: orderBy || { startDate: 'asc' },
+    }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    hasNextPage: total > page * limit,
+  };
+};
+
+// 3. 관리자용 상태별 조회 (페이지네이션 + 아티스트 포함)
+export const findConcertsByStatus = async ({
+  status,
+  page,
+  limit,
+}: {
+  status: PublishStatus;
   page: number;
-  size: number;
-}) => {
-  return prisma.concert.findMany({
-    where: params.where,
-    skip: (params.page - 1) * params.size,
-    take: params.size,
-    orderBy: { startDate: 'asc' },
-  });
+  limit: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}): Promise<PaginatedResult<any>> => {
+  const skip = (page - 1) * limit;
+
+  const [total, data] = await Promise.all([
+    prisma.concert.count({ where: { publishStatus: status } }),
+    prisma.concert.findMany({
+      where: { publishStatus: status },
+      take: limit,
+      skip,
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        artists: {
+          include: {
+            artist: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    hasNextPage: total > page * limit,
+  };
 };
 
 export const findConcertById = async (id: string) => {
