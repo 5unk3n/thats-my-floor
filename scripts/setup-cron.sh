@@ -18,10 +18,10 @@ CRON_JOB_SYNC="0 10 * * * curl https://localhost/api/cron/sync-concert-status -H
 # 4. MusicBrainz Incremental Replication (Hourly)
 # Using PWD since this script is executed during deployment from the project root
 PROJECT_ROOT=$(pwd)
-CRON_JOB_MB="0 * * * * cd ${PROJECT_ROOT} && npx tsx scripts/musicbrainz/replicate.ts >> /home/azureuser/mb_replicate.log 2>&1"
+CRON_JOB_MB="0 * * * * docker exec \$(docker ps --format '{{.Names}}' | grep 'app-' | head -n 1) npx tsx scripts/musicbrainz/replicate.ts >> /home/azureuser/mb_replicate.log 2>&1"
 
 # 5. Refresh Materialized Views (Every day at 04:00 AM)
-CRON_JOB_MV_REFRESH="0 4 * * * cd ${PROJECT_ROOT} && npx tsx scripts/musicbrainz/refresh-mv.ts >> /home/azureuser/cron_mv_refresh.log 2>&1"
+CRON_JOB_MV_REFRESH="0 4 * * * docker exec \$(docker ps --format '{{.Names}}' | grep 'app-' | head -n 1) npx tsx scripts/musicbrainz/refresh-mv.ts >> /home/azureuser/cron_mv_refresh.log 2>&1"
 
 # Function to add cron job if not exists
 add_cron_job() {
