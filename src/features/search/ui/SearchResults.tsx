@@ -85,6 +85,9 @@ export function SearchResults({ results, onSelect }: SearchResultsProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-sm font-medium">{artist.name}</p>
+                    {artist.comment && (
+                      <p className="truncate text-xs text-muted-foreground">{artist.comment}</p>
+                    )}
                   </div>
                 </button>
               </li>
