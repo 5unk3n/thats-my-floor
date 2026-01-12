@@ -29,7 +29,7 @@ export function ArtistCard({ artist, actionSlot }: ArtistCardProps) {
         )}
       </div>
       <CardHeader className="p-4 pb-2">
-        <Link href={`/artists/${artist.id}`} className="hover:underline">
+        <Link href={`/artists/${artist.mbid}`} className="hover:underline">
           <h3 className="font-bold text-lg truncate">{artist.name}</h3>
         </Link>
       </CardHeader>
