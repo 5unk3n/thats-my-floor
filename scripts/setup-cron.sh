@@ -20,6 +20,9 @@ CRON_JOB_SYNC="0 10 * * * curl https://localhost/api/cron/sync-concert-status -H
 PROJECT_ROOT=$(pwd)
 CRON_JOB_MB="0 * * * * cd ${PROJECT_ROOT} && npx tsx scripts/musicbrainz/replicate.ts >> /home/azureuser/mb_replicate.log 2>&1"
 
+# 5. Refresh Materialized Views (Every day at 04:00 AM)
+CRON_JOB_MV_REFRESH="0 4 * * * cd ${PROJECT_ROOT} && npx tsx scripts/musicbrainz/refresh-mv.ts >> /home/azureuser/cron_mv_refresh.log 2>&1"
+
 # Function to add cron job if not exists
 add_cron_job() {
   local job="$1"
@@ -40,6 +43,7 @@ add_cron_job "$CRON_JOB_COLLECT"
 add_cron_job "$CRON_JOB_TICKET"
 add_cron_job "$CRON_JOB_SYNC"
 add_cron_job "$CRON_JOB_MB"
+add_cron_job "$CRON_JOB_MV_REFRESH"
 
 echo "Cron jobs configured successfully."
 crontab -l

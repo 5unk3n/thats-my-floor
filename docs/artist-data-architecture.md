@@ -149,3 +149,9 @@ scripts/musicbrainz/
     2. **Name Length**: 이름이 짧을수록 우선 노출 (정확도 높은 간결한 결과 선호).
     3. **Similarity Score**: 유사도 점수가 높은 순.
     4. **Meta Priority**: 본명(`canonical_name`)이거나, 주요 별칭(`is_primary`)인 경우 가산점.
+
+### 6.3. Refresh Strategy (Refresh Strategy)
+
+- **주기**: 매일 04:00 (KST 기준 서버 시간) 실행.
+- **방식**: `REFRESH MATERIALIZED VIEW CONCURRENTLY "mv_artist_search";`
+- **목적**: `mb_artist`에 반영된 증분 업데이트 내용을 검색 뷰에 통합하여 최신성을 유지합니다. `CONCURRENTLY` 옵션을 사용하여 조회 Lock 없이 Refresh를 수행합니다.
