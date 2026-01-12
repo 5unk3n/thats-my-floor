@@ -34,7 +34,17 @@ export async function getArtistProfile(mbid: string) {
   const mbArtist = await findMusicBrainzArtistByMbid(mbid);
   if (!mbArtist) return null;
 
-  const localArtist = await findLocalArtistByMbid(mbid);
+  let localArtist = await findLocalArtistByMbid(mbid);
+
+  // Requirement: Ensure local artist exists to store image
+  if (!localArtist) {
+    try {
+      const created = await createLocalArtist({ mbid: mbArtist.gid });
+      localArtist = { ...created, customAliases: [] };
+    } catch (e) {
+      console.error('[getArtistProfile] Failed to create local artist:', e);
+    }
+  }
 
   let imageUrl = localArtist?.imageUrl;
 
