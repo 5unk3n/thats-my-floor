@@ -7,7 +7,6 @@ export const getSearchResults = async (
   query: string,
   type: 'all' | 'concert' | 'artist' = 'all'
 ): Promise<SearchResult> => {
-  'use cache';
   if (!query || query.trim().length === 0) {
     return { concerts: [], artists: [] };
   }

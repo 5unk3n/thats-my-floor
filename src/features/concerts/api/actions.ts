@@ -59,7 +59,6 @@ export async function publishConcertAction(
     const concert = await AnalysisService.publishConcert(concertId, candidates);
 
     // Send notification to followers after successful publish
-    // Send notification to followers after successful publish
     const detail = await concertService.getConcertDetail(concert.id);
     if (detail) {
       const artistNames = detail.artists.map((a) => a.name).join(', ');
@@ -67,20 +66,9 @@ export async function publishConcertAction(
     }
 
     // Invalidate Cache
-    // Invalidate Cache
     revalidatePath('/admin/reviews');
-    // revalidatePath('/'); // Refresh main page explicitly - unnecessary with tags
-    // revalidatePath(`/concerts/${concertId}`); // Refresh detail page - unnecessary with tags
-
-    revalidateTag('concerts', {});
-    revalidateTag(`concert-detail-${concertId}`, {});
-
-    // Invalidate artist pages (ISR/Cache)
-    if (concert.artists) {
-      concert.artists.forEach((ca) => {
-        revalidateTag(`artist-concerts-${ca.artistId}`, {}); // tag-based invalidation
-      });
-    }
+    revalidateTag('concerts', { expire: 0 });
+    revalidateTag(`concert-detail-${concertId}`, { expire: 0 });
 
     return { success: true, data: undefined };
   } catch (error) {
