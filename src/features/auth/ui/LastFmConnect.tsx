@@ -29,10 +29,16 @@ export function LastFmConnect({ initialUsername, apiKey }: LastFmConnectProps) {
 
       setIsConnecting(true);
       try {
-        await connectLastFmAction(token);
-        toast.success('Last.fm 계정이 성공적으로 연결되었습니다.');
-        // Remove token from URL
-        router.replace('/mypage');
+        const result = await connectLastFmAction(token);
+        if (result.success && result.data) {
+          setUsername(result.data.username);
+          toast.success('Last.fm 계정이 성공적으로 연결되었습니다.');
+          router.refresh();
+          // Remove token from URL
+          router.replace('/mypage');
+        } else {
+          throw new Error(result.error?.message || 'Connection failed');
+        }
       } catch (error) {
         console.error(error);
         toast.error('계정 연결에 실패했습니다.');
