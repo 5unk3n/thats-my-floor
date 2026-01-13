@@ -116,7 +116,7 @@ export async function restoreToReviewAction(concertId: string): Promise<ActionRe
 // --- Manual Search (Local DB) ---
 
 export async function searchExternalArtistsAction(query: string): Promise<ArtistCandidate[]> {
-  const artists = await ArtistService.searchArtists(query, 10);
+  const artists = await ArtistService.searchArtists(query, 20);
   return artists;
 }
 
