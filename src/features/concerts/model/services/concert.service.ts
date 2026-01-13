@@ -50,7 +50,7 @@ export const getConcerts = async (
     totalPages,
     hasNextPage,
   } = await ConcertRepository.findConcerts(filter, params.page || 1, params.size || 20, {
-    startDate: 'asc',
+    createdAt: 'desc',
   });
 
   const formatDate = (date: Date) => {
