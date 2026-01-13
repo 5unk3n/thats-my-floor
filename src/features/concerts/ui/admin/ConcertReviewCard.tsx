@@ -47,7 +47,6 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
     const selectedCandidates = Array.from(selectedIds)
       .map((id) => candidateMap.get(id))
       .filter(Boolean) as ArtistCandidate[];
-    if (selectedCandidates.length === 0) return;
 
     setLoading(true);
     await publishConcertAction(concert.id, selectedCandidates);
