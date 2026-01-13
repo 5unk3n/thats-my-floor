@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
 
 import { FcmTokenManager } from '@/features/notifications';
-import { SearchInput } from '@/features/search';
+import { SearchCommand } from '@/features/search';
 import { Footer } from '@/shared/layout/footer/Footer';
 import { Header } from '@/shared/layout/header/Header';
 import Providers from '@/shared/providers';
@@ -68,7 +68,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${notoSansKr.variable} antialiased flex min-h-screen flex-col`}>
         <Providers>
-          <Header searchSlot={<SearchInput />} />
+          <Header searchSlot={<SearchCommand />} />
           <div className="flex-1">{children}</div>
           <Footer />
           <Toaster />
