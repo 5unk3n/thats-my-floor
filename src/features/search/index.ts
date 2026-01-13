@@ -2,7 +2,6 @@ export * from './api/actions';
 export * from './model/services/search.service';
 export * from './model/types';
 
-// Checking components...
+// UI Components
 export * from './ui/ArtistSearchTrigger';
-export * from './ui/SearchInput';
-export * from './ui/SearchResults';
+export * from './ui/SearchCommand';

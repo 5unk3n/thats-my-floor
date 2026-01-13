@@ -13,7 +13,7 @@ import {
 } from '@/shared/ui/dialog';
 import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
 
-import { SearchInput } from './SearchInput';
+import { SearchCommand } from './SearchCommand';
 
 interface ArtistSearchTriggerProps {
   variant: 'dropdown' | 'button';
@@ -39,7 +39,7 @@ export function ArtistSearchTrigger({ variant }: ArtistSearchTriggerProps) {
           <DialogTitle>아티스트 검색</DialogTitle>
         </DialogHeader>
         <div className="flex items-center space-x-2 py-4">
-          <SearchInput type="artist" />
+          <SearchCommand type="artist" />
         </div>
       </DialogContent>
     </Dialog>

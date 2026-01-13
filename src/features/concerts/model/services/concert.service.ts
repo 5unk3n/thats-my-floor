@@ -29,9 +29,17 @@ export const getConcerts = async (
   };
 
   if (params.region === 'METRO') {
-    filter.region = { in: ['서울', '경기', '인천'] };
+    filter.OR = [
+      { region: { contains: '서울' } },
+      { region: { contains: '경기' } },
+      { region: { contains: '인천' } },
+    ];
   } else if (params.region === 'OTHERS') {
-    filter.region = { notIn: ['서울', '경기', '인천'] };
+    filter.AND = [
+      { region: { not: { contains: '서울' } } },
+      { region: { not: { contains: '경기' } } },
+      { region: { not: { contains: '인천' } } },
+    ];
   }
 
   const {
@@ -42,7 +50,7 @@ export const getConcerts = async (
     totalPages,
     hasNextPage,
   } = await ConcertRepository.findConcerts(filter, params.page || 1, params.size || 20, {
-    startDate: 'asc',
+    createdAt: 'desc',
   });
 
   const formatDate = (date: Date) => {
