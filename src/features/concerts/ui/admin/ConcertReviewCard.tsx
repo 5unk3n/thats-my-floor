@@ -218,7 +218,7 @@ export function ConcertReviewCard({ concert }: ConcertReviewCardProps) {
               <Button variant="outline" onClick={handleReject} disabled={loading}>
                 {loading ? '처리 중...' : '반려'}
               </Button>
-              <Button onClick={handlePublish} disabled={loading || selectedIds.size === 0}>
+              <Button onClick={handlePublish} disabled={loading}>
                 {loading ? '발행 중...' : `선택한 ${selectedIds.size}명 승인 및 발행`}
               </Button>
             </div>
