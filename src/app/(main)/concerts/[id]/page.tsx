@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { ConcertDetail } from '@/entities/concert';
 import { ConcertRepository } from '@/entities/concert';
-import { ConcertService } from '@/features/concerts';
+import { ConcertService, generateConcertJsonLd } from '@/features/concerts';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -71,5 +71,15 @@ export default async function ConcertDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <ConcertDetail concert={concert} />;
+  const jsonLd = generateConcertJsonLd(concert);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ConcertDetail concert={concert} />
+    </>
+  );
 }

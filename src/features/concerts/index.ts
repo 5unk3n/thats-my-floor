@@ -1,4 +1,5 @@
 export * from './api/actions';
+export * from './lib/json-ld';
 export * as AnalysisService from './model/services/analysis.service';
 export * as CollectorService from './model/services/collector.service';
 export * as ConcertService from './model/services/concert.service';
