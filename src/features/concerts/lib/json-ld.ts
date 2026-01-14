@@ -16,19 +16,16 @@ export const generateConcertJsonLd = (concert: ConcertDetailModel) => {
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
 
   // 3. Region Logic
-  const addressLocality = concert.region || 'South Korea';
+  const addressLocality = concert.region;
 
   // 4. Date Logic
-  // Extract time from schedule (e.g., "(19:00)") if startDate has 00:00:00
-  let startDate = concert.startDate;
+  let startDate = concert.startDate.replaceAll('.', '-');
   const timeMatch = concert.schedule?.match(/(\d{2}:\d{2})/);
-  if (timeMatch && (startDate.includes('00:00:00') || !startDate.includes(':'))) {
-    // If it's "YYYY-MM-DD 00:00:00" or just "YYYY-MM-DD"
-    const datePart = startDate.split(' ')[0]; // Take YYYY-MM-DD
-    startDate = `${datePart}T${timeMatch[1]}:00`;
+  if (timeMatch) {
+    const [hours, minutes] = timeMatch[1].split(':');
+    startDate = `${startDate}T${hours}:${minutes}+09:00`;
   }
 
-  // 5. Offers Logic
   const offers = concert.relates?.map((link) => ({
     '@type': 'Offer',
     price: minPrice.toString(),
@@ -52,7 +49,6 @@ export const generateConcertJsonLd = (concert: ConcertDetailModel) => {
     '@type': 'MusicEvent',
     name: concert.title,
     startDate: startDate,
-    endDate: concert.endDate,
     eventStatus,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
