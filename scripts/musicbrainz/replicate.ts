@@ -1,10 +1,4 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
 import { MusicBrainzReplicator } from './replicator';
-
-// Load environment variables
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
