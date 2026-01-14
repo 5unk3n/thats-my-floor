@@ -213,6 +213,21 @@ export const findRecentConcertsForStaticParams = async (take: number = 100) => {
   });
 };
 
+export const findConcertsForSitemap = async () => {
+  return prisma.concert.findMany({
+    where: {
+      publishStatus: PublishStatus.PUBLISHED,
+    },
+    orderBy: {
+      updatedAt: 'desc',
+    },
+    select: {
+      id: true,
+      updatedAt: true,
+    },
+  });
+};
+
 export const findConcertsByArtistId = async (artistId: number) => {
   const concerts = await prisma.concert.findMany({
     where: {
