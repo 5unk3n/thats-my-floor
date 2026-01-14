@@ -21,6 +21,7 @@ export interface ConcertDetailModel extends Concert {
   schedule: string;
   relates: BookingLink[];
   artists: { id: string; mbid: string; name: string }[];
+  region?: string;
 }
 
 export interface ConcertFilterParams {

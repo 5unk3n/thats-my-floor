@@ -1,4 +1,5 @@
 import { Prisma, PublishStatus } from '@prisma/client';
+import { format } from 'date-fns';
 import { cacheLife, cacheTag } from 'next/cache';
 
 import { ArtistService } from '@/entities/artist';
@@ -110,7 +111,7 @@ export const getConcertDetail = async (id: string): Promise<ConcertDetailModel |
   const artistMap = new Map(enrichedArtists.map((a: any) => [a.id, a]));
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0].replace(/-/g, '.');
+    return format(date, 'yyyy.MM.dd');
   };
 
   return {

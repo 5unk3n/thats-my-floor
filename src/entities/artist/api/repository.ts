@@ -264,3 +264,15 @@ export async function findMusicBrainzArtistsByMbids(mbids: string[]) {
     select: { gid: true, name: true },
   });
 }
+
+export async function findArtistsForSitemap() {
+  return prisma.artist.findMany({
+    select: {
+      mbid: true,
+      updatedAt: true,
+    },
+    orderBy: {
+      updatedAt: 'desc',
+    },
+  });
+}

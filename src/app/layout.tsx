@@ -22,6 +22,7 @@ const APP_TITLE_TEMPLATE = "%s - That's My Floor";
 const APP_DESCRIPTION = '좋아하는 아티스트의 공연 정보를 놓치지 마세요';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://thatsmyfloor.com'),
   applicationName: APP_NAME,
   title: {
     default: APP_DEFAULT_TITLE,
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
     description: APP_DESCRIPTION,
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: {
       default: APP_DEFAULT_TITLE,
       template: APP_TITLE_TEMPLATE,
