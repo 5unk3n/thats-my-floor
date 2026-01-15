@@ -13,7 +13,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [new URL('http://www.kopis.or.kr/**'), new URL('https://i.scdn.co/image/**')],
   },
   cacheComponents: true,
-  serverExternalPackages: ['tar-stream', 'unbzip2-stream'], // 증분 업데이트 스크립트용
 };
 
 export default withSerwist(nextConfig);
