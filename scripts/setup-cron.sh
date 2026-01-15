@@ -2,7 +2,9 @@
 
 # Load environment variables
 if [ -f .env ]; then
-  export $(cat .env | xargs)
+  set -a
+  . .env
+  set +a
 fi
 
 # Define Cron Jobs
