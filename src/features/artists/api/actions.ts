@@ -15,7 +15,7 @@ import {
   syncLastFmArtists,
 } from '../model/services/lastfm-sync.service';
 
-export async function toggleFollow(artistId: string): Promise<ActionResponse<boolean>> {
+export async function toggleFollow(mbid: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return {
@@ -27,10 +27,10 @@ export async function toggleFollow(artistId: string): Promise<ActionResponse<boo
   try {
     const isFollowing = await ArtistService.toggleArtistFollow(
       session.user.id,
-      artistId // Passed as string (MBID)
+      mbid // Passed as string (MBID)
     );
     revalidatePath('/mypage/artists');
-    revalidatePath(`/artists/${artistId}`);
+    revalidatePath(`/artists/${mbid}`);
     return { success: true, data: isFollowing };
   } catch (error) {
     console.error('toggleFollow Error:', error);
@@ -41,7 +41,7 @@ export async function toggleFollow(artistId: string): Promise<ActionResponse<boo
   }
 }
 
-export async function getFollowStatus(artistId: string): Promise<ActionResponse<boolean>> {
+export async function getFollowStatus(mbid: string): Promise<ActionResponse<boolean>> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return { success: true, data: false };
@@ -50,7 +50,7 @@ export async function getFollowStatus(artistId: string): Promise<ActionResponse<
   try {
     const status = await ArtistService.getArtistFollowStatus(
       session.user.id,
-      artistId // Passed as string (MBID)
+      mbid // Passed as string (MBID)
     );
     return { success: true, data: status };
   } catch (error) {

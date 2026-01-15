@@ -6,9 +6,9 @@ import { ArtistService } from '@/entities/artist';
  * Fetches artist profile with caching.
  * Feature-level service to handle caching strategy for Artist Profile page.
  */
-export async function getCachedArtistProfile(artistId: string) {
+export async function getCachedArtistProfile(mbid: string) {
   'use cache';
   cacheLife('hours');
-  cacheTag(`artist-profile-${artistId}`);
-  return ArtistService.getArtistProfile(artistId);
+  cacheTag(`artist-profile-${mbid}`);
+  return ArtistService.getArtistProfile(mbid);
 }

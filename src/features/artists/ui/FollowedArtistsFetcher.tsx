@@ -42,7 +42,7 @@ export async function FollowedArtistsFetcher({ searchTrigger }: FollowedArtistsF
           key={artist.id}
           artist={artist}
           actionSlot={
-            <FollowButton artistId={artist.id} initialIsFollowing={true} className="w-full" />
+            <FollowButton mbid={artist.mbid} initialIsFollowing={true} className="w-full" />
           }
         />
       ))}
