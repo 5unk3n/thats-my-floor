@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <main className="container mx-auto space-y-12 py-8">
+    <main className="container mx-auto space-y-12 px-4 py-8">
       <section>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">국내 공연</h2>
