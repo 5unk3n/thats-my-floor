@@ -251,11 +251,11 @@ psql "$DATABASE_URL" <<EOF
     CREATE UNIQUE INDEX mb_artist_id_key ON mb_artist(id);
 
     -- 4. Restore Foreign Key Constraints (Match migration.sql)
-    ALTER TABLE mb_artist_alias ADD CONSTRAINT mb_artist_alias_artist_fkey FOREIGN KEY (artist) REFERENCES mb_artist(id) ON DELETE NO ACTION ON UPDATE CASCADE;
-    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_entity0_fkey FOREIGN KEY (entity0) REFERENCES mb_artist(id) ON DELETE CASCADE ON UPDATE CASCADE;
-    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_entity1_fkey FOREIGN KEY (entity1) REFERENCES mb_url(id) ON DELETE CASCADE ON UPDATE CASCADE;
-    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_link_fkey FOREIGN KEY (link) REFERENCES mb_link(id) ON DELETE CASCADE ON UPDATE CASCADE;
-    ALTER TABLE mb_link ADD CONSTRAINT mb_link_link_type_fkey FOREIGN KEY (link_type) REFERENCES mb_link_type(id) ON DELETE CASCADE ON UPDATE CASCADE;
+    ALTER TABLE mb_artist_alias ADD CONSTRAINT mb_artist_alias_artist_fkey FOREIGN KEY (artist) REFERENCES mb_artist(id) ON DELETE NO ACTION ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
+    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_entity0_fkey FOREIGN KEY (entity0) REFERENCES mb_artist(id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
+    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_entity1_fkey FOREIGN KEY (entity1) REFERENCES mb_url(id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
+    ALTER TABLE mb_l_artist_url ADD CONSTRAINT mb_l_artist_url_link_fkey FOREIGN KEY (link) REFERENCES mb_link(id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
+    ALTER TABLE mb_link ADD CONSTRAINT mb_link_link_type_fkey FOREIGN KEY (link_type) REFERENCES mb_link_type(id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
 
   COMMIT;
 EOF
