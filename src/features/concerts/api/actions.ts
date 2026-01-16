@@ -10,9 +10,12 @@ import { prisma } from '@/shared/lib/prisma';
 import { ActionResponse } from '@/shared/types/action-response';
 import { PaginatedResult } from '@/shared/types/common';
 
+import { invalidateCalendarCache } from '../lib/invalidate-calendar';
 import * as AnalysisService from '../model/services/analysis.service';
+import * as CalendarService from '../model/services/calendar.service';
 import * as concertService from '../model/services/concert.service';
 import { notifyConcertRegistration } from '../model/services/notification.service';
+import type { MonthCalendarData } from '../model/types';
 
 // --- Admin Pipeline Actions ---
 
@@ -69,6 +72,7 @@ export async function publishConcertAction(
     revalidatePath('/admin/reviews');
     revalidateTag('concerts', { expire: 0 });
     revalidateTag(`concert-detail-${concertId}`, { expire: 0 });
+    invalidateCalendarCache(concert.startDate, concert.endDate);
 
     return { success: true, data: undefined };
   } catch (error) {
@@ -82,9 +86,24 @@ export async function publishConcertAction(
 
 export async function rejectConcertAction(concertId: string): Promise<ActionResponse> {
   try {
+    // Fetch concert dates before rejecting for cache invalidation
+    const concert = await prisma.concert.findUnique({
+      where: { id: concertId },
+      select: { startDate: true, endDate: true, publishStatus: true },
+    });
+    const wasPublished = concert?.publishStatus === PublishStatus.PUBLISHED;
+
     await AnalysisService.rejectConcert(concertId);
     revalidatePath('/admin/reviews');
     revalidatePath(`/concerts/${concertId}`);
+
+    // Invalidate caches if was published
+    if (wasPublished && concert) {
+      revalidateTag('concerts', { expire: 0 });
+      revalidateTag(`concert-detail-${concertId}`, { expire: 0 });
+      invalidateCalendarCache(concert.startDate, concert.endDate);
+    }
+
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Reject Failed:', error);
@@ -97,12 +116,27 @@ export async function rejectConcertAction(concertId: string): Promise<ActionResp
 
 export async function restoreToReviewAction(concertId: string): Promise<ActionResponse> {
   try {
+    // Fetch concert dates before restoring for cache invalidation
+    const concert = await prisma.concert.findUnique({
+      where: { id: concertId },
+      select: { startDate: true, endDate: true, publishStatus: true },
+    });
+    const wasPublished = concert?.publishStatus === PublishStatus.PUBLISHED;
+
     await prisma.concert.update({
       where: { id: concertId },
       data: { publishStatus: PublishStatus.REVIEWING },
     });
     revalidatePath('/admin/reviews');
     revalidatePath(`/concerts/${concertId}`);
+
+    // Invalidate caches if was published
+    if (wasPublished && concert) {
+      revalidateTag('concerts', { expire: 0 });
+      revalidateTag(`concert-detail-${concertId}`, { expire: 0 });
+      invalidateCalendarCache(concert.startDate, concert.endDate);
+    }
+
     return { success: true, data: undefined };
   } catch (error) {
     console.error('Restore Failed:', error);
@@ -144,4 +178,12 @@ export async function getConcertsAction(params: {
       error: { code: ERROR_CODES.NOT_FOUND, message: 'Failed to fetch concerts' },
     };
   }
+}
+// --- Calendar Actions ---
+
+export async function getCalendarConcertsAction(
+  year: number,
+  month: number
+): Promise<MonthCalendarData> {
+  return CalendarService.getMonthCalendarData(year, month);
 }
