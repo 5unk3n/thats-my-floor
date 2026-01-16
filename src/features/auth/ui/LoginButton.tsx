@@ -9,25 +9,29 @@ export function LoginButton() {
 
   if (session) {
     return (
-      <div className="flex items-center gap-4">
-        <p>Signed in as {session.user?.email}</p>
-        <Button variant="destructive" onClick={() => signOut()}>
-          Sign out
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-sm text-muted-foreground">로그인된 계정: {session.user?.email}</p>
+        <Button variant="outline" onClick={() => signOut()}>
+          로그아웃
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-4">
-      <Button onClick={() => signIn('google')} className="bg-blue-500 hover:bg-blue-600">
-        Sign in with Google
+    <div className="flex w-full flex-col gap-3">
+      <Button
+        onClick={() => signIn('kakao', { callbackUrl: '/' })}
+        className="h-11 w-full bg-[#FEE500] text-base font-medium text-[#191919] hover:bg-[#FEE500]/90"
+      >
+        카카오로 시작하기
       </Button>
       <Button
-        onClick={() => signIn('kakao')}
-        className="bg-yellow-400 text-black hover:bg-yellow-500"
+        onClick={() => signIn('google', { callbackUrl: '/' })}
+        variant="outline"
+        className="h-11 w-full border-zinc-200 text-base font-medium text-zinc-700 hover:bg-zinc-50"
       >
-        Sign in with Kakao
+        구글로 시작하기
       </Button>
     </div>
   );

@@ -12,12 +12,14 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8">
-      <div className="text-center">
-        <h1 className="text-xl font-bold">Welcome Back</h1>
-        <p className="text-gray-600">Sign in to your account to continue</p>
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-16">
+      <div className="w-full max-w-sm space-y-10">
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
+          <p className="text-muted-foreground">SNS 계정으로 간편하게 시작하세요</p>
+        </div>
+        <LoginButton />
       </div>
-      <LoginButton />
     </div>
   );
 }
