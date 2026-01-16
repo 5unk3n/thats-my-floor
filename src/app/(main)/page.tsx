@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { ConcertListSkeleton } from '@/entities/concert';
-import { MainConcertFetcher } from '@/features/concerts';
+import { CalendarGrid, CalendarSkeleton, MainConcertFetcher } from '@/features/concerts';
 import { Button } from '@/shared/ui/button';
 
 export const metadata: Metadata = {
@@ -47,6 +47,13 @@ export default function HomePage() {
         </div>
         <Suspense fallback={<ConcertListSkeleton />}>
           <MainConcertFetcher type="FESTIVAL" />
+        </Suspense>
+      </section>
+
+      <section id="calendar">
+        <h2 className="mb-6 text-2xl font-bold">공연 캘린더</h2>
+        <Suspense fallback={<CalendarSkeleton />}>
+          <CalendarGrid />
         </Suspense>
       </section>
     </main>

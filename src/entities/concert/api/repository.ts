@@ -315,3 +315,44 @@ export const searchConcerts = async (query: string, limit: number = 5) => {
     },
   });
 };
+
+export const findConcertsByMonth = async (year: number, month: number) => {
+  const startOfMonth = new Date(year, month - 1, 1);
+  const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+
+  return prisma.concert.findMany({
+    where: {
+      publishStatus: PublishStatus.PUBLISHED,
+      OR: [
+        // 시작일이 해당 월 내에 있는 경우
+        { startDate: { gte: startOfMonth, lte: endOfMonth } },
+        // 종료일이 해당 월 내에 있는 경우
+        { endDate: { gte: startOfMonth, lte: endOfMonth } },
+        // 공연이 해당 월 전체를 포함하는 경우
+        {
+          AND: [{ startDate: { lte: startOfMonth } }, { endDate: { gte: endOfMonth } }],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+      startDate: true,
+      endDate: true,
+      isGlobal: true,
+      isFestival: true,
+      place: true,
+      posterUrl: true,
+      artists: {
+        select: {
+          artist: {
+            select: {
+              mbid: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { startDate: 'asc' },
+  });
+};
