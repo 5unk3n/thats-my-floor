@@ -35,6 +35,7 @@ export class DatabaseHandler {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await client.query('SET CONSTRAINTS ALL DEFERRED');
 
       for (const change of changes) {
         await this.applyChange(client, change);
