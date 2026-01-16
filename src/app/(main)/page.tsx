@@ -8,7 +8,8 @@ import { Button } from '@/shared/ui/button';
 
 export const metadata: Metadata = {
   title: '홈',
-  description: '최신 공연 정보를 확인하세요.',
+  description:
+    '국내 콘서트, 내한 공연, 뮤직 페스티벌 일정과 티켓 예매 정보를 한곳에서 확인하세요. 아티스트를 팔로우하고 새로운 공연 알림을 놓치지 마세요.',
 };
 
 export default function HomePage() {
