@@ -37,13 +37,13 @@ export default function ArtistDetailPage({ params }: ArtistDetailPageProps) {
 
   return (
     <main className="min-h-screen bg-background pb-20 pt-8">
-      <div className="container mx-auto px-4 space-y-12">
+      <div className="container mx-auto space-y-8 px-4">
         <Suspense fallback={<ArtistProfileSkeleton />}>
           <ArtistProfileFetcher mbid={mbidPromise} />
         </Suspense>
 
         <section>
-          <h2 className="text-2xl font-bold mb-6">예정된 공연</h2>
+          <h2 className="mb-4 text-xl font-bold">예정된 공연</h2>
           <Suspense fallback={<ConcertListSkeleton />}>
             <ArtistConcertList artistId={mbidPromise} />
           </Suspense>

@@ -85,8 +85,8 @@ export function NotificationList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">알림</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-bold">알림</h1>
         {data?.unreadCount && data.unreadCount > 0 ? (
           <Button
             variant="ghost"
