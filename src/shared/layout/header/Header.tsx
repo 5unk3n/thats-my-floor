@@ -26,12 +26,13 @@ export function Header({ searchSlot }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
         <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="text-xl font-bold">That&apos;s My Floor</span>
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="hidden text-xl font-bold md:inline-block">That&apos;s My Floor</span>
+            <span className="text-xl font-bold md:hidden">TMF</span>
           </Link>
           {/* Logo already links to home */}
         </div>
-        <div className="mx-4 flex flex-1 items-center justify-center">{searchSlot}</div>
+        <div className="mx-2 flex flex-1 items-center justify-center md:mx-4">{searchSlot}</div>
         <div className="flex items-center space-x-2">
           {session ? (
             <>

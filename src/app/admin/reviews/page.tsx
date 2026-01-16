@@ -30,7 +30,7 @@ export default async function AdminReviewsPage(props: AdminReviewsPageProps) {
   return (
     <div className="container py-8 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">공연 AI 분석 파이프라인</h1>
+        <h1 className="text-2xl font-bold">공연 AI 분석 파이프라인</h1>
         <form
           action={async () => {
             'use server';

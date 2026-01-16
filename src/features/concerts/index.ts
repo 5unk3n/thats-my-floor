@@ -6,6 +6,8 @@ export * as ConcertService from './model/services/concert.service';
 export * as SyncService from './model/services/sync.service';
 export * from './ui/admin/AdminReviewListFetcher';
 export * from './ui/ArtistConcertList';
+export * from './ui/calendar/CalendarGrid';
+export * from './ui/calendar/CalendarSkeleton';
 export * from './ui/ConcertFilter';
 export * from './ui/ConcertList';
 export * from './ui/MainConcertFetcher';

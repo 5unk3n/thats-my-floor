@@ -2,7 +2,7 @@ export interface Artist {
   id: string | number;
   name: string;
   imageUrl?: string | null;
-  mbid?: string;
+  mbid: string;
   externalLinks?: {
     appleMusic?: string;
     spotify?: string;

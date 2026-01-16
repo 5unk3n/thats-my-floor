@@ -40,7 +40,7 @@ export function ArtistProfile({ artist, isFollowing }: ArtistProfileProps) {
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <FollowButton artistId={artist.id as string} initialIsFollowing={isFollowing} />
+              <FollowButton mbid={artist.mbid} initialIsFollowing={isFollowing} />
             </div>
 
             {artist.externalLinks && (

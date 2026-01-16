@@ -7,10 +7,10 @@ import { ArtistProfile } from '@/features/artists/ui/ArtistProfile';
 import { authOptions } from '@/shared/lib/auth';
 
 interface ArtistProfileFetcherProps {
-  artistId: Promise<string> | string;
+  mbid: Promise<string> | string;
 }
 
-export async function ArtistProfileFetcher({ artistId }: ArtistProfileFetcherProps) {
+export async function ArtistProfileFetcher({ mbid: artistId }: ArtistProfileFetcherProps) {
   const id = await artistId;
   const artist = await getCachedArtistProfile(id);
 

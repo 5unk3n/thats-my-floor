@@ -20,7 +20,7 @@ export function ConcertGrid({ concerts, layout = 'grid' }: ConcertGridProps) {
   if (layout === 'horizontal') {
     return (
       <ScrollArea className="w-full whitespace-nowrap rounded-md pb-4">
-        <div className="flex w-max space-x-4 p-4">
+        <div className="flex w-max space-x-4">
           {concerts.map((concert) => (
             <div key={concert.id} className="w-40 shrink-0 md:w-50">
               <ConcertCard concert={concert} />

@@ -26,8 +26,8 @@ export const metadata = {
 export default function FollowedArtistsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">팔로우한 아티스트</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">팔로우한 아티스트</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button>
