@@ -85,7 +85,7 @@ export function SearchCommand({ type = 'all' }: SearchCommandProps) {
                 setIsOpen(false);
               }
             }}
-            className="pl-8 pr-8"
+            className="pr-8"
           />
           {(query || isLoading) && (
             <div className="absolute right-2 top-2.5 flex items-center gap-1 z-10">
