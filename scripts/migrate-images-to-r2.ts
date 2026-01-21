@@ -76,7 +76,7 @@ async function main() {
           if (concert.posterUrl && KOPIS_URL_PATTERN.test(concert.posterUrl)) {
             const result = await R2ImageService.downloadAndUploadImage(
               concert.posterUrl,
-              `concerts/${concert.kopisId}/poster`
+              'concerts'
             );
             newPosterUrl = result.url;
           }
@@ -84,10 +84,7 @@ async function main() {
           // 이미지 마이그레이션
           const kopisImages = concert.images.filter((img) => KOPIS_URL_PATTERN.test(img));
           if (kopisImages.length > 0) {
-            const results = await R2ImageService.uploadImages(
-              kopisImages,
-              `concerts/${concert.kopisId}/images`
-            );
+            const results = await R2ImageService.uploadImages(kopisImages, 'concerts');
             // 마이그레이션된 이미지 URL 교체
             newImages = concert.images.map((img) => {
               if (KOPIS_URL_PATTERN.test(img)) {

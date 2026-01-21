@@ -134,10 +134,7 @@ export const collectConcerts = async () => {
       let r2PosterUrl = detail.poster;
       if (detail.poster) {
         try {
-          const result = await R2ImageService.downloadAndUploadImage(
-            detail.poster,
-            `concerts/${detail.mt20id}/poster`
-          );
+          const result = await R2ImageService.downloadAndUploadImage(detail.poster, 'concerts');
           r2PosterUrl = result.url;
           console.log(`[Collector] Uploaded poster to R2: ${result.url}`);
         } catch (error) {
@@ -150,10 +147,7 @@ export const collectConcerts = async () => {
       let r2Images: string[] = storyUrls;
       if (storyUrls.length > 0) {
         try {
-          const results = await R2ImageService.uploadImages(
-            storyUrls,
-            `concerts/${detail.mt20id}/images`
-          );
+          const results = await R2ImageService.uploadImages(storyUrls, 'concerts');
           r2Images = results.map((r) => r.url);
           console.log(`[Collector] Uploaded ${results.length} images to R2`);
         } catch (error) {
