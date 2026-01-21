@@ -10,7 +10,12 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    remotePatterns: [new URL('http://www.kopis.or.kr/**'), new URL('https://i.scdn.co/image/**')],
+    remotePatterns: [
+      new URL('http://www.kopis.or.kr/**'), // TODO: 마이그레이션 완료 후 제거
+      new URL('https://i.scdn.co/image/**'),
+      new URL('https://cdn.thatsmyfloor.live/**'),
+      new URL('https://cdn-dev.thatsmyfloor.live/**'),
+    ],
   },
   cacheComponents: true,
 };
