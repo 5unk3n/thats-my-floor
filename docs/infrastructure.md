@@ -17,6 +17,7 @@ graph TD
     %% External Services
     CF["Cloudflare<br/>(Tunnel Endpoint)"]
     LB["Azure Load Balancer<br/>(L4)"]
+    R2["Cloudflare R2<br/>(Object Storage)"]
 
     subgraph VNet ["Azure VNet"]
         %% App Private Subnet with VM internals
@@ -50,6 +51,9 @@ graph TD
     Blue --"TCP 5432"--> DB
     Green -.-> DB
 
+    %% === User to R2 (Image via CDN) ===
+    Internet --"Images (CDN)"--> R2
+
     %% === Outbound via LB ===
     AppVM --"Outbound (SNAT)"--> LB
     LB -.-> Internet
@@ -57,6 +61,7 @@ graph TD
     %% Styling - External
     style CF fill:#ffccbc,stroke:#ff8a65,stroke-width:2px
     style LB fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    style R2 fill:#ffe0b2,stroke:#ff9800,stroke-width:2px
     style Internet fill:#eeeeee,stroke:#616161,stroke-width:2px
 
     %% Styling - VNet
@@ -79,6 +84,7 @@ graph TD
 
 - **실선**: 유저 서비스 트래픽 (Load Balancer → Nginx → App Container → DB)
 - **점선**: 관리용 Cloudflare Tunnel (SSH 접속, DB 터널링)
+- **R2**: 공연 이미지 저장소 (CDN 경유 서빙, App 업로드는 Outbound 경로 사용)
 
 ### 2.2. Subnets (서브넷 구성)
 
@@ -136,6 +142,42 @@ graph TD
 
 - 서브넷 간의 트래픽 흐름을 정의합니다.
 - App Subnet의 기본 인터넷 트래픽은 Load Balancer의 Outbound IP를 통해 나갑니다.
+
+## 5. Object Storage (Cloudflare R2)
+
+### 5.1. 개요
+
+공연 이미지(포스터, 상세 이미지)를 저장하기 위한 **Cloudflare R2** 오브젝트 스토리지를 사용합니다.
+
+### 5.2. 구성
+
+| 항목            | 값                                   |
+| --------------- | ------------------------------------ |
+| **버킷**        | Production / Development 분리        |
+| **접근 방식**   | S3 호환 API (`@aws-sdk/client-s3`)   |
+| **CDN 도메인**  | `cdn.thatsmyfloor.live` (Production) |
+| **이미지 포맷** | WebP (1200px, 80% 품질)              |
+
+### 5.3. 저장 구조
+
+```plaintext
+images/
+├── concerts/           # 공연 이미지
+│   ├── {hash}.webp
+│   └── ...
+└── artists/            # 아티스트 이미지 (추후 확장)
+    └── ...
+```
+
+- **Content Hash 기반**: 이미지 콘텐츠의 SHA-256 해시를 키로 사용하여 중복 저장 방지
+- **타입별 폴더**: 이미지 종류에 따라 폴더 분리
+
+### 5.4. 데이터 흐름
+
+1. **수집 시점**: KOPIS API에서 이미지 URL 획득
+2. **변환**: 원본 다운로드 → sharp로 리사이즈/WebP 변환
+3. **업로드**: R2에 저장, R2 URL을 DB에 기록
+4. **서빙**: CDN 도메인을 통해 사용자에게 제공
 
 ---
 

@@ -86,8 +86,9 @@
 
 ### Database & Storage
 
-- **Database**: PostgreSQL (Supabase)
+- **Database**: PostgreSQL
 - **ORM**: Prisma
+- **Object Storage**: Cloudflare R2 (공연 이미지)
 
 ### Infrastructure
 
