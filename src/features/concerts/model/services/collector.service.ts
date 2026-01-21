@@ -2,6 +2,7 @@ import { ConcertRepository } from '@/entities/concert';
 import { kopisClient } from '@/shared/lib/kopis/client';
 import { KopisConcertListResponse } from '@/shared/lib/kopis/types';
 import { prisma } from '@/shared/lib/prisma';
+import { R2ImageService } from '@/shared/lib/r2';
 
 export const collectConcerts = async () => {
   const today = new Date();
@@ -129,10 +130,42 @@ export const collectConcerts = async () => {
         url: item.relateurl,
       }));
 
+      // 포스터 이미지 R2 업로드
+      let r2PosterUrl = detail.poster;
+      if (detail.poster) {
+        try {
+          const result = await R2ImageService.downloadAndUploadImage(
+            detail.poster,
+            `concerts/${detail.mt20id}/poster`
+          );
+          r2PosterUrl = result.url;
+          console.log(`[Collector] Uploaded poster to R2: ${result.url}`);
+        } catch (error) {
+          console.error(`[Collector] Failed to upload poster:`, error);
+          // 실패 시 원본 URL 유지
+        }
+      }
+
+      // 스토리 이미지들 R2 업로드
+      let r2Images: string[] = storyUrls;
+      if (storyUrls.length > 0) {
+        try {
+          const results = await R2ImageService.uploadImages(
+            storyUrls,
+            `concerts/${detail.mt20id}/images`
+          );
+          r2Images = results.map((r) => r.url);
+          console.log(`[Collector] Uploaded ${results.length} images to R2`);
+        } catch (error) {
+          console.error(`[Collector] Failed to upload images:`, error);
+          // 실패 시 원본 URL 유지
+        }
+      }
+
       const savedConcert = await ConcertRepository.upsertConcertWithArtist({
         kopisId: detail.mt20id,
         title: detail.prfnm,
-        posterUrl: detail.poster,
+        posterUrl: r2PosterUrl,
         startDate: detail.prfpdfrom,
         endDate: detail.prfpdto,
         place: detail.fcltynm,
@@ -146,7 +179,7 @@ export const collectConcerts = async () => {
         price: detail.pcseguidance,
         schedule: detail.dtguidance,
         description: detail.sty,
-        images: storyUrls,
+        images: r2Images,
         relates,
       });
 
