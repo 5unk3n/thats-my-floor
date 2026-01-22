@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# That's My Floor
 
-## Getting Started
+<!-- TODO: 아키텍처 이미지 추가하기~ -->
 
-First, run the development server:
+## 핵심 기능
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 1. 공연 정보 제공
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **공연 목록 조회**: 국내/내한/페스티벌 분류별 필터링
+- **공연 검색**: MusicBrainz 기반 퍼지 검색 (`pg_trgm`)
+- **공연 상세 정보**: 포스터, 공연명, 날짜, 장소, 아티스트, 예매처 링크
+- **공연 캘린더**: 월별 공연 일정 시각화
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. 알림 서비스
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **공연 등록 알림**: 팔로우한 아티스트의 신규 공연 등록 시 알림
+- **알림 설정**: 사용자별 알림 on/off 커스터마이징
 
-## Learn More
+### 3. 아티스트 팔로우
 
-To learn more about Next.js, take a look at the following resources:
+- 관심 아티스트 팔로우/언팔로우
+- 팔로우한 아티스트 목록 관리
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Last.fm 연동
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- OAuth 2.0 인증
+- 사용자 청취 기록 기반 아티스트 자동 추천
+- 선택한 아티스트 일괄 팔로우
 
-## Deploy on Vercel
+### 5. 관리자
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **공연 데이터 정제**: AI 기반 아티스트 자동 분석 및 매칭 파이프라인
+- **데이터 관리 대시보드**: 공연 상태 관리 (Draft -> Analyzing -> Reviewing -> Published)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 기술 스택
+
+### Frontend
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand, React Query
+- **PWA**: @serwist/next
+
+### Backend
+
+- **API Routes**: Next.js API Routes
+- **Authentication**: NextAuth.js
+- **External APIs**: KOPIS, Last.fm, Spotify, Perplexity
+
+### Database & Storage
+
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Object Storage**: Cloudflare R2
+
+### Infrastructure
+
+- **Hosting**: Azure (VM + Docker)
+- **CI/CD**: GitHub Actions
+- **Testing**: Vitest
+- **Notifications**: Firebase Cloud Messaging
+
+## 문서
+
+더 자세한 내용은 아래 문서들을 참고해주세요.
+
+- [프로젝트 구조](docs/project-structure.md)
+- [인프라 구조](docs/infrastructure.md)
+- [데이터베이스 구조](docs/database-architecture.md)
+- [배포 전략](docs/deployment-strategy.md)
