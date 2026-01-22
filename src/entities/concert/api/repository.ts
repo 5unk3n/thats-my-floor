@@ -343,6 +343,7 @@ export const findConcertsByMonth = async (year: number, month: number) => {
       isFestival: true,
       place: true,
       posterUrl: true,
+      schedule: true,
       artists: {
         select: {
           artist: {
