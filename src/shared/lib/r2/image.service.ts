@@ -35,7 +35,12 @@ export const downloadAndUploadImage = async (
 
   // 2. Sharp로 리사이즈 및 WebP 변환
   const webpBuffer = await sharp(buffer)
-    .resize({ width: maxWidth, withoutEnlargement: true })
+    .resize({
+      width: maxWidth,
+      height: 16383, // WebP maximum height limit
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
     .webp({ quality: 80 })
     .toBuffer();
 

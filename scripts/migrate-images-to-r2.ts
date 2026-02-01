@@ -31,9 +31,6 @@ async function main() {
 
   // KOPIS URL을 가진 공연 조회
   const concerts = await prisma.concert.findMany({
-    where: {
-      OR: [{ posterUrl: { contains: 'kopis.or.kr' } }, { images: { hasSome: [] } }],
-    },
     select: {
       id: true,
       kopisId: true,
