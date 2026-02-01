@@ -1,18 +1,12 @@
 'use cache';
 
-import {
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  isWithinInterval,
-  parseISO,
-  startOfMonth,
-} from 'date-fns';
+import { eachDayOfInterval, endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
 import { cacheLife, cacheTag } from 'next/cache';
 
 import { ArtistRepository } from '@/entities/artist';
 import { ConcertRepository } from '@/entities/concert';
 
+import { getActualConcertDates } from '../../lib/parse-schedule';
 import type { CalendarConcert, ConcertType, DayConcerts, MonthCalendarData } from '../types';
 
 /**
@@ -22,16 +16,6 @@ function toConcertType(isGlobal: boolean, isFestival: boolean): ConcertType {
   if (isFestival) return 'FESTIVAL';
   if (isGlobal) return 'GLOBAL';
   return 'DOMESTIC';
-}
-
-/**
- * 공연이 특정 날짜에 진행되는지 확인
- */
-function isConcertOnDate(concert: { startDate: Date; endDate: Date }, date: Date): boolean {
-  return isWithinInterval(date, {
-    start: concert.startDate,
-    end: concert.endDate,
-  });
 }
 
 /**
@@ -68,10 +52,10 @@ export async function getMonthCalendarData(
   const monthEnd = endOfMonth(monthStart);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // 공연 데이터를 CalendarConcert 형식으로 변환
   type CalendarConcertWithDates = CalendarConcert & {
     startDateObj: Date;
     endDateObj: Date;
+    schedule: string | null;
   };
 
   const calendarConcerts: CalendarConcertWithDates[] = concerts.map((c) => ({
@@ -87,13 +71,25 @@ export async function getMonthCalendarData(
       .filter((name) => name !== ''),
     startDateObj: c.startDate,
     endDateObj: c.endDate,
+    schedule: c.schedule,
   }));
+
+  // 각 공연별 실제 진행 날짜 미리 계산
+  const concertActiveDates = new Map<string, Set<string>>();
+  calendarConcerts.forEach((c) => {
+    const dates = getActualConcertDates(c.startDateObj, c.endDateObj, c.schedule);
+    const dateSet = new Set(dates.map((d) => format(d, 'yyyy-MM-dd')));
+    concertActiveDates.set(c.id, dateSet);
+  });
 
   // 날짜별로 공연 그룹화
   const days: DayConcerts[] = daysInMonth.map((day) => {
     const dateStr = format(day, 'yyyy-MM-dd');
     const concertsOnDay = calendarConcerts
-      .filter((c) => isConcertOnDate({ startDate: c.startDateObj, endDate: c.endDateObj }, day))
+      .filter((c) => {
+        const activeDates = concertActiveDates.get(c.id);
+        return activeDates?.has(dateStr) ?? false;
+      })
       .map((c) => ({
         id: c.id,
         title: c.title,

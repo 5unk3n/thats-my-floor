@@ -16,14 +16,14 @@
    - MusicBrainz 원본 데이터를 저장하는 **Mirror**입니다.
    - **Replication**을 통해 MusicBrainz 메인 서버와 동기화 상태를 유지합니다.
 
-2. **Domain Layer (`artist`, `artist_custom_alias`)**:
+2. **Domain Layer (`artists`, `artist_custom_aliases`)**:
    - 서비스 로직에 필요한 데이터만 `mb_artist`에서 Extract하여 사용합니다.
-   - `gid` (UUID)를 통해 Raw Layer와 느슨하게 연결됩니다.
+   - `mbid` (UUID)를 통해 Raw Layer와 느슨하게 연결됩니다.
 
 ### 2.2. UUID (GID) Centric
 
-- MusicBrainz의 **GID (UUID)**를 시스템의 유일한 식별자로 사용합니다.
-- 모든 관계(Relation)는 이 GID를 기준으로 맺습니다.
+- MusicBrainz의 **MBID (UUID)**를 시스템의 유일한 식별자로 사용합니다.
+- 모든 관계(Relation)는 이 MBID를 기준으로 맺습니다. (Raw Layer의 `gid`와 매핑)
 
 ### 2.3. Incremental Replication (증분 업데이트)
 
@@ -54,22 +54,24 @@ _참고: 전체 컬럼 정의는 `scripts/musicbrainz/schemas.ts` 또는 공식 
 
 (기존과 동일)
 
+````sql
 ```sql
-CREATE TABLE artist (
+CREATE TABLE artists (
     id SERIAL PRIMARY KEY,
-    gid UUID NOT NULL UNIQUE,
+    mbid UUID NOT NULL UNIQUE, -- Maps to mb_artist.gid
     image_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE artist_custom_alias (
+CREATE TABLE artist_custom_aliases (
     id SERIAL PRIMARY KEY,
-    artist_gid UUID NOT NULL,
+    artist_mbid UUID NOT NULL, -- References artists.mbid
     alias VARCHAR(255) NOT NULL,
-    verified BOOLEAN DEFAULT FALSE
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
 );
-```
+````
 
 ---
 
@@ -116,7 +118,9 @@ CREATE TABLE artist_custom_alias (
 
 ```text
 scripts/musicbrainz/
+├── download.sh              # [Bash] Replication Packet 다운로드
 ├── import.sh                # [Bash] 최초 Full Dump 로드 및 테이블 생성
+├── refresh-mv.ts            # [Node.js] Materialized View 새로고침 (검색 인덱스 갱신)
 ├── replicate.ts             # [Node.js] 리플리케이션 실행 엔트리포인트
 └── replicator/              # [Module] 리플리케이터 핵심 로직
     ├── database.ts          # DB 연결 및 트랜잭션/쿼리 실행
